@@ -1,0 +1,593 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ZeroPFAS Solutions — Eliminación verificable de PFAS</title>
+    <meta name="description" content="ZeroPFAS Solutions: estrategia integrada de captura, concentración y destrucción verificable de PFAS mediante SCWO y balance de masas de flúor.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/animations.css">
+</head>
+<body>
+
+<!-- ===== Navbar ===== -->
+<nav class="navbar" id="navbar">
+  <div class="navbar__inner">
+    <a href="#" class="navbar__logo">
+      <svg class="navbar__logo-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v4m0 12v4M2 12h4m12 0h4m-3.5-6.5L17 7m-10 10-1.5 1.5M20.5 17.5 19 17M5 7 3.5 5.5"/></svg>
+      <span class="zero">Zero</span><span class="pfas">PFAS</span>
+    </a>
+    <ul class="navbar__links" id="navLinks">
+      <li><a href="#about">Proyecto</a></li>
+      <li><a href="#problem">Problema</a></li>
+      <li><a href="#solution">Solución</a></li>
+      <li><a href="#technology">Tecnología</a></li>
+      <li><a href="#product">Producto</a></li>
+      <li><a href="#verification">Verificación</a></li>
+    </ul>
+    <a href="#solution" class="navbar__cta">Ver solución</a>
+    <button class="navbar__toggle" id="mobileToggle" aria-label="Menú" aria-expanded="false">
+      <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M2 4.5h14M2 9h14M2 13.5h14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+    </button>
+  </div>
+</nav>
+
+<!-- ===== HERO — Full-viewport immersive 3D ===== -->
+<section class="hero" id="hero">
+  <div class="hero__bg"></div>
+  <div class="hero__orb hero__orb--1"></div>
+  <div class="hero__orb hero__orb--2"></div>
+  <div class="hero__orb hero__orb--3"></div>
+  <div class="hero__content">
+    <div class="hero__badge anim-hero-badge">
+      <span class="hero__badge-dot"></span>
+      Investigación activa · 2026
+    </div>
+    <h1 class="hero__title anim-hero-title">
+      <span class="hero__title-line">Destruimos los</span>
+      <span class="hero__title-line"><span class="gradient-text">químicos eternos.</span></span>
+    </h1>
+    <p class="hero__sub anim-hero-sub">Captura, concentración y destrucción verificable de PFAS mediante oxidación en agua supercrítica.</p>
+    <div class="hero__actions anim-hero-actions">
+      <a href="#solution" class="btn btn--primary">
+        <span>Descubrir la solución</span>
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8h10m-4-4 4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </a>
+      <a href="#about" class="btn btn--glass">Sobre el proyecto</a>
+    </div>
+  </div>
+  <div class="hero__scroll anim-hero-scroll">
+    <div class="hero__scroll-line"></div>
+  </div>
+</section>
+
+<!-- ===== Animated separator ===== -->
+<div class="glow-separator"></div>
+
+<!-- ===== ABOUT ===== -->
+<section id="about" class="section">
+  <div class="container">
+    <div class="section-label reveal">
+      <span class="section-label__num">01</span>
+      <span class="section-label__line"></span>
+      <span class="section-label__text">Sobre el proyecto</span>
+    </div>
+    <div class="about-hero reveal">
+      <h2 class="display-xl">Un químico frente al reto de los <span class="gradient-text">contaminantes eternos.</span></h2>
+    </div>
+    <div class="about-intro reveal">
+      <p>Proyecto de <strong>Daniel Martínez Onofre</strong>, químico. Las PFAS son compuestos con enlaces C–F extremadamente estables, usados desde 1950. Su persistencia los hace acumularse en agua, suelos y organismos vivos.</p>
+    </div>
+
+    <!-- Animated data cards -->
+    <div class="data-grid reveal-stagger">
+      <div class="data-card">
+        <div class="data-card__glow data-card__glow--blue"></div>
+        <div class="data-card__value" data-count="1950">1950</div>
+        <div class="data-card__label">En uso desde</div>
+        <svg class="data-card__icon" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+      </div>
+      <div class="data-card">
+        <div class="data-card__glow data-card__glow--teal"></div>
+        <div class="data-card__value" data-count="4700" data-suffix="+">4.700+</div>
+        <div class="data-card__label">Compuestos identificados</div>
+        <svg class="data-card__icon" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0H5a2 2 0 0 1-2-2v-4m6 6h10a2 2 0 0 0 2-2v-4M3 9h18M3 15h18"/></svg>
+      </div>
+      <div class="data-card">
+        <div class="data-card__glow data-card__glow--orange"></div>
+        <div class="data-card__value">485 kJ/mol</div>
+        <div class="data-card__label">Energía enlace C–F</div>
+        <svg class="data-card__icon" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+      </div>
+      <div class="data-card">
+        <div class="data-card__glow data-card__glow--red"></div>
+        <div class="data-card__value">98 %</div>
+        <div class="data-card__label">Aguas con PFAS detectables</div>
+        <svg class="data-card__icon" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><path d="M12 2a7 7 0 0 0-7 7c0 5.25 7 13 7 13s7-7.75 7-13a7 7 0 0 0-7-7z"/><circle cx="12" cy="9" r="2.5"/></svg>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="glow-separator glow-separator--teal"></div>
+
+<!-- ===== PROBLEM ===== -->
+<section id="problem" class="section section--dark">
+  <div class="container">
+    <div class="section-label reveal">
+      <span class="section-label__num">02</span>
+      <span class="section-label__line"></span>
+      <span class="section-label__text">El problema</span>
+    </div>
+    <h2 class="display-xl reveal">¿Por qué las PFAS son un <span class="gradient-text">reto sin resolver?</span></h2>
+
+    <div class="problem-grid reveal-stagger">
+      <div class="problem-card">
+        <div class="problem-card__visual">
+          <div class="problem-card__ring problem-card__ring--pulse"></div>
+          <span class="problem-card__num">01</span>
+        </div>
+        <h3 class="problem-card__title">Persistencia extrema</h3>
+        <p class="problem-card__text">Los enlaces C–F no se degradan naturalmente. Se acumulan durante décadas.</p>
+        <div class="problem-card__stat">
+          <span class="problem-card__stat-value">1.000+</span>
+          <span class="problem-card__stat-unit">años</span>
+        </div>
+      </div>
+
+      <div class="problem-card">
+        <div class="problem-card__visual">
+          <div class="problem-card__ring problem-card__ring--pulse"></div>
+          <span class="problem-card__num">02</span>
+        </div>
+        <h3 class="problem-card__title">Bioacumulación</h3>
+        <p class="problem-card__text">Exposición crónica asociada a alteraciones reproductivas, renales y carcinogenicidad.</p>
+        <div class="problem-card__stat">
+          <span class="problem-card__stat-value">Grupo 1</span>
+          <span class="problem-card__stat-unit">IARC</span>
+        </div>
+      </div>
+
+      <div class="problem-card">
+        <div class="problem-card__visual">
+          <div class="problem-card__ring problem-card__ring--pulse"></div>
+          <span class="problem-card__num">03</span>
+        </div>
+        <h3 class="problem-card__title">Retención ≠ Destrucción</h3>
+        <p class="problem-card__text">El carbón activado retira PFAS pero no rompe los enlaces C–F.</p>
+        <div class="problem-card__stat">
+          <span class="problem-card__stat-value">0 %</span>
+          <span class="problem-card__stat-unit">destruido</span>
+        </div>
+      </div>
+
+      <div class="problem-card problem-card--accent">
+        <div class="problem-card__visual">
+          <div class="problem-card__ring problem-card__ring--pulse"></div>
+          <span class="problem-card__num">04</span>
+        </div>
+        <h3 class="problem-card__title">Ventana regulatoria</h3>
+        <p class="problem-card__text">EPA y ECHA exigen tecnologías de eliminación verificable para 2026.</p>
+        <div class="problem-card__stat">
+          <span class="problem-card__stat-value">2026</span>
+          <span class="problem-card__stat-unit">deadline</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Realistic C-F bond -->
+    <div class="bond-visual reveal">
+      <div class="bond-visual__molecule">
+        <!-- Carbon atom -->
+        <div class="bond-visual__atom bond-visual__atom--c">
+          <div class="bond-visual__cloud bond-visual__cloud--c"></div>
+          <span class="bond-visual__symbol">C</span>
+          <span class="bond-visual__number">6</span>
+        </div>
+        <!-- Sigma bond -->
+        <div class="bond-visual__bond">
+          <div class="bond-visual__bond-bar"></div>
+          <div class="bond-visual__bond-bar"></div>
+          <div class="bond-visual__bond-bar"></div>
+          <div class="bond-visual__overlap"></div>
+          <div class="bond-visual__electrons">
+            <span class="bond-visual__e bond-visual__e--1"></span>
+            <span class="bond-visual__e bond-visual__e--2"></span>
+          </div>
+          <span class="bond-visual__energy">BDE 485 kJ/mol</span>
+        </div>
+        <!-- Fluorine atom -->
+        <div class="bond-visual__atom bond-visual__atom--f">
+          <div class="bond-visual__cloud bond-visual__cloud--f"></div>
+          <span class="bond-visual__symbol">F</span>
+          <span class="bond-visual__number">9</span>
+        </div>
+      </div>
+      <!-- Comparative BDE scale -->
+      <div class="bond-visual__scale">
+        <div class="bond-visual__scale-row">
+          <span class="bond-visual__scale-label">C–H</span>
+          <div class="bond-visual__scale-bar"><div class="bond-visual__scale-fill bond-visual__scale-fill--ch"></div></div>
+          <span class="bond-visual__scale-val">411</span>
+        </div>
+        <div class="bond-visual__scale-row">
+          <span class="bond-visual__scale-label">C–C</span>
+          <div class="bond-visual__scale-bar"><div class="bond-visual__scale-fill bond-visual__scale-fill--cc"></div></div>
+          <span class="bond-visual__scale-val">346</span>
+        </div>
+        <div class="bond-visual__scale-row">
+          <span class="bond-visual__scale-label">C–O</span>
+          <div class="bond-visual__scale-bar"><div class="bond-visual__scale-fill bond-visual__scale-fill--co"></div></div>
+          <span class="bond-visual__scale-val">358</span>
+        </div>
+        <div class="bond-visual__scale-row bond-visual__scale-row--highlight">
+          <span class="bond-visual__scale-label">C–F</span>
+          <div class="bond-visual__scale-bar"><div class="bond-visual__scale-fill bond-visual__scale-fill--cf"></div></div>
+          <span class="bond-visual__scale-val">485</span>
+        </div>
+      </div>
+      <p class="bond-visual__caption">El enlace C–F (BDE = 485 kJ/mol) es uno de los más fuertes de la química orgánica. Su energía de disociación supera al C–H, C–C y C–O. Las tecnologías convencionales <strong>no lo rompen</strong>.</p>
+    </div>
+  </div>
+</section>
+
+<div class="glow-separator"></div>
+
+<!-- ===== SOLUTION — Visual pipeline ===== -->
+<section id="solution" class="section">
+  <div class="container">
+    <div class="section-label reveal">
+      <span class="section-label__num">03</span>
+      <span class="section-label__line"></span>
+      <span class="section-label__text">Nuestra solución</span>
+    </div>
+    <h2 class="display-xl reveal">De agua contaminada a agua <span class="gradient-text">verificada.</span></h2>
+  </div>
+
+  <!-- 3D Pipeline Visualization -->
+  <div class="scene-showcase reveal-scale" id="sceneShowcase">
+    <canvas id="hero-canvas"></canvas>
+  </div>
+
+  <!-- Process legend -->
+  <div class="scene-legend reveal">
+    <div class="scene-legend__item">
+      <span class="scene-legend__num">01</span>
+      <span class="scene-legend__dot scene-legend__dot--blue"></span>
+      <span>Captura GAC/IX</span>
+    </div>
+    <div class="scene-legend__item">
+      <span class="scene-legend__num">02</span>
+      <span class="scene-legend__dot scene-legend__dot--teal"></span>
+      <span>Concentración NF · ×100</span>
+    </div>
+    <div class="scene-legend__item scene-legend__item--core">
+      <span class="scene-legend__num">03</span>
+      <span class="scene-legend__dot scene-legend__dot--orange"></span>
+      <span>SCWO · 374 °C · 221 bar · τ 60 s</span>
+    </div>
+    <div class="scene-legend__item">
+      <span class="scene-legend__num">04</span>
+      <span class="scene-legend__dot scene-legend__dot--green"></span>
+      <span>Verificación · LC-MS/MS · F⁻</span>
+    </div>
+  </div>
+</section>
+
+<div class="glow-separator glow-separator--teal"></div>
+
+<!-- ===== TECHNOLOGY ===== -->
+<section id="technology" class="section section--dark">
+  <div class="container">
+    <div class="section-label reveal">
+      <span class="section-label__num">04</span>
+      <span class="section-label__line"></span>
+      <span class="section-label__text">Tecnología</span>
+    </div>
+    <h2 class="display-xl reveal">Dos líneas integradas. <span class="gradient-text">Un objetivo.</span></h2>
+
+    <div class="tech-duo">
+      <div class="tech-panel reveal">
+        <div class="tech-panel__glow tech-panel__glow--blue"></div>
+        <div class="tech-panel__badge tech-panel__badge--industrial">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 20h20M5 20V8l5 4V8l5 4V4h4v16"/></svg>
+          Industrial
+        </div>
+        <h3 class="tech-panel__title">Concentración + Destrucción Centralizada</h3>
+        <ul class="tech-panel__list">
+          <li>Plantas municipales e industriales</li>
+          <li>Capacidad &gt; 1.000 m³/día</li>
+          <li>Reactor SCWO in situ</li>
+          <li>Monitorización continua en línea</li>
+        </ul>
+      </div>
+
+      <div class="tech-panel reveal">
+        <div class="tech-panel__glow tech-panel__glow--teal"></div>
+        <div class="tech-panel__badge tech-panel__badge--pou">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+          Punto de Uso
+        </div>
+        <h3 class="tech-panel__title">Captura con circuito de retorno</h3>
+        <ul class="tech-panel__list">
+          <li>Filtro bajo fregadero o fuente</li>
+          <li>Cartuchos con chip NFC trazable</li>
+          <li>Recogida periódica → planta central</li>
+          <li>Informe de destrucción por lote</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="glow-separator"></div>
+
+<!-- ===== PRODUCT HERO — 3D Hyperrealistic Device ===== -->
+<section id="product" class="section product-hero-section">
+  <div class="product-hero-section__bg"></div>
+  <div class="container">
+    <div class="section-label reveal">
+      <span class="section-label__num">04.1</span>
+      <span class="section-label__line"></span>
+      <span class="section-label__text">Producto</span>
+    </div>
+
+    <div class="product-hero">
+      <!-- Left: Text content -->
+      <div class="product-hero__text reveal">
+        <h2 class="display-xl">Tecnología tangible.<br><span class="gradient-text">Diseño real.</span></h2>
+        <p class="product-hero__desc">Sistema compacto de punto de uso para captura selectiva de PFAS con circuito de retorno trazable. Diseñado para hogar, oficina o laboratorio.</p>
+        <div class="product-hero__specs">
+          <div class="product-spec">
+            <span class="product-spec__val">&lt; 0.5</span>
+            <span class="product-spec__unit">ng/L</span>
+            <span class="product-spec__label">PFAS en salida</span>
+          </div>
+          <div class="product-spec">
+            <span class="product-spec__val">2.1</span>
+            <span class="product-spec__unit">L/min</span>
+            <span class="product-spec__label">Caudal nominal</span>
+          </div>
+          <div class="product-spec">
+            <span class="product-spec__val">NFC</span>
+            <span class="product-spec__unit">chip</span>
+            <span class="product-spec__label">Trazabilidad</span>
+          </div>
+        </div>
+        <a href="#technology" class="btn btn--glass product-hero__cta">
+          <span>Ver tecnología integrada</span>
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8h10m-4-4 4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </a>
+      </div>
+
+      <!-- Right: 3D Canvas Device Render -->
+      <div class="product-hero__visual reveal-scale">
+        <div class="product-hero__canvas-wrap" id="productCanvasWrap">
+          <canvas id="productCanvas"></canvas>
+          <!-- Floating ambient particles -->
+          <div class="product-hero__ambient"></div>
+        </div>
+
+        <!-- Callout annotations — positioned over canvas -->
+        <div class="product-hero__callouts" id="productCallouts">
+          <div class="ph-callout ph-callout--inlet" data-stage="inlet">
+            <div class="ph-callout__dot"></div>
+            <div class="ph-callout__line"></div>
+            <div class="ph-callout__tag">
+              <span class="ph-callout__num">01</span>
+              <span class="ph-callout__title">Entrada de agua</span>
+            </div>
+          </div>
+          <div class="ph-callout ph-callout--prefilter" data-stage="prefilter">
+            <div class="ph-callout__dot"></div>
+            <div class="ph-callout__line"></div>
+            <div class="ph-callout__tag">
+              <span class="ph-callout__num">02</span>
+              <span class="ph-callout__title">Pretratamiento GAC</span>
+            </div>
+          </div>
+          <div class="ph-callout ph-callout--membrane" data-stage="membrane">
+            <div class="ph-callout__dot"></div>
+            <div class="ph-callout__line"></div>
+            <div class="ph-callout__tag">
+              <span class="ph-callout__num">03</span>
+              <span class="ph-callout__title">Membrana avanzada</span>
+            </div>
+          </div>
+          <div class="ph-callout ph-callout--capture" data-stage="capture">
+            <div class="ph-callout__dot"></div>
+            <div class="ph-callout__line"></div>
+            <div class="ph-callout__tag">
+              <span class="ph-callout__num">04</span>
+              <span class="ph-callout__title">Captura selectiva PFAS</span>
+            </div>
+          </div>
+          <div class="ph-callout ph-callout--cartridge" data-stage="cartridge">
+            <div class="ph-callout__dot"></div>
+            <div class="ph-callout__line"></div>
+            <div class="ph-callout__tag">
+              <span class="ph-callout__num">05</span>
+              <span class="ph-callout__title">Cartucho retornable</span>
+            </div>
+          </div>
+          <div class="ph-callout ph-callout--outlet" data-stage="outlet">
+            <div class="ph-callout__dot"></div>
+            <div class="ph-callout__line"></div>
+            <div class="ph-callout__tag">
+              <span class="ph-callout__num">06</span>
+              <span class="ph-callout__title">Agua verificada</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bottom feature bar -->
+  <div class="product-featurebar reveal-stagger">
+    <div class="product-fbar__item">
+      <div class="product-fbar__icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2a7 7 0 0 0-7 7c0 5.25 7 13 7 13s7-7.75 7-13a7 7 0 0 0-7-7z"/><circle cx="12" cy="9" r="2.5"/></svg>
+      </div>
+      <div><strong>Punto de uso</strong><span>Bajo fregadero · Fuente</span></div>
+    </div>
+    <div class="product-fbar__sep"></div>
+    <div class="product-fbar__item">
+      <div class="product-fbar__icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+      </div>
+      <div><strong>Monitorización</strong><span>Display LED en tiempo real</span></div>
+    </div>
+    <div class="product-fbar__sep"></div>
+    <div class="product-fbar__item">
+      <div class="product-fbar__icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>
+      </div>
+      <div><strong>Trazabilidad</strong><span>Chip NFC por cartucho</span></div>
+    </div>
+    <div class="product-fbar__sep"></div>
+    <div class="product-fbar__item">
+      <div class="product-fbar__icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+      </div>
+      <div><strong>Circuito circular</strong><span>Retorno → destrucción SCWO</span></div>
+    </div>
+  </div>
+</section>
+
+<div class="glow-separator glow-separator--teal"></div>
+
+<!-- ===== VERIFICATION ===== -->
+<section id="verification" class="section">
+  <div class="container">
+    <div class="section-label reveal">
+      <span class="section-label__num">05</span>
+      <span class="section-label__line"></span>
+      <span class="section-label__text">Verificación analítica</span>
+    </div>
+    <h2 class="display-xl reveal">Destrucción demostrable, <span class="gradient-text">no estimada.</span></h2>
+
+    <div class="verify-trio reveal-stagger">
+      <div class="verify-card">
+        <div class="verify-card__icon-wrap verify-card__icon-wrap--1">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+          <div class="verify-card__ring"></div>
+        </div>
+        <h3 class="verify-card__title">Análisis específico</h3>
+        <p class="verify-card__desc">PFAS individuales por LC-MS/MS</p>
+        <span class="verify-card__tag">Target analysis</span>
+      </div>
+      <div class="verify-card">
+        <div class="verify-card__icon-wrap verify-card__icon-wrap--2">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+          <div class="verify-card__ring"></div>
+        </div>
+        <h3 class="verify-card__title">Organoflúor total</h3>
+        <p class="verify-card__desc">Detección de transformación incompleta</p>
+        <span class="verify-card__tag">Non-target screening</span>
+      </div>
+      <div class="verify-card">
+        <div class="verify-card__icon-wrap verify-card__icon-wrap--3">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+          <div class="verify-card__ring"></div>
+        </div>
+        <h3 class="verify-card__title">Fluoruro inorgánico (F⁻)</h3>
+        <p class="verify-card__desc">Prueba directa de ruptura C–F</p>
+        <span class="verify-card__tag">Mass balance proof</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="glow-separator glow-separator--teal"></div>
+
+<!-- ===== INNOVATION + REGULATION ===== -->
+<section id="innovation" class="section section--dark">
+  <div class="container">
+    <div class="section-label reveal">
+      <span class="section-label__num">06</span>
+      <span class="section-label__line"></span>
+      <span class="section-label__text">Innovación y regulación</span>
+    </div>
+
+    <div class="split-section">
+      <div class="split-section__left reveal">
+        <h2 class="display-lg">Integración como <span class="gradient-text">innovación.</span></h2>
+        <div class="pillar-grid">
+          <div class="pillar">
+            <div class="pillar__icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div>
+            <span>Escalabilidad</span>
+          </div>
+          <div class="pillar">
+            <div class="pillar__icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg></div>
+            <span>Trazabilidad</span>
+          </div>
+          <div class="pillar">
+            <div class="pillar__icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></div>
+            <span>Transferibilidad</span>
+          </div>
+          <div class="pillar">
+            <div class="pillar__icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg></div>
+            <span>Validación progresiva</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="split-section__right reveal">
+        <h3 class="display-sm">Marco regulatorio</h3>
+        <div class="reg-cards">
+          <div class="reg-card">
+            <div class="reg-card__flag reg-card__flag--us">US</div>
+            <div class="reg-card__body">
+              <strong>EPA — MCL PFOA/PFOS</strong>
+              <div class="reg-card__value">4,0 ng/L</div>
+              <span class="reg-card__date">Cumplimiento 2026</span>
+            </div>
+          </div>
+          <div class="reg-card">
+            <div class="reg-card__flag reg-card__flag--eu">EU</div>
+            <div class="reg-card__body">
+              <strong>Directiva 2020/2184</strong>
+              <div class="reg-card__value">0,1 μg/L</div>
+              <span class="reg-card__date">Transposición 2026</span>
+            </div>
+          </div>
+          <div class="reg-card">
+            <div class="reg-card__flag reg-card__flag--eu">EU</div>
+            <div class="reg-card__body">
+              <strong>ECHA — Restricción universal</strong>
+              <div class="reg-card__value">Pendiente</div>
+              <span class="reg-card__date">2025–2027</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== Footer ===== -->
+<footer class="footer">
+  <div class="container">
+    <div class="footer__inner">
+      <div class="footer__brand">
+        <span class="zero">Zero</span><span class="pfas">PFAS</span>
+        <span class="footer__sub">Solutions</span>
+      </div>
+      <div class="footer__meta">
+        <p>Proyecto de investigación · <a href="#about">Daniel Martínez Onofre</a></p>
+        <p>&copy; 2026 ZeroPFAS Solutions</p>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="js/three-scene.js"></script>
+<script src="js/product-3d.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>
