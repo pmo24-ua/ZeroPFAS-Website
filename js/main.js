@@ -122,6 +122,7 @@
   addSpotlight('.verify-card');
   addSpotlight('.product-spec');
   addSpotlight('.product-fbar__item');
+  addSpotlight('.explorer__step');
 
   /* ===== Glow separators animate on scroll ===== */
   const glowSeps = document.querySelectorAll('.glow-separator');

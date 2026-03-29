@@ -1,4 +1,4 @@
-/* product-3d.js — Hyperrealistic 3D product device for ZeroPFAS */
+/* product-3d.js — Realistic under-sink multi-stage water treatment system for ZeroPFAS */
 (function () {
   'use strict';
 
@@ -21,276 +21,916 @@
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   renderer.setSize(W(), H());
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 1.2;
+  renderer.toneMappingExposure = 1.15;
   renderer.outputEncoding = THREE.sRGBEncoding;
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
   var scene = new THREE.Scene();
-  var camera = new THREE.PerspectiveCamera(32, W() / H(), 0.1, 100);
-  camera.position.set(4, 2, 8);
-  camera.lookAt(0, 0, 0);
+  var camera = new THREE.PerspectiveCamera(36, W() / H(), 0.1, 100);
+  camera.position.set(5, 4, 12);
+  camera.lookAt(-0.5, 0.5, 0);
 
   /* -------- Lighting — Studio setup -------- */
-  scene.add(new THREE.AmbientLight(0x8899bb, 0.35));
+  scene.add(new THREE.AmbientLight(0x8899bb, 0.4));
 
-  // Key light (top-right)
-  var keyLight = new THREE.DirectionalLight(0xffffff, 0.9);
-  keyLight.position.set(5, 8, 6);
+  var keyLight = new THREE.DirectionalLight(0xffffff, 0.85);
+  keyLight.position.set(6, 10, 8);
   keyLight.castShadow = true;
   keyLight.shadow.mapSize.width = 1024;
   keyLight.shadow.mapSize.height = 1024;
   keyLight.shadow.camera.near = 1;
-  keyLight.shadow.camera.far = 25;
-  keyLight.shadow.camera.left = -5;
-  keyLight.shadow.camera.right = 5;
+  keyLight.shadow.camera.far = 30;
+  keyLight.shadow.camera.left = -8;
+  keyLight.shadow.camera.right = 8;
   keyLight.shadow.camera.top = 8;
-  keyLight.shadow.camera.bottom = -5;
+  keyLight.shadow.camera.bottom = -4;
   keyLight.shadow.bias = -0.002;
   scene.add(keyLight);
 
-  // Fill light (left, cooler)
-  var fillLight = new THREE.DirectionalLight(0x8899cc, 0.35);
-  fillLight.position.set(-4, 4, -3);
+  var fillLight = new THREE.DirectionalLight(0x8899cc, 0.3);
+  fillLight.position.set(-5, 4, -4);
   scene.add(fillLight);
 
-  // Rim light (back, subtle blue)
-  var rimLight = new THREE.PointLight(0x4488cc, 1.2, 20);
-  rimLight.position.set(-2, 6, -6);
+  var rimLight = new THREE.PointLight(0x4488cc, 1.0, 22);
+  rimLight.position.set(-3, 7, -8);
   scene.add(rimLight);
 
-  // Accent glow for teal/blue branding
-  var accentLight = new THREE.PointLight(0x30d5c8, 0.8, 12);
-  accentLight.position.set(2, -1, 4);
+  var accentLight = new THREE.PointLight(0x30d5c8, 0.6, 14);
+  accentLight.position.set(3, -1, 5);
   scene.add(accentLight);
 
   /* -------- Materials -------- */
   var matWhite = new THREE.MeshStandardMaterial({
-    color: 0xe8e8ec, roughness: 0.35, metalness: 0.05
+    color: 0xeaeaef, roughness: 0.32, metalness: 0.04
   });
   var matAluminum = new THREE.MeshStandardMaterial({
-    color: 0xb0b8c4, roughness: 0.2, metalness: 0.85
+    color: 0xb0b8c4, roughness: 0.18, metalness: 0.88
   });
   var matDarkMetal = new THREE.MeshStandardMaterial({
-    color: 0x2a2a35, roughness: 0.3, metalness: 0.7
+    color: 0x2a2a35, roughness: 0.28, metalness: 0.72
   });
   var matTeal = new THREE.MeshStandardMaterial({
-    color: 0x30d5c8, roughness: 0.4, metalness: 0.3, emissive: 0x30d5c8, emissiveIntensity: 0.15
+    color: 0x30d5c8, roughness: 0.35, metalness: 0.3,
+    emissive: 0x30d5c8, emissiveIntensity: 0.12
   });
   var matBlue = new THREE.MeshStandardMaterial({
-    color: 0x2997ff, roughness: 0.45, metalness: 0.2, emissive: 0x2997ff, emissiveIntensity: 0.1
+    color: 0x2997ff, roughness: 0.4, metalness: 0.2,
+    emissive: 0x2997ff, emissiveIntensity: 0.08
   });
   var matOrange = new THREE.MeshStandardMaterial({
-    color: 0xff9500, roughness: 0.4, metalness: 0.2, emissive: 0xff9500, emissiveIntensity: 0.15
+    color: 0xff9500, roughness: 0.38, metalness: 0.2,
+    emissive: 0xff9500, emissiveIntensity: 0.12
   });
   var matGlass = new THREE.MeshStandardMaterial({
-    color: 0x88bbdd, roughness: 0.1, metalness: 0.1, transparent: true, opacity: 0.25
+    color: 0x99ccee, roughness: 0.08, metalness: 0.08,
+    transparent: true, opacity: 0.18
   });
   var matInner = new THREE.MeshStandardMaterial({
     color: 0x1a1a24, roughness: 0.5, metalness: 0.4
   });
-  var matCartridge = new THREE.MeshStandardMaterial({
-    color: 0x30d158, roughness: 0.4, metalness: 0.3, emissive: 0x30d158, emissiveIntensity: 0.1
+  var matGreen = new THREE.MeshStandardMaterial({
+    color: 0x30d158, roughness: 0.38, metalness: 0.3,
+    emissive: 0x30d158, emissiveIntensity: 0.08
+  });
+  var matSediment = new THREE.MeshStandardMaterial({
+    color: 0x9a8a6a, roughness: 0.55, metalness: 0.1
+  });
+  var matCarbon = new THREE.MeshStandardMaterial({
+    color: 0x333340, roughness: 0.45, metalness: 0.2
+  });
+  var matResin = new THREE.MeshStandardMaterial({
+    color: 0xcc5522, roughness: 0.4, metalness: 0.15,
+    emissive: 0xff6600, emissiveIntensity: 0.06
+  });
+  var matPipe = new THREE.MeshStandardMaterial({
+    color: 0xc0c8d0, roughness: 0.22, metalness: 0.8
   });
 
   /* -------- Device Group -------- */
   var device = new THREE.Group();
   scene.add(device);
 
-  /* Main cylindrical body */
-  var bodyGeo = new THREE.CylinderGeometry(1.1, 1.1, 5.5, 48, 1, false);
-  var bodyMesh = new THREE.Mesh(bodyGeo, matWhite);
-  bodyMesh.castShadow = true;
-  bodyMesh.receiveShadow = true;
-  device.add(bodyMesh);
+  /* ========================================================
+     MOUNTING BRACKET — horizontal base plate (under-sink style)
+     ======================================================== */
+  var bracketGeo = new THREE.BoxGeometry(9.5, 0.12, 2.8);
+  var bracket = new THREE.Mesh(bracketGeo, matAluminum);
+  bracket.position.set(0, -1.8, 0);
+  bracket.castShadow = true;
+  bracket.receiveShadow = true;
+  device.add(bracket);
 
-  /* Top cap — aluminum */
-  var topCapGeo = new THREE.CylinderGeometry(1.15, 1.15, 0.2, 48);
-  var topCap = new THREE.Mesh(topCapGeo, matAluminum);
-  topCap.position.y = 2.85;
-  topCap.castShadow = true;
-  device.add(topCap);
+  // Bracket mounting holes (decorative)
+  for (var bh = 0; bh < 4; bh++) {
+    var holeGeo = new THREE.TorusGeometry(0.08, 0.02, 8, 16);
+    var hole = new THREE.Mesh(holeGeo, matDarkMetal);
+    hole.rotation.x = Math.PI / 2;
+    hole.position.set(-3.6 + bh * 2.4, -1.73, 1.2);
+    device.add(hole);
+  }
 
-  /* Bottom cap — aluminum */
-  var botCapGeo = new THREE.CylinderGeometry(1.15, 1.15, 0.2, 48);
-  var botCap = new THREE.Mesh(botCapGeo, matAluminum);
-  botCap.position.y = -2.85;
-  botCap.castShadow = true;
-  device.add(botCap);
+  // Back-rail (upright support behind canisters)
+  var railGeo = new THREE.BoxGeometry(9.5, 0.12, 0.18);
+  var rail = new THREE.Mesh(railGeo, matAluminum);
+  rail.position.set(0, -0.3, -1.55);
+  rail.castShadow = true;
+  device.add(rail);
 
-  /* Inlet port (top) */
-  var inletGeo = new THREE.CylinderGeometry(0.2, 0.2, 0.5, 24);
-  var inlet = new THREE.Mesh(inletGeo, matAluminum);
-  inlet.position.set(0, 3.2, 0);
-  inlet.castShadow = true;
-  device.add(inlet);
+  // Canister support clamps on bracket
+  var clampXs = [-3.6, -1.8, 1.0, 3.8];
+  for (var ci = 0; ci < clampXs.length; ci++) {
+    var clampGeo = new THREE.TorusGeometry(0.58, 0.04, 6, 24, Math.PI);
+    var clamp = new THREE.Mesh(clampGeo, matDarkMetal);
+    clamp.rotation.y = Math.PI / 2;
+    clamp.rotation.z = Math.PI;
+    clamp.position.set(clampXs[ci], -1.3, 0);
+    device.add(clamp);
+  }
 
-  var inletRingGeo = new THREE.TorusGeometry(0.22, 0.04, 12, 32);
-  var inletRing = new THREE.Mesh(inletRingGeo, matTeal);
-  inletRing.rotation.x = Math.PI / 2;
-  inletRing.position.set(0, 3.45, 0);
+  // Pressure gauge on inlet manifold
+  var gaugeBody = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.18, 0.18, 0.08, 20),
+    matAluminum
+  );
+  gaugeBody.rotation.x = Math.PI / 2;
+  gaugeBody.position.set(-4.2, 2.1, 0.15);
+  device.add(gaugeBody);
+  var gaugeFace = new THREE.Mesh(
+    new THREE.CircleGeometry(0.16, 20),
+    new THREE.MeshStandardMaterial({ color: 0x111116, roughness: 0.3, metalness: 0.2 })
+  );
+  gaugeFace.position.set(-4.2, 2.1, 0.2);
+  device.add(gaugeFace);
+
+  /* ========================================================
+     Helper: build a vertical cartridge canister (filter housing)
+     Refined with O-ring seals, grip grooves, and thicker caps
+     ======================================================== */
+  function buildCanister(r, h, pos, bodyMat, showCutaway, innerMat, innerR) {
+    var g = new THREE.Group();
+    g.position.copy(pos);
+
+    // Main body
+    var bodyGeo = new THREE.CylinderGeometry(r, r, h, 40);
+    var body = new THREE.Mesh(bodyGeo, bodyMat);
+    body.castShadow = true;
+    body.receiveShadow = true;
+    g.add(body);
+
+    // Top cap — thicker, beveled
+    var capGeo = new THREE.CylinderGeometry(r + 0.05, r + 0.03, 0.14, 40);
+    var topCap = new THREE.Mesh(capGeo, matAluminum);
+    topCap.position.y = h / 2 + 0.07;
+    topCap.castShadow = true;
+    g.add(topCap);
+
+    // Bottom cap
+    var botCap = new THREE.Mesh(capGeo.clone(), matAluminum);
+    botCap.position.y = -h / 2 - 0.07;
+    botCap.castShadow = true;
+    g.add(botCap);
+
+    // O-ring seals at cap junctions
+    var oRingGeo = new THREE.TorusGeometry(r + 0.01, 0.018, 8, 32);
+    var oRingMat = new THREE.MeshStandardMaterial({
+      color: 0x222228, roughness: 0.7, metalness: 0.1
+    });
+    var oRingTop = new THREE.Mesh(oRingGeo, oRingMat);
+    oRingTop.rotation.x = Math.PI / 2;
+    oRingTop.position.y = h / 2;
+    g.add(oRingTop);
+    var oRingBot = new THREE.Mesh(oRingGeo.clone(), oRingMat);
+    oRingBot.rotation.x = Math.PI / 2;
+    oRingBot.position.y = -h / 2;
+    g.add(oRingBot);
+
+    // Neck fitting on top (push-connect)
+    var neckGeo = new THREE.CylinderGeometry(r * 0.3, r * 0.35, 0.28, 20);
+    var neck = new THREE.Mesh(neckGeo, matPipe);
+    neck.position.y = h / 2 + 0.28;
+    g.add(neck);
+
+    // Bottom drain fitting
+    var drainGeo = new THREE.CylinderGeometry(r * 0.22, r * 0.25, 0.15, 16);
+    var drain = new THREE.Mesh(drainGeo, matPipe);
+    drain.position.y = -h / 2 - 0.21;
+    g.add(drain);
+
+    // Grip grooves — three subtle rings on lower body
+    for (var gi = 0; gi < 3; gi++) {
+      var grooveGeo = new THREE.TorusGeometry(r + 0.005, 0.01, 6, 32);
+      var groove = new THREE.Mesh(grooveGeo, matDarkMetal);
+      groove.rotation.x = Math.PI / 2;
+      groove.position.y = -h * 0.2 + gi * 0.18;
+      g.add(groove);
+    }
+
+    // Cutaway section — partial transparency shell + inner fill
+    if (showCutaway && innerMat) {
+      var cutArc = Math.PI * 1.55;
+      var shellGeo = new THREE.CylinderGeometry(r + 0.01, r + 0.01, h * 0.85, 40, 1, true, 0, cutArc);
+      var shell = new THREE.Mesh(shellGeo, matGlass);
+      shell.rotation.y = Math.PI * 0.35;
+      g.add(shell);
+
+      var iR = innerR || r * 0.72;
+      var innerGeo = new THREE.CylinderGeometry(iR, iR, h * 0.75, 28);
+      var inner = new THREE.Mesh(innerGeo, innerMat);
+      g.add(inner);
+    }
+
+    device.add(g);
+    return g;
+  }
+
+  /* ========================================================
+     Helper: push-fit pipe connector detail
+     ======================================================== */
+  function addFitting(pos, rotZ) {
+    var fGeo = new THREE.CylinderGeometry(0.1, 0.1, 0.12, 14);
+    var f = new THREE.Mesh(fGeo, matAluminum);
+    f.position.copy(pos);
+    if (rotZ) f.rotation.z = rotZ;
+    device.add(f);
+    // Collet ring
+    var cGeo = new THREE.TorusGeometry(0.1, 0.015, 8, 20);
+    var c = new THREE.Mesh(cGeo, matDarkMetal);
+    c.position.copy(pos);
+    c.rotation.x = Math.PI / 2;
+    if (rotZ) c.rotation.z = rotZ;
+    device.add(c);
+  }
+
+  /* ========================================================
+     STAGE 1: Water inlet manifold (top-left)
+     ======================================================== */
+  var inletPipeGeo = new THREE.CylinderGeometry(0.12, 0.12, 1.8, 16);
+  var inletPipe = new THREE.Mesh(inletPipeGeo, matPipe);
+  inletPipe.rotation.z = Math.PI / 2;
+  inletPipe.position.set(-4.8, 1.8, 0);
+  inletPipe.castShadow = true;
+  device.add(inletPipe);
+
+  // Inlet ball valve
+  var valveGeo = new THREE.SphereGeometry(0.2, 20, 16);
+  var valve = new THREE.Mesh(valveGeo, matAluminum);
+  valve.position.set(-5.5, 1.8, 0);
+  valve.castShadow = true;
+  device.add(valve);
+
+  // Valve handle (quarter-turn lever)
+  var handleGeo = new THREE.BoxGeometry(0.06, 0.38, 0.06);
+  var valveHandle = new THREE.Mesh(handleGeo, matBlue);
+  valveHandle.position.set(-5.5, 2.0, 0.15);
+  valveHandle.rotation.z = 0.15;
+  device.add(valveHandle);
+
+  // Inlet ring
+  var inletRingGeo = new THREE.TorusGeometry(0.15, 0.03, 8, 24);
+  var inletRing = new THREE.Mesh(inletRingGeo, matBlue);
+  inletRing.rotation.y = Math.PI / 2;
+  inletRing.position.set(-5.7, 1.8, 0);
   device.add(inletRing);
 
-  /* Outlet port (bottom) */
-  var outletGeo = new THREE.CylinderGeometry(0.2, 0.2, 0.5, 24);
-  var outlet = new THREE.Mesh(outletGeo, matAluminum);
-  outlet.position.set(0, -3.2, 0);
-  outlet.castShadow = true;
-  device.add(outlet);
+  // Inlet fitting detail
+  addFitting(new THREE.Vector3(-3.9, 1.8, 0), Math.PI / 2);
 
-  var outletRingGeo = new THREE.TorusGeometry(0.22, 0.04, 12, 32);
-  var outletRing = new THREE.Mesh(outletRingGeo, matCartridge);
-  outletRing.rotation.x = Math.PI / 2;
-  outletRing.position.set(0, -3.45, 0);
-  device.add(outletRing);
+  // Down-pipe from inlet to first canister
+  var downPipe1Geo = new THREE.CylinderGeometry(0.08, 0.08, 1.6, 12);
+  var downPipe1 = new THREE.Mesh(downPipe1Geo, matPipe);
+  downPipe1.position.set(-3.6, 0.9, 0);
+  device.add(downPipe1);
 
-  /* -------- Cutaway section — show internal stages -------- */
-  /* We create a partial (270°) shell to reveal internals on one side */
+  /* ========================================================
+     STAGE 2: Sediment pre-filter — SLIM TRANSLUCENT BOWL
+     Narrow see-through housing with visible pleated element
+     ======================================================== */
+  (function () {
+    var sx = -3.6, sy = -0.2;
 
-  // Cutaway outer shell (shows a slice removed)
-  var cutAngle = Math.PI * 1.5; // 270 degrees = quarter removed
-  var shellGeo = new THREE.CylinderGeometry(1.12, 1.12, 5.3, 48, 1, true, 0, cutAngle);
-  var shellMesh = new THREE.Mesh(shellGeo, matGlass);
-  shellMesh.position.y = 0;
-  shellMesh.rotation.y = Math.PI * 0.25; // orient cutaway towards camera
-  device.add(shellMesh);
+    // Translucent outer bowl (narrower than carbon)
+    var matBowl = new THREE.MeshStandardMaterial({
+      color: 0xaaccdd, roughness: 0.08, metalness: 0.05,
+      transparent: true, opacity: 0.22
+    });
+    var bowl = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.38, 0.42, 2.6, 32), matBowl
+    );
+    bowl.position.set(sx, sy, 0);
+    bowl.castShadow = true;
+    device.add(bowl);
 
-  /* Internal stages — stacked discs/cylinders visible through cutaway */
+    // Heavy aluminum head (top — wider than bowl = sump-filter look)
+    var headGeo = new THREE.CylinderGeometry(0.48, 0.44, 0.35, 32);
+    var head = new THREE.Mesh(headGeo, matAluminum);
+    head.position.set(sx, sy + 1.45, 0);
+    head.castShadow = true;
+    device.add(head);
 
-  // Stage 1: Pre-filter (GAC) — top
-  var prefilterGeo = new THREE.CylinderGeometry(0.85, 0.85, 0.9, 32);
-  var prefilter = new THREE.Mesh(prefilterGeo, matDarkMetal);
-  prefilter.position.y = 1.8;
-  device.add(prefilter);
+    // Bottom dome cap (rounded)
+    var domeGeo = new THREE.SphereGeometry(0.42, 24, 12, 0, Math.PI * 2, Math.PI * 0.5, Math.PI * 0.5);
+    var dome = new THREE.Mesh(domeGeo, matBowl);
+    dome.position.set(sx, sy - 1.3, 0);
+    device.add(dome);
 
-  // GAC ring detail
-  var gacRingGeo = new THREE.TorusGeometry(0.7, 0.06, 8, 32);
-  var gacRing = new THREE.Mesh(gacRingGeo, matBlue);
-  gacRing.rotation.x = Math.PI / 2;
-  gacRing.position.y = 1.8;
-  device.add(gacRing);
+    // Inner pleated cartridge (visible through bowl)
+    var pleatedMat = new THREE.MeshStandardMaterial({
+      color: 0xc8b888, roughness: 0.6, metalness: 0.05
+    });
+    var pleated = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.24, 0.24, 2.0, 20), pleatedMat
+    );
+    pleated.position.set(sx, sy, 0);
+    device.add(pleated);
 
-  // Stage divider
-  var divider1Geo = new THREE.CylinderGeometry(0.95, 0.95, 0.06, 48);
-  var divider1 = new THREE.Mesh(divider1Geo, matAluminum);
-  divider1.position.y = 1.25;
-  device.add(divider1);
+    // Pleat rings (horizontal ridges on cartridge)
+    for (var pr = 0; pr < 7; pr++) {
+      var ring = new THREE.Mesh(
+        new THREE.TorusGeometry(0.25, 0.012, 6, 24), pleatedMat
+      );
+      ring.rotation.x = Math.PI / 2;
+      ring.position.set(sx, sy - 0.8 + pr * 0.28, 0);
+      device.add(ring);
+    }
 
-  // Stage 2: Advanced Membrane — mid-upper
-  var membraneGeo = new THREE.CylinderGeometry(0.85, 0.85, 0.9, 32);
-  var membrane = new THREE.Mesh(membraneGeo, matInner);
-  membrane.position.y = 0.7;
-  device.add(membrane);
+    // Sediment deposit at bottom (darker fill)
+    var sedFill = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.36, 0.40, 0.5, 20), matSediment
+    );
+    sedFill.position.set(sx, sy - 1.05, 0);
+    device.add(sedFill);
 
-  // Membrane spiral detail
-  var spiralGeo = new THREE.TorusGeometry(0.55, 0.04, 8, 48, Math.PI * 4);
+    // Neck fitting on head
+    var neck = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.12, 0.14, 0.2, 16), matPipe
+    );
+    neck.position.set(sx, sy + 1.7, 0);
+    device.add(neck);
+
+    // Label band — blue
+    var band = new THREE.Mesh(
+      new THREE.TorusGeometry(0.49, 0.025, 8, 32), matBlue
+    );
+    band.rotation.x = Math.PI / 2;
+    band.position.set(sx, sy + 1.3, 0);
+    device.add(band);
+  })();
+
+  /* ========================================================
+     STAGE 3: Activated Carbon block — OPAQUE DARK GRAPHITE
+     Dense, solid black canister — clearly adsorption, not filtration
+     ======================================================== */
+  (function () {
+    var cx = -1.8, cy = -0.2;
+
+    // Dense opaque body — dark graphite color, wider than sediment
+    var matGraphite = new THREE.MeshStandardMaterial({
+      color: 0x1e1e28, roughness: 0.45, metalness: 0.25
+    });
+    var body = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.55, 0.55, 3.0, 32), matGraphite
+    );
+    body.position.set(cx, cy, 0);
+    body.castShadow = true;
+    body.receiveShadow = true;
+    device.add(body);
+
+    // Top cap — brushed metal, flat industrial
+    var capGeo = new THREE.CylinderGeometry(0.58, 0.56, 0.14, 32);
+    var topCap = new THREE.Mesh(capGeo, matDarkMetal);
+    topCap.position.set(cx, cy + 1.57, 0);
+    topCap.castShadow = true;
+    device.add(topCap);
+
+    // Bottom cap
+    var botCap = new THREE.Mesh(capGeo.clone(), matDarkMetal);
+    botCap.position.set(cx, cy - 1.57, 0);
+    device.add(botCap);
+
+    // Textured grip ridges — five dark ribs around lower body
+    for (var gi = 0; gi < 5; gi++) {
+      var rib = new THREE.Mesh(
+        new THREE.TorusGeometry(0.56, 0.015, 6, 32), matDarkMetal
+      );
+      rib.rotation.x = Math.PI / 2;
+      rib.position.set(cx, cy - 0.6 + gi * 0.3, 0);
+      device.add(rib);
+    }
+
+    // Carbon micro-texture band (lighter stripe showing GAC label zone)
+    var matCarbonBand = new THREE.MeshStandardMaterial({
+      color: 0x3a3a48, roughness: 0.35, metalness: 0.3
+    });
+    var bandGeo = new THREE.CylinderGeometry(0.56, 0.56, 0.25, 32);
+    var cBand = new THREE.Mesh(bandGeo, matCarbonBand);
+    cBand.position.set(cx, cy + 0.9, 0);
+    device.add(cBand);
+
+    // Teal label ring
+    var labelRing = new THREE.Mesh(
+      new THREE.TorusGeometry(0.57, 0.025, 8, 32), matTeal
+    );
+    labelRing.rotation.x = Math.PI / 2;
+    labelRing.position.set(cx, cy + 1.05, 0);
+    device.add(labelRing);
+
+    // Neck fitting
+    var neck = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.16, 0.18, 0.22, 16), matPipe
+    );
+    neck.position.set(cx, cy + 1.78, 0);
+    device.add(neck);
+
+    // Bottom drain
+    var drain = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.12, 0.14, 0.12, 14), matPipe
+    );
+    drain.position.set(cx, cy - 1.72, 0);
+    device.add(drain);
+  })();
+
+  // Inter-canister pipe: sediment → carbon
+  var pipeGeoBetween = new THREE.CylinderGeometry(0.06, 0.06, 1.5, 10);
+  var pipe12 = new THREE.Mesh(pipeGeoBetween, matPipe);
+  pipe12.rotation.z = Math.PI / 2;
+  pipe12.position.set(-2.7, 1.5, 0);
+  device.add(pipe12);
+
+  /* ========================================================
+     STAGE 4: RO/NF Membrane — horizontal pressure vessel
+     Enhanced with distinct port fittings (feed, permeate, concentrate)
+     ======================================================== */
+  var membraneBodyGeo = new THREE.CylinderGeometry(0.48, 0.48, 3.2, 36);
+  var membraneBody = new THREE.Mesh(membraneBodyGeo, matWhite);
+  membraneBody.rotation.z = Math.PI / 2;
+  membraneBody.position.set(0.4, 2.2, 0);
+  membraneBody.castShadow = true;
+  device.add(membraneBody);
+
+  // Membrane end caps — thicker, industrial
+  var mCapGeo = new THREE.CylinderGeometry(0.52, 0.52, 0.12, 36);
+  var mCapL = new THREE.Mesh(mCapGeo, matAluminum);
+  mCapL.rotation.z = Math.PI / 2;
+  mCapL.position.set(-1.2, 2.2, 0);
+  device.add(mCapL);
+  var mCapR = new THREE.Mesh(mCapGeo.clone(), matAluminum);
+  mCapR.rotation.z = Math.PI / 2;
+  mCapR.position.set(2.0, 2.2, 0);
+  device.add(mCapR);
+
+  // Feed port (left end — blue ring identifies feed)
+  var feedPort = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.1, 0.1, 0.18, 14), matPipe
+  );
+  feedPort.rotation.z = Math.PI / 2;
+  feedPort.position.set(-1.35, 2.2, 0);
+  device.add(feedPort);
+  var feedRing = new THREE.Mesh(
+    new THREE.TorusGeometry(0.11, 0.02, 8, 20), matBlue
+  );
+  feedRing.rotation.y = Math.PI / 2;
+  feedRing.position.set(-1.45, 2.2, 0);
+  device.add(feedRing);
+
+  // Permeate port (right end — teal, treated water output)
+  var permPort = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.08, 0.08, 0.18, 12), matPipe
+  );
+  permPort.rotation.z = Math.PI / 2;
+  permPort.position.set(2.15, 2.2, 0);
+  device.add(permPort);
+  var permRing = new THREE.Mesh(
+    new THREE.TorusGeometry(0.09, 0.02, 8, 18), matTeal
+  );
+  permRing.rotation.y = Math.PI / 2;
+  permRing.position.set(2.25, 2.2, 0);
+  device.add(permRing);
+
+  // Concentrate port (top of right end — orange, reject output)
+  var concPort = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.06, 0.06, 0.22, 10), matPipe
+  );
+  concPort.position.set(1.8, 2.55, 0);
+  device.add(concPort);
+  var concRing = new THREE.Mesh(
+    new THREE.TorusGeometry(0.07, 0.018, 8, 16), matOrange
+  );
+  concRing.rotation.x = Math.PI / 2;
+  concRing.position.set(1.8, 2.68, 0);
+  device.add(concRing);
+
+  // Cutaway shell — partial arc showing spiral
+  var mCutGeo = new THREE.CylinderGeometry(0.49, 0.49, 2.8, 36, 1, true, 0, Math.PI * 1.5);
+  var mCut = new THREE.Mesh(mCutGeo, matGlass);
+  mCut.rotation.z = Math.PI / 2;
+  mCut.rotation.y = Math.PI * 0.2;
+  mCut.position.set(0.4, 2.2, 0);
+  device.add(mCut);
+
+  // Inner spiral membrane roll
+  var spiralGeo = new THREE.TorusGeometry(0.28, 0.03, 8, 48, Math.PI * 6);
   var spiral = new THREE.Mesh(spiralGeo, matTeal);
-  spiral.rotation.x = Math.PI / 2;
-  spiral.position.y = 0.7;
+  spiral.rotation.z = Math.PI / 2;
+  spiral.rotation.y = Math.PI / 2;
+  spiral.position.set(0.4, 2.2, 0);
   device.add(spiral);
 
-  // Stage divider 2
-  var divider2 = new THREE.Mesh(divider1Geo.clone(), matAluminum);
-  divider2.position.y = 0.15;
-  device.add(divider2);
+  // Inner permeate tube
+  var permGeo = new THREE.CylinderGeometry(0.06, 0.06, 2.6, 12);
+  var permTube = new THREE.Mesh(permGeo, matBlue);
+  permTube.rotation.z = Math.PI / 2;
+  permTube.position.set(0.4, 2.2, 0);
+  device.add(permTube);
 
-  // Stage 3: PFAS Selective Capture — center
-  var captureGeo = new THREE.CylinderGeometry(0.85, 0.85, 0.9, 32);
-  var capture = new THREE.Mesh(captureGeo, matInner);
-  capture.position.y = -0.4;
-  device.add(capture);
+  // Pipe from carbon up to membrane
+  var pipe23v = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.06, 0.06, 1.1, 10),
+    matPipe
+  );
+  pipe23v.position.set(-0.9, 1.55, 0);
+  device.add(pipe23v);
 
-  // Capture core — glowing orange
-  var coreGeo = new THREE.CylinderGeometry(0.35, 0.35, 0.7, 24);
-  var core = new THREE.Mesh(coreGeo, matOrange);
-  core.position.y = -0.4;
-  device.add(core);
+  /* ========================================================
+     STAGE 5: Reject/concentrate line — FLOW LINE, not a module
+     Thin angled pipe with orange accents, drain arrow appearance
+     ======================================================== */
+  // Vertical segment from concentrate port up
+  var rejectPipeV = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.05, 0.05, 0.6, 10), matPipe
+  );
+  rejectPipeV.position.set(2.0, 2.72, 0);
+  device.add(rejectPipeV);
 
-  // Stage divider 3
-  var divider3 = new THREE.Mesh(divider1Geo.clone(), matAluminum);
-  divider3.position.y = -0.95;
-  device.add(divider3);
+  // Elbow: small orange sphere at bend
+  var rejectElbow = new THREE.Mesh(
+    new THREE.SphereGeometry(0.08, 12, 10), matOrange
+  );
+  rejectElbow.position.set(2.0, 3.05, 0);
+  device.add(rejectElbow);
 
-  // Stage 4: Returnable cartridge — lower
-  var cartridgeGeo = new THREE.CylinderGeometry(0.75, 0.75, 0.9, 32);
-  var cartridge = new THREE.Mesh(cartridgeGeo, matCartridge);
-  cartridge.position.y = -1.5;
-  cartridge.castShadow = true;
-  device.add(cartridge);
+  // Horizontal drain pipe segment going right
+  var rejectPipeH = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.05, 0.05, 0.6, 10), matPipe
+  );
+  rejectPipeH.rotation.z = Math.PI / 2;
+  rejectPipeH.position.set(2.35, 3.05, 0);
+  device.add(rejectPipeH);
 
-  // Cartridge band
-  var bandGeo = new THREE.CylinderGeometry(0.78, 0.78, 0.12, 32);
-  var band = new THREE.Mesh(bandGeo, matAluminum);
-  band.position.y = -1.5;
-  device.add(band);
+  // Drain arrow (orange cone tip)
+  var drainArrow = new THREE.Mesh(
+    new THREE.ConeGeometry(0.08, 0.15, 8), matOrange
+  );
+  drainArrow.rotation.z = -Math.PI / 2;
+  drainArrow.position.set(2.72, 3.05, 0);
+  device.add(drainArrow);
 
-  // Stage divider 4
-  var divider4 = new THREE.Mesh(divider1Geo.clone(), matAluminum);
-  divider4.position.y = -2.05;
-  device.add(divider4);
+  // Orange accent rings along reject line
+  for (var ri = 0; ri < 2; ri++) {
+    var rr = new THREE.Mesh(
+      new THREE.TorusGeometry(0.06, 0.015, 6, 14), matOrange
+    );
+    rr.rotation.x = Math.PI / 2;
+    rr.position.set(2.0, 2.5 + ri * 0.3, 0);
+    device.add(rr);
+  }
 
-  // Stage 5: Outlet chamber — bottom
-  var outletChamberGeo = new THREE.CylinderGeometry(0.85, 0.85, 0.5, 32);
-  var outletChamber = new THREE.Mesh(outletChamberGeo, matInner);
-  outletChamber.position.y = -2.4;
-  device.add(outletChamber);
+  /* ========================================================
+     STAGE 6: PFAS selective capture — FACETED OCTAGONAL HOUSING
+     Distinct from cylindrical canisters: flat-sided, amber window,
+     visible resin inside, specialized industrial identity
+     ======================================================== */
+  var matPFASBody = new THREE.MeshStandardMaterial({
+    color: 0xd4a050, roughness: 0.32, metalness: 0.12, transparent: true, opacity: 0.85
+  });
+  (function () {
+    var px = 1.0, py = -0.2;
 
-  /* -------- LED indicator ring -------- */
-  var ledRingGeo = new THREE.TorusGeometry(1.14, 0.03, 8, 64);
+    // Octagonal main body (8-sided prism via LatheGeometry)
+    var pts = [];
+    var octR = 0.52;
+    for (var i = 0; i <= 8; i++) {
+      var a = (i / 8) * Math.PI * 2;
+      pts.push(new THREE.Vector2(
+        Math.cos(a) * octR, Math.sin(a) * octR
+      ));
+    }
+    // Use 8-segment cylinder for octagonal look
+    var octGeo = new THREE.CylinderGeometry(0.52, 0.52, 3.0, 8);
+    var octBody = new THREE.Mesh(octGeo, matPFASBody);
+    octBody.position.set(px, py, 0);
+    octBody.castShadow = true;
+    octBody.receiveShadow = true;
+    device.add(octBody);
+
+    // Amber window panel (flat face showing resin inside)
+    var windowMat = new THREE.MeshStandardMaterial({
+      color: 0xe8a830, roughness: 0.06, metalness: 0.05,
+      transparent: true, opacity: 0.35,
+      emissive: 0xff9500, emissiveIntensity: 0.08
+    });
+    var windowGeo = new THREE.PlaneGeometry(0.42, 1.8);
+    var windowPanel = new THREE.Mesh(windowGeo, windowMat);
+    windowPanel.position.set(px, py, 0.52);
+    device.add(windowPanel);
+
+    // Visible resin beads inside (cluster of small spheres)
+    var resinCluster = new THREE.Group();
+    var beadGeo = new THREE.SphereGeometry(0.06, 8, 6);
+    for (var bx = -2; bx <= 2; bx++) {
+      for (var by = -4; by <= 4; by++) {
+        var bead = new THREE.Mesh(beadGeo, matResin);
+        bead.position.set(
+          bx * 0.1 + (by % 2) * 0.05,
+          by * 0.12,
+          0
+        );
+        resinCluster.add(bead);
+      }
+    }
+    resinCluster.position.set(px, py, 0.3);
+    device.add(resinCluster);
+
+    // Heavy hex caps (top/bottom)
+    var hexCapGeo = new THREE.CylinderGeometry(0.56, 0.54, 0.16, 8);
+    var hexCapT = new THREE.Mesh(hexCapGeo, matAluminum);
+    hexCapT.position.set(px, py + 1.58, 0);
+    hexCapT.castShadow = true;
+    device.add(hexCapT);
+    var hexCapB = new THREE.Mesh(hexCapGeo.clone(), matAluminum);
+    hexCapB.position.set(px, py - 1.58, 0);
+    device.add(hexCapB);
+
+    // O-ring seals at cap junctions
+    var oRingGeo = new THREE.TorusGeometry(0.53, 0.018, 8, 32);
+    var oRingMat = new THREE.MeshStandardMaterial({
+      color: 0x222228, roughness: 0.7, metalness: 0.1
+    });
+    var oT = new THREE.Mesh(oRingGeo, oRingMat);
+    oT.rotation.x = Math.PI / 2;
+    oT.position.set(px, py + 1.5, 0);
+    device.add(oT);
+    var oB = new THREE.Mesh(oRingGeo.clone(), oRingMat);
+    oB.rotation.x = Math.PI / 2;
+    oB.position.set(px, py - 1.5, 0);
+    device.add(oB);
+
+    // Double orange identification bands
+    var pfasLabelGeo = new THREE.TorusGeometry(0.54, 0.03, 8, 32);
+    var pfasLabel = new THREE.Mesh(pfasLabelGeo, matOrange);
+    pfasLabel.rotation.x = Math.PI / 2;
+    pfasLabel.position.set(px, py + 0.7, 0);
+    device.add(pfasLabel);
+    var pfasLabel2 = new THREE.Mesh(pfasLabelGeo.clone(), matOrange);
+    pfasLabel2.rotation.x = Math.PI / 2;
+    pfasLabel2.position.set(px, py + 0.5, 0);
+    device.add(pfasLabel2);
+
+    // Neck fitting
+    var neck = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.14, 0.16, 0.22, 12), matPipe
+    );
+    neck.position.set(px, py + 1.78, 0);
+    device.add(neck);
+  })();
+
+  // NFC chip — on the PFAS cartridge
+  var nfcGeo = new THREE.BoxGeometry(0.25, 0.25, 0.02);
+  var nfcMat = new THREE.MeshStandardMaterial({
+    color: 0x2997ff, emissive: 0x2997ff, emissiveIntensity: 0.25,
+    roughness: 0.3, metalness: 0.4
+  });
+  var nfcChip = new THREE.Mesh(nfcGeo, nfcMat);
+  nfcChip.position.set(1.0, -0.5, 0.56);
+  device.add(nfcChip);
+
+  // Pipe from membrane down to PFAS cartridge
+  var pipe45v = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.06, 0.06, 1.3, 10),
+    matPipe
+  );
+  pipe45v.position.set(1.6, 1.45, 0);
+  device.add(pipe45v);
+
+  /* ========================================================
+     STAGE 7: Purified water outlet — GREEN FLOW LINE with glow
+     ======================================================== */
+  var outletPipeGeo = new THREE.CylinderGeometry(0.1, 0.1, 1.2, 14);
+  var outletPipe = new THREE.Mesh(outletPipeGeo, matPipe);
+  outletPipe.rotation.z = Math.PI / 2;
+  outletPipe.position.set(3.0, -0.2, 0);
+  outletPipe.castShadow = true;
+  device.add(outletPipe);
+
+  // Outlet faucet end ring — bright green
+  var outletRingGeo = new THREE.TorusGeometry(0.12, 0.025, 8, 20);
+  var outletRing = new THREE.Mesh(outletRingGeo, matGreen);
+  outletRing.rotation.y = Math.PI / 2;
+  outletRing.position.set(3.6, -0.2, 0);
+  device.add(outletRing);
+
+  // Green flow-check indicator light
+  var matFlowGlow = new THREE.MeshStandardMaterial({
+    color: 0x30d158, emissive: 0x30d158, emissiveIntensity: 0.4,
+    roughness: 0.2, metalness: 0.3
+  });
+  var flowDot = new THREE.Mesh(
+    new THREE.SphereGeometry(0.05, 12, 8), matFlowGlow
+  );
+  flowDot.position.set(3.2, -0.05, 0.12);
+  device.add(flowDot);
+
+  // Second green ring at mid-pipe
+  var midRing = new THREE.Mesh(
+    new THREE.TorusGeometry(0.11, 0.02, 8, 18), matGreen
+  );
+  midRing.rotation.y = Math.PI / 2;
+  midRing.position.set(2.8, -0.2, 0);
+  device.add(midRing);
+
+  // Pipe from PFAS cartridge to outlet
+  var pipe67h = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.06, 0.06, 1.2, 10),
+    matPipe
+  );
+  pipe67h.rotation.z = Math.PI / 2;
+  pipe67h.position.set(2.0, -0.2, 0);
+  device.add(pipe67h);
+
+  // Fitting at key pipe junctions
+  addFitting(new THREE.Vector3(-2.7, 1.5, 0), Math.PI / 2);
+  addFitting(new THREE.Vector3(1.6, 0.8, 0));
+  addFitting(new THREE.Vector3(2.6, -0.2, 0), Math.PI / 2);
+
+  /* ========================================================
+     STAGE 8: Returnable cartridge module — HERO element
+     Visually offset, larger, with extraction handle, NFC
+     antenna ring, quick-release mechanism, and green glow.
+     ======================================================== */
+  var retGroup = new THREE.Group();
+  retGroup.position.set(3.8, 0.0, 0.35); // offset forward + right = extractable feel
+  device.add(retGroup);
+
+  // Main cartridge body — taller, green-tinted translucent
+  var matRetBody = new THREE.MeshStandardMaterial({
+    color: 0x28b84a, roughness: 0.28, metalness: 0.18,
+    transparent: true, opacity: 0.82,
+    emissive: 0x30d158, emissiveIntensity: 0.06
+  });
+  var retGeo = new THREE.CylinderGeometry(0.5, 0.5, 2.0, 32);
+  var retBody = new THREE.Mesh(retGeo, matRetBody);
+  retBody.position.y = -0.2;
+  retBody.castShadow = true;
+  retGroup.add(retBody);
+
+  // Top cap with quick-release collar
+  var retCapGeo = new THREE.CylinderGeometry(0.54, 0.52, 0.14, 32);
+  var retCapT = new THREE.Mesh(retCapGeo, matAluminum);
+  retCapT.position.y = 0.87;
+  retGroup.add(retCapT);
+
+  // Quick-release twist ring
+  var twistRingGeo = new THREE.TorusGeometry(0.53, 0.03, 8, 32);
+  var twistRing = new THREE.Mesh(twistRingGeo, matTeal);
+  twistRing.rotation.x = Math.PI / 2;
+  twistRing.position.y = 0.78;
+  retGroup.add(twistRing);
+
+  // Extraction handle on top — T-grip
+  var handleStem = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.06, 0.06, 0.5, 12),
+    matAluminum
+  );
+  handleStem.position.y = 1.22;
+  retGroup.add(handleStem);
+  var handleBar = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.04, 0.04, 0.55, 12),
+    matAluminum
+  );
+  handleBar.rotation.z = Math.PI / 2;
+  handleBar.position.y = 1.5;
+  retGroup.add(handleBar);
+  // Handle grip pads (dark rubber)
+  var gripMat = new THREE.MeshStandardMaterial({ color: 0x222228, roughness: 0.8, metalness: 0.05 });
+  var gripL = new THREE.Mesh(new THREE.CylinderGeometry(0.055, 0.055, 0.14, 10), gripMat);
+  gripL.rotation.z = Math.PI / 2;
+  gripL.position.set(-0.22, 1.5, 0);
+  retGroup.add(gripL);
+  var gripR = gripL.clone();
+  gripR.position.set(0.22, 1.5, 0);
+  retGroup.add(gripR);
+
+  // Bottom cap
+  var retCapB = new THREE.Mesh(retCapGeo.clone(), matAluminum);
+  retCapB.position.y = -1.27;
+  retGroup.add(retCapB);
+
+  // O-ring seals
+  var retORing = new THREE.Mesh(
+    new THREE.TorusGeometry(0.51, 0.02, 8, 32),
+    new THREE.MeshStandardMaterial({ color: 0x222228, roughness: 0.7, metalness: 0.1 })
+  );
+  retORing.rotation.x = Math.PI / 2;
+  retORing.position.y = 0.8;
+  retGroup.add(retORing);
+  var retORingB = retORing.clone();
+  retORingB.position.y = -1.2;
+  retGroup.add(retORingB);
+
+  // NFC chip — larger, on front face with antenna ring
+  var nfcRetGeo = new THREE.BoxGeometry(0.3, 0.3, 0.025);
+  var nfcRetMat = new THREE.MeshStandardMaterial({
+    color: 0x2997ff, emissive: 0x2997ff, emissiveIntensity: 0.3,
+    roughness: 0.25, metalness: 0.45
+  });
+  var nfcRetChip = new THREE.Mesh(nfcRetGeo, nfcRetMat);
+  nfcRetChip.position.set(0, -0.45, 0.52);
+  retGroup.add(nfcRetChip);
+  // NFC antenna coil ring
+  var nfcAntennaGeo = new THREE.TorusGeometry(0.26, 0.012, 6, 32);
+  var nfcAntenna = new THREE.Mesh(nfcAntennaGeo, new THREE.MeshStandardMaterial({
+    color: 0x4488cc, roughness: 0.3, metalness: 0.6
+  }));
+  nfcAntenna.position.set(0, -0.45, 0.535);
+  retGroup.add(nfcAntenna);
+
+  // Circular-return symbol (torus arc)
+  var retSymGeo = new THREE.TorusGeometry(0.22, 0.022, 8, 24, Math.PI * 1.6);
+  var retSym = new THREE.Mesh(retSymGeo, matTeal);
+  retSym.position.set(0, 0.2, 0.52);
+  retGroup.add(retSym);
+
+  // Separation gap indicator — subtle dashed ring showing removability
+  var gapRingGeo = new THREE.TorusGeometry(0.56, 0.008, 6, 48);
+  var gapRingMat = new THREE.MeshStandardMaterial({
+    color: 0x30d5c8, emissive: 0x30d5c8, emissiveIntensity: 0.4,
+    roughness: 0.3, metalness: 0.3
+  });
+  var gapRing = new THREE.Mesh(gapRingGeo, gapRingMat);
+  gapRing.rotation.x = Math.PI / 2;
+  gapRing.position.y = 0.72;
+  retGroup.add(gapRing);
+
+  // Color band labels on body
+  for (var rb = 0; rb < 2; rb++) {
+    var bandGeo = new THREE.TorusGeometry(0.51, 0.02, 6, 32);
+    var band = new THREE.Mesh(bandGeo, matGreen);
+    band.rotation.x = Math.PI / 2;
+    band.position.y = 0.1 - rb * 0.65;
+    retGroup.add(band);
+  }
+
+  /* ========================================================
+     LED status strip — along mounting bracket
+     ======================================================== */
+  var ledStripGeo = new THREE.BoxGeometry(8.5, 0.03, 0.08);
   var ledMat = new THREE.MeshStandardMaterial({
-    color: 0x30d5c8, emissive: 0x30d5c8, emissiveIntensity: 0.6,
+    color: 0x30d5c8, emissive: 0x30d5c8, emissiveIntensity: 0.5,
     roughness: 0.3, metalness: 0.5
   });
-  var ledRing = new THREE.Mesh(ledRingGeo, ledMat);
-  ledRing.rotation.x = Math.PI / 2;
-  ledRing.position.y = 2.1;
-  device.add(ledRing);
+  var ledStrip = new THREE.Mesh(ledStripGeo, ledMat);
+  ledStrip.position.set(0, -1.72, 1.4);
+  device.add(ledStrip);
 
-  /* Second LED ring at bottom */
-  var ledRing2 = new THREE.Mesh(ledRingGeo.clone(), ledMat);
-  ledRing2.rotation.x = Math.PI / 2;
-  ledRing2.position.y = -2.1;
-  device.add(ledRing2);
-
-  /* -------- Brand label groove -------- */
-  var labelGeo = new THREE.BoxGeometry(0.8, 0.15, 0.02);
-  var labelMat = new THREE.MeshStandardMaterial({
-    color: 0x2997ff, emissive: 0x2997ff, emissiveIntensity: 0.3,
+  /* ========================================================
+     Brand label on bracket
+     ======================================================== */
+  var labelGeo = new THREE.BoxGeometry(1.0, 0.06, 0.3);
+  var labelMat2 = new THREE.MeshStandardMaterial({
+    color: 0x2997ff, emissive: 0x2997ff, emissiveIntensity: 0.2,
     roughness: 0.4, metalness: 0.3
   });
-  var label = new THREE.Mesh(labelGeo, labelMat);
-  label.position.set(0, 2.45, 1.12);
-  device.add(label);
+  var brandLabel = new THREE.Mesh(labelGeo, labelMat2);
+  brandLabel.position.set(0, -1.72, -1.2);
+  device.add(brandLabel);
 
-  /* -------- Shadow receiver plane -------- */
-  var floorGeo = new THREE.PlaneGeometry(12, 12);
-  var floorMat = new THREE.ShadowMaterial({ opacity: 0.15 });
+  /* -------- Shadow receiver -------- */
+  var floorGeo = new THREE.PlaneGeometry(16, 12);
+  var floorMat = new THREE.ShadowMaterial({ opacity: 0.12 });
   var floor = new THREE.Mesh(floorGeo, floorMat);
   floor.rotation.x = -Math.PI / 2;
-  floor.position.y = -3.6;
+  floor.position.y = -1.95;
   floor.receiveShadow = true;
   scene.add(floor);
 
   /* -------- Ambient particles -------- */
-  var particleCount = 60;
+  var particleCount = 45;
   var pGeo = new THREE.BufferGeometry();
   var pPositions = new Float32Array(particleCount * 3);
   for (var i = 0; i < particleCount; i++) {
-    pPositions[i * 3] = (Math.random() - 0.5) * 10;
-    pPositions[i * 3 + 1] = (Math.random() - 0.5) * 10;
-    pPositions[i * 3 + 2] = (Math.random() - 0.5) * 10;
+    pPositions[i * 3] = (Math.random() - 0.5) * 12;
+    pPositions[i * 3 + 1] = (Math.random() - 0.5) * 8;
+    pPositions[i * 3 + 2] = (Math.random() - 0.5) * 8;
   }
   pGeo.setAttribute('position', new THREE.BufferAttribute(pPositions, 3));
   var pMat = new THREE.PointsMaterial({
-    color: 0x30d5c8, size: 0.04, transparent: true, opacity: 0.35
+    color: 0x30d5c8, size: 0.035, transparent: true, opacity: 0.25
   });
   var particles = new THREE.Points(pGeo, pMat);
   scene.add(particles);
 
   /* -------- Mouse parallax -------- */
   var mouseX = 0, mouseY = 0;
-  var targetRotY = 0, targetRotX = 0;
-
   wrap.addEventListener('mousemove', function (e) {
     var rect = wrap.getBoundingClientRect();
     mouseX = ((e.clientX - rect.left) / rect.width - 0.5) * 2;
@@ -313,7 +953,7 @@
       callouts.forEach(function (el, i) {
         setTimeout(function () {
           el.classList.add('is-visible');
-        }, 200 + i * 120);
+        }, 300 + i * 140);
       });
     }
   }
@@ -322,36 +962,52 @@
 
   /* -------- Animation loop -------- */
   var clock = new THREE.Clock();
+  var baseRotY = Math.PI * -0.15;
 
   function animate() {
     requestAnimationFrame(animate);
     var t = clock.getElapsedTime();
 
-    // Gentle auto-rotation
-    targetRotY = Math.PI * -0.12 + mouseX * 0.4;
-    targetRotX = mouseY * 0.15;
-    device.rotation.y += (targetRotY - device.rotation.y) * 0.04;
-    device.rotation.x += (targetRotX - device.rotation.x) * 0.04;
+    // Gentle rotation with mouse parallax
+    var targetRotY = baseRotY + mouseX * 0.3;
+    var targetRotX = mouseY * 0.1;
+    device.rotation.y += (targetRotY - device.rotation.y) * 0.035;
+    device.rotation.x += (targetRotX - device.rotation.x) * 0.035;
 
     // Subtle float
-    device.position.y = Math.sin(t * 0.6) * 0.08;
+    device.position.y = Math.sin(t * 0.5) * 0.06;
 
-    // LED pulse
-    var pulse = 0.4 + Math.sin(t * 2.5) * 0.3;
-    ledMat.emissiveIntensity = pulse;
+    // LED strip pulse
+    ledMat.emissiveIntensity = 0.35 + Math.sin(t * 2.0) * 0.2;
 
-    // Spiral rotation
-    spiral.rotation.z = t * 0.5;
+    // NFC chip pulse
+    nfcMat.emissiveIntensity = 0.15 + Math.sin(t * 2.5) * 0.12;
+    nfcRetMat.emissiveIntensity = 0.2 + Math.sin(t * 2.5 + 0.5) * 0.15;
 
-    // Orange core subtle glow
-    matOrange.emissiveIntensity = 0.1 + Math.sin(t * 1.8) * 0.08;
+    // Returnable cartridge body glow pulse
+    matRetBody.emissiveIntensity = 0.04 + Math.sin(t * 1.2) * 0.04;
+
+    // Gap ring pulse on returnable
+    gapRingMat.emissiveIntensity = 0.25 + Math.sin(t * 2.0) * 0.2;
+
+    // Membrane spiral slow rotation
+    spiral.rotation.x = t * 0.3;
+
+    // Reject valve glow
+    matOrange.emissiveIntensity = 0.08 + Math.sin(t * 1.5) * 0.06;
+
+    // Outlet flow glow
+    matFlowGlow.emissiveIntensity = 0.3 + Math.sin(t * 2.2) * 0.2;
+
+    // Resin inner subtle shift
+    matResin.emissiveIntensity = 0.04 + Math.sin(t * 1.8) * 0.04;
 
     // Particles drift
-    particles.rotation.y = t * 0.02;
-    particles.rotation.x = t * 0.01;
+    particles.rotation.y = t * 0.015;
+    particles.rotation.x = t * 0.008;
 
-    // Accent light subtle animation
-    accentLight.intensity = 0.6 + Math.sin(t * 1.2) * 0.2;
+    // Accent light animation
+    accentLight.intensity = 0.5 + Math.sin(t * 1.0) * 0.15;
 
     renderer.render(scene, camera);
   }
