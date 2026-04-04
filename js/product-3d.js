@@ -762,6 +762,44 @@
   addFitting(new THREE.Vector3(1.6, 0.8, 0));
   addFitting(new THREE.Vector3(2.6, -0.2, 0), Math.PI / 2);
 
+  /* -------- Elbow connectors at pipe direction changes -------- */
+  var elbowGeo = new THREE.SphereGeometry(0.09, 14, 10);
+
+  var elbowInlet = new THREE.Mesh(elbowGeo, matAluminum);
+  elbowInlet.position.set(-3.6, 1.7, 0);
+  elbowInlet.castShadow = true;
+  device.add(elbowInlet);
+
+  var elbowCM = new THREE.Mesh(elbowGeo, matAluminum);
+  elbowCM.position.set(-0.9, 2.15, 0);
+  elbowCM.castShadow = true;
+  device.add(elbowCM);
+
+  var elbowMP = new THREE.Mesh(elbowGeo, matAluminum);
+  elbowMP.position.set(1.6, 2.15, 0);
+  elbowMP.castShadow = true;
+  device.add(elbowMP);
+
+  var elbowPF = new THREE.Mesh(elbowGeo, matAluminum);
+  elbowPF.position.set(1.3, 0.8, 0);
+  elbowPF.castShadow = true;
+  device.add(elbowPF);
+
+  /* -------- Bridge pipes closing routing gaps -------- */
+  var bridgeCM = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.06, 0.06, 0.50, 10), matPipe
+  );
+  bridgeCM.rotation.z = Math.PI / 2;
+  bridgeCM.position.set(-1.12, 2.18, 0);
+  device.add(bridgeCM);
+
+  var bridgeMP = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.06, 0.06, 0.55, 10), matPipe
+  );
+  bridgeMP.rotation.z = Math.PI / 2;
+  bridgeMP.position.set(1.88, 2.18, 0);
+  device.add(bridgeMP);
+
   /* ========================================================
      STAGE 8: Returnable cartridge module — HERO element
      Visually offset, larger, with extraction handle, NFC
@@ -929,6 +967,127 @@
   var particles = new THREE.Points(pGeo, pMat);
   scene.add(particles);
 
+  /* ========================================================
+     WATER FLOW PARTICLE SYSTEM
+     Animated spheres trace the complete treatment path from
+     inlet to outlet. Reject branch shown in orange.
+     All parameters editable at the top of this block.
+     ======================================================== */
+  var FLOW_SPEED        = 0.055;   // main path cycle rate
+  var REJECT_SPEED      = 0.07;    // reject path cycle rate
+  var MAIN_PARTICLE_N   = 24;      // particles on main path
+  var REJECT_PARTICLE_N = 6;       // particles on reject branch
+  var FLOW_PARTICLE_R   = 0.032;   // sphere radius
+  var FLOW_GLOW         = 0.55;    // base emissive intensity
+  var PULSE_COUNT       = 6;       // glow rings travelling main path
+  var PULSE_SPEED       = 0.04;    // ring cycle rate
+
+  /* -- Path waypoints (follow exterior pipe routing) -- */
+  var FLOW_PATH = [
+    new THREE.Vector3(-5.70,  1.80, 0),   // inlet entry
+    new THREE.Vector3(-3.90,  1.80, 0),   // after valve / fitting
+    new THREE.Vector3(-3.60,  1.70, 0),   // elbow — turn down
+    new THREE.Vector3(-3.60,  1.50, 0),   // sediment head level
+    new THREE.Vector3(-1.95,  1.50, 0),   // inter-canister pipe end
+    new THREE.Vector3(-0.90,  1.00, 0),   // pipe23v bottom
+    new THREE.Vector3(-0.90,  2.15, 0),   // pipe23v top / elbow
+    new THREE.Vector3(-1.35,  2.20, 0),   // membrane feed port
+    new THREE.Vector3( 2.15,  2.20, 0),   // membrane permeate out
+    new THREE.Vector3( 1.60,  2.15, 0),   // elbow — turn down
+    new THREE.Vector3( 1.60,  0.80, 0),   // pipe45v bottom
+    new THREE.Vector3( 1.40, -0.20, 0),   // PFAS exit
+    new THREE.Vector3( 2.60, -0.20, 0),   // outlet pipe mid
+    new THREE.Vector3( 3.60, -0.20, 0)    // outlet end
+  ];
+
+  var REJECT_PATH = [
+    new THREE.Vector3( 1.80, 2.55, 0),    // concentrate port
+    new THREE.Vector3( 2.00, 2.72, 0),    // reject pipe mid
+    new THREE.Vector3( 2.00, 3.05, 0),    // elbow
+    new THREE.Vector3( 2.35, 3.05, 0),    // horizontal drain pipe
+    new THREE.Vector3( 2.72, 3.05, 0)     // drain tip
+  ];
+
+  /* -- Precompute cumulative distances for constant-speed sampling -- */
+  function buildPathLUT(path) {
+    var d = [0];
+    for (var i = 1; i < path.length; i++) {
+      d.push(d[i - 1] + path[i - 1].distanceTo(path[i]));
+    }
+    return { d: d, total: d[d.length - 1] };
+  }
+  var mainLUT   = buildPathLUT(FLOW_PATH);
+  var rejectLUT = buildPathLUT(REJECT_PATH);
+
+  /* Returns a point on the path at normalised position t (0-1, wraps) */
+  function samplePath(path, lut, t) {
+    t = ((t % 1) + 1) % 1;
+    var dist = t * lut.total;
+    for (var i = 0; i < lut.d.length - 1; i++) {
+      if (dist <= lut.d[i + 1]) {
+        var seg = lut.d[i + 1] - lut.d[i];
+        var frac = seg > 0 ? (dist - lut.d[i]) / seg : 0;
+        return new THREE.Vector3().lerpVectors(path[i], path[i + 1], frac);
+      }
+    }
+    return path[path.length - 1].clone();
+  }
+
+  /* -- Particle pools -- */
+  var flowSphGeo = new THREE.SphereGeometry(FLOW_PARTICLE_R, 8, 6);
+
+  var flowMatBlue = new THREE.MeshStandardMaterial({
+    color: 0x2997ff, emissive: 0x2997ff, emissiveIntensity: FLOW_GLOW,
+    roughness: 0.2, metalness: 0.3, transparent: true, opacity: 0.85
+  });
+  var flowMatTeal = new THREE.MeshStandardMaterial({
+    color: 0x30d5c8, emissive: 0x30d5c8, emissiveIntensity: FLOW_GLOW,
+    roughness: 0.2, metalness: 0.3, transparent: true, opacity: 0.85
+  });
+  var flowMatGreen = new THREE.MeshStandardMaterial({
+    color: 0x30d158, emissive: 0x30d158, emissiveIntensity: FLOW_GLOW,
+    roughness: 0.2, metalness: 0.3, transparent: true, opacity: 0.85
+  });
+  var flowMatReject = new THREE.MeshStandardMaterial({
+    color: 0xff9500, emissive: 0xff9500, emissiveIntensity: FLOW_GLOW,
+    roughness: 0.3, metalness: 0.2, transparent: true, opacity: 0.80
+  });
+
+  var mainFlowPool = [];
+  for (var mfi = 0; mfi < MAIN_PARTICLE_N; mfi++) {
+    var fpm = new THREE.Mesh(flowSphGeo, flowMatTeal); // default teal; swapped in loop
+    fpm._off = mfi / MAIN_PARTICLE_N;
+    device.add(fpm);
+    mainFlowPool.push(fpm);
+  }
+
+  var rejectFlowPool = [];
+  for (var rfi = 0; rfi < REJECT_PARTICLE_N; rfi++) {
+    var fpr = new THREE.Mesh(flowSphGeo, flowMatReject);
+    fpr._off = rfi / REJECT_PARTICLE_N;
+    device.add(fpr);
+    rejectFlowPool.push(fpr);
+  }
+
+  /* -- Pulse glow rings (larger, semi-transparent, travelling on main path) -- */
+  var pulseRingGeo = new THREE.TorusGeometry(0.09, 0.014, 6, 18);
+  var pulseRings   = [];
+  for (var pli = 0; pli < PULSE_COUNT; pli++) {
+    var plMat = new THREE.MeshStandardMaterial({
+      color: 0x30d5c8, emissive: 0x30d5c8, emissiveIntensity: 0.30,
+      roughness: 0.2, metalness: 0.3, transparent: true, opacity: 0.35
+    });
+    var plr = new THREE.Mesh(pulseRingGeo, plMat);
+    plr._off = pli / PULSE_COUNT;
+    plr._mat = plMat;
+    device.add(plr);
+    pulseRings.push(plr);
+  }
+
+  /* Reusable helpers for ring orientation (avoid GC pressure) */
+  var _flowUp  = new THREE.Vector3(0, 1, 0);
+  var _flowQ   = new THREE.Quaternion();
+
   /* -------- Mouse parallax -------- */
   var mouseX = 0, mouseY = 0;
   wrap.addEventListener('mousemove', function (e) {
@@ -966,16 +1125,26 @@
 
   function animate() {
     requestAnimationFrame(animate);
+    if (window.__zeroPFAS_paused) return;
     var t = clock.getElapsedTime();
 
-    // Gentle rotation with mouse parallax
-    var targetRotY = baseRotY + mouseX * 0.3;
-    var targetRotX = mouseY * 0.1;
-    device.rotation.y += (targetRotY - device.rotation.y) * 0.035;
-    device.rotation.x += (targetRotX - device.rotation.x) * 0.035;
+    /* Auto-orbit — Lissajous idle drift, fades when mouse is active */
+    var idleFactor = 1 - Math.min(Math.abs(mouseX) * 2 + Math.abs(mouseY) * 2, 1);
+    var orbitY = Math.sin(t * 0.08) * 0.12 + Math.sin(t * 0.037) * 0.05;
+    var orbitX = Math.sin(t * 0.053) * 0.035;
+    var targetRotY = baseRotY + mouseX * 0.3 + orbitY * idleFactor;
+    var targetRotX = mouseY * 0.1 + orbitX * idleFactor;
+    device.rotation.y += (targetRotY - device.rotation.y) * 0.03;
+    device.rotation.x += (targetRotX - device.rotation.x) * 0.03;
 
-    // Subtle float
-    device.position.y = Math.sin(t * 0.5) * 0.06;
+    /* Subtle camera dolly + elevation breathe */
+    camera.position.z += (12 + Math.sin(t * 0.12) * 0.3 * idleFactor - camera.position.z) * 0.02;
+    camera.position.y += (4 + Math.cos(t * 0.09) * 0.15 * idleFactor - camera.position.y) * 0.02;
+
+    /* Multi-frequency organic float */
+    device.position.y = Math.sin(t * 0.5) * 0.04
+                      + Math.sin(t * 0.31) * 0.02
+                      + Math.cos(t * 0.71) * 0.012;
 
     // LED strip pulse
     ledMat.emissiveIntensity = 0.35 + Math.sin(t * 2.0) * 0.2;
@@ -1006,8 +1175,66 @@
     particles.rotation.y = t * 0.015;
     particles.rotation.x = t * 0.008;
 
+    /* ---- Water flow particles — main treatment path ---- */
+    var flowT = t * FLOW_SPEED;
+    for (var fi = 0; fi < mainFlowPool.length; fi++) {
+      var pathT = ((flowT + mainFlowPool[fi]._off) % 1 + 1) % 1;
+      var pt = samplePath(FLOW_PATH, mainLUT, pathT);
+      mainFlowPool[fi].position.copy(pt);
+      // Subtle size breathe
+      mainFlowPool[fi].scale.setScalar(0.8 + Math.sin(t * 3.0 + fi * 0.7) * 0.3);
+      // Color zone: blue (inlet) → teal (treatment) → green (outlet)
+      if (pathT < 0.30) {
+        mainFlowPool[fi].material = flowMatBlue;
+      } else if (pathT < 0.70) {
+        mainFlowPool[fi].material = flowMatTeal;
+      } else {
+        mainFlowPool[fi].material = flowMatGreen;
+      }
+    }
+
+    /* ---- Water flow particles — reject branch ---- */
+    var rejT = t * REJECT_SPEED;
+    for (var rj = 0; rj < rejectFlowPool.length; rj++) {
+      var rpt = samplePath(REJECT_PATH, rejectLUT, rejT + rejectFlowPool[rj]._off);
+      rejectFlowPool[rj].position.copy(rpt);
+      rejectFlowPool[rj].scale.setScalar(0.7 + Math.sin(t * 3.5 + rj * 0.9) * 0.3);
+    }
+
+    /* ---- Pulse rings — oriented perpendicular to pipe direction ---- */
+    var pulseT = t * PULSE_SPEED;
+    for (var pk = 0; pk < pulseRings.length; pk++) {
+      var prng  = pulseRings[pk];
+      var pT    = pulseT + prng._off;
+      var p1    = samplePath(FLOW_PATH, mainLUT, pT);
+      var p2    = samplePath(FLOW_PATH, mainLUT, pT + 0.005);
+      prng.position.copy(p1);
+      var dir = p2.sub(p1);
+      if (dir.lengthSq() > 0.0001) {
+        dir.normalize();
+        if (dir.y < -0.999) {
+          _flowQ.setFromAxisAngle(_flowUp.set(1, 0, 0), Math.PI);
+        } else {
+          _flowUp.set(0, 1, 0);
+          _flowQ.setFromUnitVectors(_flowUp, dir);
+        }
+        prng.quaternion.copy(_flowQ);
+      }
+      var wave = Math.sin(pT * Math.PI * 6);
+      prng._mat.opacity = 0.20 + wave * 0.20;
+      prng._mat.emissiveIntensity = 0.20 + wave * 0.18;
+    }
+
+    // Flow material glow micro-pulse
+    flowMatBlue.emissiveIntensity  = FLOW_GLOW + Math.sin(t * 2.0) * 0.12;
+    flowMatTeal.emissiveIntensity  = FLOW_GLOW + Math.sin(t * 2.0 + 0.5) * 0.12;
+    flowMatGreen.emissiveIntensity = FLOW_GLOW + Math.sin(t * 2.0 + 1.0) * 0.12;
+
     // Accent light animation
     accentLight.intensity = 0.5 + Math.sin(t * 1.0) * 0.15;
+
+    // Rim light subtle breathing
+    rimLight.intensity = 0.8 + Math.sin(t * 0.4) * 0.2;
 
     renderer.render(scene, camera);
   }

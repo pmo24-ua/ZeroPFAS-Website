@@ -5,56 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ZeroPFAS Solutions — Eliminación verificable de PFAS</title>
     <meta name="description" content="ZeroPFAS Solutions: estrategia integrada de captura, concentración y destrucción verificable de PFAS mediante SCWO y balance de masas de flúor.">
-    <!-- Open Graph -->
-    <meta property="og:title" content="ZeroPFAS Solutions — Eliminación verificable de PFAS">
-    <meta property="og:description" content="Captura, concentración y destrucción verificable de PFAS mediante oxidación en agua supercrítica.">
-    <meta property="og:type" content="website">
-    <meta property="og:locale" content="es_ES">
-    <!-- Twitter Card -->
-    <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="ZeroPFAS Solutions">
-    <meta name="twitter:description" content="Destruimos los químicos eternos. Captura y destrucción verificable de PFAS.">
-    <!-- Theme -->
-    <meta name="theme-color" content="#050508">
-    <!-- Favicon SVG inline -->
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💧</text></svg>">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
-    <!-- Structured Data -->
-    <script type="application/ld+json">
-    {
-      "@context": "https://schema.org",
-      "@type": "Organization",
-      "name": "ZeroPFAS Solutions",
-      "description": "Estrategia integrada de captura, concentración y destrucción verificable de PFAS mediante SCWO.",
-      "foundingDate": "2026",
-      "founder": {
-        "@type": "Person",
-        "name": "Daniel Martínez Onofre",
-        "jobTitle": "Químico"
-      },
-      "knowsAbout": ["PFAS", "SCWO", "Water Treatment", "Supercritical Water Oxidation"],
-      "areaServed": "Global"
-    }
-    </script>
-    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" as="style">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/animations.css">
 </head>
 <body>
-
-<!-- ===== Loading Overlay ===== -->
-<div class="page-loader" id="pageLoader">
-  <div class="page-loader__inner">
-    <div class="page-loader__spinner"></div>
-    <span class="page-loader__text"><span class="zero">Zero</span><span class="pfas">PFAS</span></span>
-  </div>
-</div>
-
-<!-- ===== Skip to content (accessibility) ===== -->
-<a href="#about" class="skip-link">Saltar al contenido</a>
 
 <!-- ===== Navbar ===== -->
 <nav class="navbar" id="navbar">
@@ -70,18 +27,12 @@
       <li><a href="#technology">Tecnología</a></li>
       <li><a href="#product">Producto</a></li>
       <li><a href="#verification">Verificación</a></li>
-      <li class="navbar__mobile-only"><a href="#contact">Contacto</a></li>
     </ul>
-    <a href="#contact" class="navbar__cta">Contactar</a>
-    <button class="navbar__toggle" id="mobileToggle" aria-label="Menú" aria-expanded="false" aria-controls="navLinks">
-      <span class="hamburger">
-        <span class="hamburger__line"></span>
-        <span class="hamburger__line"></span>
-        <span class="hamburger__line"></span>
-      </span>
+    <a href="#solution" class="navbar__cta">Ver solución</a>
+    <button class="navbar__toggle" id="mobileToggle" aria-label="Menú" aria-expanded="false">
+      <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M2 4.5h14M2 9h14M2 13.5h14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
     </button>
   </div>
-  <div class="navbar__progress" id="navProgress"></div>
 </nav>
 
 <!-- ===== HERO — Full-viewport immersive 3D ===== -->
@@ -227,10 +178,33 @@
       </div>
     </div>
 
-    <!-- Realistic C-F bond — 3D render -->
+    <!-- Realistic C-F bond -->
     <div class="bond-visual reveal">
-      <div class="bond-visual__canvas-wrap">
-        <canvas id="bondCanvas" role="img" aria-label="Render 3D realista del enlace covalente C–F"></canvas>
+      <div class="bond-visual__molecule">
+        <!-- Carbon atom -->
+        <div class="bond-visual__atom bond-visual__atom--c">
+          <div class="bond-visual__cloud bond-visual__cloud--c"></div>
+          <span class="bond-visual__symbol">C</span>
+          <span class="bond-visual__number">6</span>
+        </div>
+        <!-- Sigma bond -->
+        <div class="bond-visual__bond">
+          <div class="bond-visual__bond-bar"></div>
+          <div class="bond-visual__bond-bar"></div>
+          <div class="bond-visual__bond-bar"></div>
+          <div class="bond-visual__overlap"></div>
+          <div class="bond-visual__electrons">
+            <span class="bond-visual__e bond-visual__e--1"></span>
+            <span class="bond-visual__e bond-visual__e--2"></span>
+          </div>
+          <span class="bond-visual__energy">BDE 485 kJ/mol</span>
+        </div>
+        <!-- Fluorine atom -->
+        <div class="bond-visual__atom bond-visual__atom--f">
+          <div class="bond-visual__cloud bond-visual__cloud--f"></div>
+          <span class="bond-visual__symbol">F</span>
+          <span class="bond-visual__number">9</span>
+        </div>
       </div>
       <!-- Comparative BDE scale -->
       <div class="bond-visual__scale">
@@ -270,72 +244,35 @@
       <span class="section-label__line"></span>
       <span class="section-label__text">Nuestra solución</span>
     </div>
-    <h2 class="display-xl reveal">Captura, destrucción y verificación <span class="gradient-text">en un solo proceso.</span></h2>
-    <p class="section-desc reveal">Nuestro sistema integra cuatro etapas secuenciales para garantizar la eliminación completa y verificable de PFAS del agua.</p>
+    <h2 class="display-xl reveal">De agua contaminada a agua <span class="gradient-text">verificada.</span></h2>
   </div>
 
-  <!-- Pipeline Visual — CSS-only professional flow -->
-  <div class="pipeline reveal" aria-label="Proceso de eliminación de PFAS en 4 etapas">
-    <div class="pipeline__track">
+  <!-- 3D Pipeline Visualization -->
+  <div class="scene-showcase reveal-scale" id="sceneShowcase">
+    <canvas id="hero-canvas"></canvas>
+  </div>
 
-      <!-- Step 1 -->
-      <div class="pipeline__step">
-        <div class="pipeline__icon pipeline__icon--blue">
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z"/></svg>
-        </div>
-        <span class="pipeline__num">01</span>
-        <h3 class="pipeline__title">Captura</h3>
-        <p class="pipeline__desc">Filtro de carbón activo + resina aniónica que atrapa PFAS del agua de entrada.</p>
-        <span class="pipeline__tag pipeline__tag--blue">Retención >98 %</span>
-      </div>
-
-      <div class="pipeline__connector"><span></span></div>
-
-      <!-- Step 2 -->
-      <div class="pipeline__step">
-        <div class="pipeline__icon pipeline__icon--teal">
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="18" rx="3"/><path d="M2 9h20M2 15h20M8 3v18M16 3v18"/></svg>
-        </div>
-        <span class="pipeline__num">02</span>
-        <h3 class="pipeline__title">Concentración</h3>
-        <p class="pipeline__desc">Membranas NF/RO concentran PFAS ×100, reduciendo volumen para el reactor.</p>
-        <span class="pipeline__tag pipeline__tag--teal">×100 concentración</span>
-      </div>
-
-      <div class="pipeline__connector"><span></span></div>
-
-      <!-- Step 3 — Core -->
-      <div class="pipeline__step pipeline__step--core">
-        <div class="pipeline__icon pipeline__icon--orange">
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2c1 3-2 5-2 8a4 4 0 0 0 8 0c0-3-3-5-2-8"/><path d="M12 22v-4"/><circle cx="12" cy="18" r="4"/></svg>
-        </div>
-        <span class="pipeline__num">03</span>
-        <h3 class="pipeline__title">Destrucción SCWO</h3>
-        <p class="pipeline__desc">Reactor a >374 °C y >22,1 MPa. El agua supercrítica rompe cada enlace C–F.</p>
-        <span class="pipeline__tag pipeline__tag--orange">>99,9 % destrucción</span>
-      </div>
-
-      <div class="pipeline__connector"><span></span></div>
-
-      <!-- Step 4 -->
-      <div class="pipeline__step">
-        <div class="pipeline__icon pipeline__icon--green">
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-        </div>
-        <span class="pipeline__num">04</span>
-        <h3 class="pipeline__title">Verificación</h3>
-        <p class="pipeline__desc">Análisis LC-MS/MS + TOF + balance de fluoruro confirman: PFAS = cero.</p>
-        <span class="pipeline__tag pipeline__tag--green">PFAS = 0 verificado</span>
-      </div>
-
+  <!-- Process legend -->
+  <div class="scene-legend reveal">
+    <div class="scene-legend__item">
+      <span class="scene-legend__num">01</span>
+      <span class="scene-legend__dot scene-legend__dot--blue"></span>
+      <span>Captura GAC/IX</span>
     </div>
-
-    <!-- Result banner -->
-    <div class="pipeline__result">
-      <div class="pipeline__result-icon">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><path d="m9 12 2 2 4-4"/></svg>
-      </div>
-      <span>Resultado: <strong>CO₂ + H₂O + F⁻ inorgánico</strong> — sin residuos tóxicos</span>
+    <div class="scene-legend__item">
+      <span class="scene-legend__num">02</span>
+      <span class="scene-legend__dot scene-legend__dot--teal"></span>
+      <span>Concentración NF · ×100</span>
+    </div>
+    <div class="scene-legend__item scene-legend__item--core">
+      <span class="scene-legend__num">03</span>
+      <span class="scene-legend__dot scene-legend__dot--orange"></span>
+      <span>SCWO · 374 °C · 221 bar · τ 60 s</span>
+    </div>
+    <div class="scene-legend__item">
+      <span class="scene-legend__num">04</span>
+      <span class="scene-legend__dot scene-legend__dot--green"></span>
+      <span>Verificación · LC-MS/MS · F⁻</span>
     </div>
   </div>
 </section>
@@ -429,11 +366,7 @@
       <!-- Right: 3D Canvas Device Render -->
       <div class="product-hero__visual reveal-scale">
         <div class="product-hero__canvas-wrap" id="productCanvasWrap">
-          <div class="canvas-loader" id="productLoader">
-            <div class="canvas-loader__spinner"></div>
-            <span class="canvas-loader__text">Cargando modelo 3D…</span>
-          </div>
-          <canvas id="productCanvas" role="img" aria-label="Modelo 3D del sistema de filtración de punto de uso ZeroPFAS"></canvas>
+          <canvas id="productCanvas"></canvas>
           <!-- Floating ambient particles -->
           <div class="product-hero__ambient"></div>
         </div>
@@ -579,11 +512,7 @@
       <!-- Center: canvas + detail side by side -->
       <div class="explorer__body">
         <div class="explorer__canvas-wrap" id="explorerCanvasWrap">
-          <div class="canvas-loader" id="explorerLoader">
-            <div class="canvas-loader__spinner"></div>
-            <span class="canvas-loader__text">Cargando explorador 3D…</span>
-          </div>
-          <canvas id="explorerCanvas" role="img" aria-label="Explorador 3D interactivo del sistema de tratamiento paso a paso"></canvas>
+          <canvas id="explorerCanvas"></canvas>
           <div class="explorer__canvas-hint">Clica en un componente</div>
         </div>
         <div class="explorer__detail" id="explorerDetail"></div>
@@ -718,120 +647,26 @@
   </div>
 </section>
 
-<div class="glow-separator"></div>
-
-<!-- ===== CONTACT CTA ===== -->
-<section id="contact" class="section contact-section">
-  <div class="contact-section__bg"></div>
-  <div class="container">
-    <div class="contact-inner reveal">
-      <div class="contact-inner__left">
-        <div class="section-label">
-          <span class="section-label__num">07</span>
-          <span class="section-label__line"></span>
-          <span class="section-label__text">Contacto</span>
-        </div>
-        <h2 class="display-xl">¿Interesado en nuestra <span class="gradient-text">solución?</span></h2>
-        <p class="contact-intro">Estamos abiertos a colaboraciones con empresas de tratamiento de aguas, entidades reguladoras e inversores. Cuéntanos tu caso.</p>
-      </div>
-      <div class="contact-inner__right">
-        <form class="contact-form" id="contactForm" novalidate>
-          <div class="contact-form__row">
-            <div class="contact-form__group">
-              <label for="contactName" class="contact-form__label">Nombre</label>
-              <input type="text" id="contactName" name="name" class="contact-form__input" placeholder="Tu nombre" required autocomplete="name">
-            </div>
-            <div class="contact-form__group">
-              <label for="contactEmail" class="contact-form__label">Email</label>
-              <input type="email" id="contactEmail" name="email" class="contact-form__input" placeholder="email@ejemplo.com" required autocomplete="email">
-            </div>
-          </div>
-          <div class="contact-form__group">
-            <label for="contactSubject" class="contact-form__label">Asunto</label>
-            <select id="contactSubject" name="subject" class="contact-form__input contact-form__select">
-              <option value="general">Consulta general</option>
-              <option value="colaboracion">Colaboración / Partnership</option>
-              <option value="inversion">Inversión</option>
-              <option value="regulacion">Regulación / Compliance</option>
-              <option value="tecnico">Consulta técnica</option>
-            </select>
-          </div>
-          <div class="contact-form__group">
-            <label for="contactMsg" class="contact-form__label">Mensaje</label>
-            <textarea id="contactMsg" name="message" class="contact-form__input contact-form__textarea" rows="4" placeholder="Describe tu interés o consulta…" required></textarea>
-          </div>
-          <button type="submit" class="btn btn--primary contact-form__submit" id="contactSubmit">
-            <div class="btn-spinner"></div>
-            <span>Enviar mensaje</span>
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8h10m-4-4 4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          </button>
-          <div class="contact-form__status" id="contactStatus"></div>
-        </form>
-      </div>
-    </div>
-  </div>
-</section>
-
 <!-- ===== Footer ===== -->
 <footer class="footer">
   <div class="container">
-    <div class="footer__top">
-      <div class="footer__brand-col">
-        <div class="footer__brand">
-          <svg class="footer__logo-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v4m0 12v4M2 12h4m12 0h4m-3.5-6.5L17 7m-10 10-1.5 1.5M20.5 17.5 19 17M5 7 3.5 5.5"/></svg>
-          <span class="zero">Zero</span><span class="pfas">PFAS</span>
-          <span class="footer__sub">Solutions</span>
-        </div>
-        <p class="footer__desc">Estrategia integrada de captura, concentración y destrucción verificable de PFAS.</p>
+    <div class="footer__inner">
+      <div class="footer__brand">
+        <span class="zero">Zero</span><span class="pfas">PFAS</span>
+        <span class="footer__sub">Solutions</span>
       </div>
-      <div class="footer__links-col">
-        <h4 class="footer__col-title">Secciones</h4>
-        <ul class="footer__link-list">
-          <li><a href="#about">Proyecto</a></li>
-          <li><a href="#problem">Problema</a></li>
-          <li><a href="#solution">Solución</a></li>
-          <li><a href="#technology">Tecnología</a></li>
-        </ul>
+      <div class="footer__meta">
+        <p>Proyecto de investigación · <a href="#about">Daniel Martínez Onofre</a></p>
+        <p>&copy; 2026 ZeroPFAS Solutions</p>
       </div>
-      <div class="footer__links-col">
-        <h4 class="footer__col-title">Más</h4>
-        <ul class="footer__link-list">
-          <li><a href="#product">Producto</a></li>
-          <li><a href="#verification">Verificación</a></li>
-          <li><a href="#innovation">Regulación</a></li>
-          <li><a href="#contact">Contacto</a></li>
-        </ul>
-      </div>
-      <div class="footer__links-col">
-        <h4 class="footer__col-title">Conecta</h4>
-        <div class="footer__social">
-          <a href="#" class="footer__social-link" aria-label="LinkedIn" title="LinkedIn">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
-          </a>
-          <a href="mailto:contacto@zeropfas.com" class="footer__social-link" aria-label="Email" title="Email">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
-          </a>
-        </div>
-      </div>
-    </div>
-    <div class="footer__bottom">
-      <p>Proyecto de investigación · <a href="#about">Daniel Martínez Onofre</a></p>
-      <p>&copy; 2026 ZeroPFAS Solutions. Todos los derechos reservados.</p>
     </div>
   </div>
 </footer>
 
-<!-- ===== Scroll to top ===== -->
-<button class="scroll-top" id="scrollTop" aria-label="Volver arriba" title="Volver arriba">
-  <svg width="18" height="18" viewBox="0 0 16 16" fill="none"><path d="M8 13V3m-4 4 4-4 4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-</button>
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js" integrity="sha512-dLxUelApnYxpLt6K2iomGngnHO83iUvZytA3YjDUCjT0HDOHKXnVYdf3hU4JjM8uEhxf9nD1/ey98U3t2vZ0qQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-<script src="js/bond-3d.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="js/three-scene.js"></script>
 <script src="js/product-3d.js"></script>
 <script src="js/explorer-3d.js"></script>
 <script src="js/main.js"></script>
-<script src="js/chatbot.js"></script>
 </body>
 </html>

@@ -92,6 +92,51 @@
     }
   ];
 
+  /* ====== Per-step camera framing & visual parameters ====== */
+  var STEP_CAMERAS = [
+    /* Each entry: camera position, lookAt target, device Y-rotation for best presentation */
+    { cam: [2.0, 4.0, 11.5],  look: [-4.0, 1.5, 0],    devRotY: -0.06 },  // 0 Inlet
+    { cam: [2.5, 3.0, 10.5],  look: [-3.0, 0.0, 0],     devRotY: -0.10 },  // 1 Sediment
+    { cam: [3.0, 3.0, 10.5],  look: [-1.5, 0.0, 0],     devRotY: -0.14 },  // 2 Carbon
+    { cam: [3.5, 4.2, 11.0],  look: [ 0.5, 2.0, 0],     devRotY: -0.10 },  // 3 Membrane
+    { cam: [4.5, 4.5, 10.5],  look: [ 2.0, 2.8, 0],     devRotY: -0.06 },  // 4 Reject
+    { cam: [4.0, 2.8, 10.0],  look: [ 1.0, 0.0, 0],     devRotY: -0.18 },  // 5 PFAS
+    { cam: [5.0, 3.0, 10.0],  look: [ 3.0,-0.1, 0],     devRotY: -0.14 },  // 6 Outlet
+    { cam: [5.5, 3.2,  9.5],  look: [ 3.5, 0.0, 0.3],   devRotY: -0.22 }   // 7 Returnable
+  ];
+
+  /* Adjacency map: connected stages get partial opacity for spatial context */
+  var CONNECTIONS = [
+    [1],        // 0: Inlet → Sediment
+    [0, 2],     // 1: Sediment ↔ Inlet, Carbon
+    [1, 3],     // 2: Carbon ↔ Sediment, Membrane
+    [2, 4, 5],  // 3: Membrane ↔ Carbon, Reject, PFAS
+    [3],        // 4: Reject → Membrane
+    [3, 6],     // 5: PFAS ↔ Membrane, Outlet
+    [5, 7],     // 6: Outlet ↔ PFAS, Returnable
+    [6]         // 7: Returnable → Outlet
+  ];
+
+  /* --- Editable visual tiers --- */
+  var OP_ACTIVE    = 1.0;   // full visibility for focused stage
+  var OP_CONNECTED = 0.28;  // partial for adjacent stages (spatial context)
+  var OP_DISTANT   = 0.05;  // nearly invisible for unrelated stages
+  var OP_BRACKET   = 0.22;  // base structure always faintly visible
+  var OP_LED       = 0.45;  // LED strip stays moderately visible
+
+  var EM_ACTIVE_BASE  = 0.22;  // emissive floor for active stage
+  var EM_ACTIVE_PULSE = 0.10;  // sine amplitude on top
+  var EM_CONNECTED    = 0.04;  // faint glow on connected stages
+  var EM_DISTANT      = 0.0;   // no glow on distant stages
+
+  /* --- Camera transition timing (seconds) --- */
+  var CAM_DURATION = 1.1;
+
+  /* Cubic ease-in-out — cinematic acceleration / deceleration */
+  function easeInOutCubic(x) {
+    return x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
+  }
+
   /* ====== Dimensions ====== */
   function W() { return wrap.clientWidth || 600; }
   function H() { return wrap.clientHeight || 400; }
@@ -123,6 +168,11 @@
   var acl = new THREE.PointLight(0x30d5c8, 0.4, 14);
   acl.position.set(2, -1, 4);
   scene.add(acl);
+
+  /* ====== Focused accent light — tracks active stage ====== */
+  var focusLight = new THREE.PointLight(0xffffff, 0.0, 10);
+  focusLight.position.set(0, 4, 6);
+  scene.add(focusLight);
 
   /* ====== Device group ====== */
   var device = new THREE.Group();
@@ -653,48 +703,130 @@
     canvas.style.cursor = (idx >= 0) ? 'pointer' : 'default';
   });
 
-  /* ====== Highlight logic ====== */
+  /* ====== Highlight + camera transition state ====== */
   var currentStep = 0;
   var targetOpacities = [];
-  for (var i = 0; i < 8; i++) targetOpacities.push(1.0);
+  var targetEmissives = [];
+  for (var i = 0; i < 8; i++) {
+    targetOpacities.push(1.0);
+    targetEmissives.push(EM_ACTIVE_BASE);
+  }
+
+  /* Camera transition tracking */
+  var camProgress = 1;
+  var camFrom = { px: 4, py: 3.5, pz: 11, lx: -0.5, ly: 0.3, lz: 0, ry: Math.PI * -0.12 };
+  var camTo   = { px: 4, py: 3.5, pz: 11, lx: -0.5, ly: 0.3, lz: 0, ry: Math.PI * -0.12 };
+  var camCur  = { px: 4, py: 3.5, pz: 11, lx: -0.5, ly: 0.3, lz: 0, ry: Math.PI * -0.12 };
+
+  /* Focus light target positions per step (elevated, forward of geometry) */
+  var FOCUS_POS = [
+    [-4.5, 3.5, 4], [-3.6, 2.0, 4], [-1.8, 2.0, 4], [0.4, 4.0, 4],
+    [2.0, 4.5, 4],  [1.0, 2.0, 4],  [3.0, 2.0, 4],  [3.8, 2.0, 4]
+  ];
 
   function setStep(idx) {
     if (idx < 0 || idx > 7) return;
     currentStep = idx;
+
+    /* Compute opacity/emissive per stage based on adjacency */
+    var connSet = {};
+    CONNECTIONS[idx].forEach(function (c) { connSet[c] = true; });
     for (var s = 0; s < 8; s++) {
-      targetOpacities[s] = (s === idx) ? 1.0 : 0.12;
+      if (s === idx) {
+        targetOpacities[s] = OP_ACTIVE;
+        targetEmissives[s] = EM_ACTIVE_BASE;
+      } else if (connSet[s]) {
+        targetOpacities[s] = OP_CONNECTED;
+        targetEmissives[s] = EM_CONNECTED;
+      } else {
+        targetOpacities[s] = OP_DISTANT;
+        targetEmissives[s] = EM_DISTANT;
+      }
     }
+
+    /* Initiate camera transition from current position to step target */
+    camFrom.px = camCur.px; camFrom.py = camCur.py; camFrom.pz = camCur.pz;
+    camFrom.lx = camCur.lx; camFrom.ly = camCur.ly; camFrom.lz = camCur.lz;
+    camFrom.ry = camCur.ry;
+
+    var sc = STEP_CAMERAS[idx];
+    camTo.px = sc.cam[0];  camTo.py = sc.cam[1];  camTo.pz = sc.cam[2];
+    camTo.lx = sc.look[0]; camTo.ly = sc.look[1]; camTo.lz = sc.look[2];
+    camTo.ry = sc.devRotY;
+    camProgress = 0;
+
     updateUI(idx);
   }
 
   /* ====== Animation loop ====== */
   var clock = new THREE.Clock();
-  var baseRotY = Math.PI * -0.12;
+  var lastTime = 0;
 
   function animate() {
     requestAnimationFrame(animate);
+    if (window.__zeroPFAS_paused) return;
     var t = clock.getElapsedTime();
+    var dt = Math.min(t - lastTime, 0.05); // capped to avoid jumps on tab-switch
+    lastTime = t;
 
-    // Gentle auto-orbit
-    device.rotation.y = baseRotY + Math.sin(t * 0.15) * 0.08;
-    device.position.y = Math.sin(t * 0.4) * 0.03;
-
-    // Lerp stage opacities
-    for (var s = 0; s < 8; s++) {
-      var mats = stageMaterials[s];
-      var target = targetOpacities[s];
-      for (var m = 0; m < mats.length; m++) {
-        mats[m].opacity += (target - mats[m].opacity) * 0.07;
-        mats[m].emissiveIntensity = target > 0.5
-          ? 0.12 + Math.sin(t * 1.8) * 0.06
-          : 0.01;
-      }
+    /* ---- Camera transition (cubic ease-in-out) ---- */
+    if (camProgress < 1) {
+      camProgress = Math.min(1, camProgress + dt / CAM_DURATION);
+      var e = easeInOutCubic(camProgress);
+      camCur.px = camFrom.px + (camTo.px - camFrom.px) * e;
+      camCur.py = camFrom.py + (camTo.py - camFrom.py) * e;
+      camCur.pz = camFrom.pz + (camTo.pz - camFrom.pz) * e;
+      camCur.lx = camFrom.lx + (camTo.lx - camFrom.lx) * e;
+      camCur.ly = camFrom.ly + (camTo.ly - camFrom.ly) * e;
+      camCur.lz = camFrom.lz + (camTo.lz - camFrom.lz) * e;
+      camCur.ry = camFrom.ry + (camTo.ry - camFrom.ry) * e;
     }
 
-    // Bracket and LED stay partially visible
-    matBracket.opacity += (0.35 - matBracket.opacity) * 0.05;
-    matLed.opacity += (0.5 - matLed.opacity) * 0.05;
-    matLed.emissiveIntensity = 0.2 + Math.sin(t * 1.5) * 0.1;
+    /* Apply camera with subtle organic drift overlay */
+    var driftX = Math.sin(t * 0.12) * 0.12;
+    var driftY = Math.cos(t * 0.09) * 0.06;
+    camera.position.set(camCur.px + driftX, camCur.py + driftY, camCur.pz);
+    camera.lookAt(camCur.lx, camCur.ly, camCur.lz);
+
+    /* Device rotation — follows per-step target with gentle breathing */
+    device.rotation.y = camCur.ry + Math.sin(t * 0.15) * 0.025;
+    device.position.y = Math.sin(t * 0.4) * 0.02;
+
+    /* ---- Stage material transitions ---- */
+    for (var s = 0; s < 8; s++) {
+      var mats = stageMaterials[s];
+      var tOp = targetOpacities[s];
+      var tEm = targetEmissives[s];
+      var isActive = (s === currentStep);
+      var lerpRate = isActive ? 0.09 : 0.06;
+
+      for (var m = 0; m < mats.length; m++) {
+        mats[m].opacity += (tOp - mats[m].opacity) * lerpRate;
+        var emTarget = isActive
+          ? tEm + Math.sin(t * 1.8) * EM_ACTIVE_PULSE
+          : tEm;
+        mats[m].emissiveIntensity += (emTarget - mats[m].emissiveIntensity) * 0.08;
+      }
+
+      /* Subtle scale pulse on active stage — alive without being distracting */
+      var sTarget = isActive ? 1.0 + Math.sin(t * 2.0) * 0.005 : 1.0;
+      var grp = stageGroups[s];
+      grp.scale.x += (sTarget - grp.scale.x) * 0.06;
+      grp.scale.y += (sTarget - grp.scale.y) * 0.06;
+      grp.scale.z += (sTarget - grp.scale.z) * 0.06;
+    }
+
+    /* Bracket + LED — dimmed but structurally present */
+    matBracket.opacity += (OP_BRACKET - matBracket.opacity) * 0.05;
+    matLed.opacity += (OP_LED - matLed.opacity) * 0.05;
+    matLed.emissiveIntensity = 0.15 + Math.sin(t * 1.5) * 0.08;
+
+    /* Focused accent light — tracks active step position */
+    var fp = FOCUS_POS[currentStep];
+    focusLight.position.x += (fp[0] - focusLight.position.x) * 0.05;
+    focusLight.position.y += (fp[1] - focusLight.position.y) * 0.05;
+    focusLight.position.z += (fp[2] - focusLight.position.z) * 0.05;
+    focusLight.intensity += (0.55 + Math.sin(t * 1.2) * 0.12 - focusLight.intensity) * 0.06;
 
     renderer.render(scene, camera);
   }

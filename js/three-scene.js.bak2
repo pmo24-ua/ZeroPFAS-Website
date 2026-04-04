@@ -1,0 +1,889 @@
+/* three-scene.js — Scientific PFAS treatment pipeline visualization */
+(function () {
+  'use strict';
+
+  var canvas = document.getElementById('hero-canvas');
+  if (!canvas) return;
+  var wrap = canvas.parentElement;
+
+  function W() { return wrap.clientWidth || window.innerWidth; }
+  function H() { return wrap.clientHeight || 460; }
+
+  /* -------- Renderer -------- */
+  var renderer;
+  try {
+    renderer = new THREE.WebGLRenderer({ canvas: canvas, alpha: false, antialias: true });
+  } catch (e) {
+    console.error('WebGL init failed:', e);
+    return;
+  }
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.setClearColor(0x05050a, 1);
+  renderer.setSize(W(), H());
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 1.15;
+  renderer.outputEncoding = THREE.sRGBEncoding;
+
+  var scene = new THREE.Scene();
+  scene.fog = new THREE.FogExp2(0x05050a, 0.008);
+
+  /* Closer camera + wider FOV so modules are much bigger on screen */
+  var camera = new THREE.PerspectiveCamera(40, W() / H(), 0.1, 200);
+  camera.position.set(0, 3.5, 28);
+  camera.lookAt(0, 0, 0);
+
+  /* -------- Lighting -------- */
+  scene.add(new THREE.AmbientLight(0x8090b0, 0.3));
+  var dirLight = new THREE.DirectionalLight(0xddeeff, 0.7);
+  dirLight.position.set(8, 12, 10);
+  scene.add(dirLight);
+  var fillLight = new THREE.DirectionalLight(0x6688cc, 0.25);
+  fillLight.position.set(-6, 5, -8);
+  scene.add(fillLight);
+
+  /* Tighter module spacing */
+  var POS = { capture: -10.5, membrane: -3.5, reactor: 3.5, verify: 10.5 };
+  var COL = {
+    pfas: 0xff4444, water: 0x2997ff, teal: 0x30d5c8, orange: 0xff9500,
+    hotCore: 0xffcc33, green: 0x30d158, steel: 0x8899aa, darkSteel: 0x445566,
+    fluoride: 0x40e0d0
+  };
+
+  /* Brighter point lights per module */
+  var captureLight = new THREE.PointLight(0x2997ff, 2.2, 16);
+  captureLight.position.set(POS.capture, 2, 5);
+  scene.add(captureLight);
+  var membraneLight = new THREE.PointLight(0x30d5c8, 2.0, 16);
+  membraneLight.position.set(POS.membrane, 2, 5);
+  scene.add(membraneLight);
+  var reactorLight = new THREE.PointLight(0xff9500, 3.0, 18);
+  reactorLight.position.set(POS.reactor, 2, 5);
+  scene.add(reactorLight);
+  var verifyLight = new THREE.PointLight(0x30d158, 1.8, 16);
+  verifyLight.position.set(POS.verify, 2, 5);
+  scene.add(verifyLight);
+  var rimLight = new THREE.PointLight(0x4466aa, 0.8, 50);
+  rimLight.position.set(0, 6, -12);
+  scene.add(rimLight);
+
+  /* Subtle ground grid */
+  var gridMesh = new THREE.Mesh(
+    new THREE.PlaneGeometry(45, 22, 45, 22),
+    new THREE.MeshBasicMaterial({ color: 0x1a1a3e, transparent: true, opacity: 0.08, wireframe: true, side: THREE.DoubleSide })
+  );
+  gridMesh.rotation.x = -Math.PI / 2;
+  gridMesh.position.y = -5.5;
+  scene.add(gridMesh);
+
+  /* ================================================
+     MODULE 1 — TALL VERTICAL TANK  (Captura GAC)
+     The ONLY tall vertical element — like a water tower
+     ================================================ */
+  var captureG = new THREE.Group();
+  captureG.position.set(POS.capture, 0, 0);
+
+  /* Main body — tall vertical cylinder, bright blue */
+  var vesselMat = new THREE.MeshStandardMaterial({ color: 0x2277cc, metalness: 0.35, roughness: 0.3 });
+  captureG.add(new THREE.Mesh(new THREE.CylinderGeometry(1.4, 1.4, 7, 32), vesselMat));
+
+  /* Edge highlight */
+  var colWire = new THREE.Mesh(
+    new THREE.CylinderGeometry(1.42, 1.42, 7.02, 32, 1, true),
+    new THREE.MeshStandardMaterial({ color: COL.water, transparent: true, opacity: 0.1, side: THREE.DoubleSide })
+  );
+  captureG.add(colWire);
+
+  /* Dome top */
+  var dome = new THREE.Mesh(
+    new THREE.SphereGeometry(1.4, 24, 12, 0, Math.PI * 2, 0, Math.PI / 2),
+    new THREE.MeshStandardMaterial({ color: 0x3388dd, metalness: 0.4, roughness: 0.25 })
+  );
+  dome.position.y = 3.5;
+  captureG.add(dome);
+
+  /* Conical hopper bottom — distinctive shape element */
+  var hopper = new THREE.Mesh(
+    new THREE.CylinderGeometry(1.4, 0.5, 2.2, 24),
+    new THREE.MeshStandardMaterial({ color: 0x2266bb, metalness: 0.4, roughness: 0.3 })
+  );
+  hopper.position.y = -4.6;
+  captureG.add(hopper);
+
+  /* 4 support legs */
+  var legMat = new THREE.MeshStandardMaterial({ color: COL.darkSteel, metalness: 0.6, roughness: 0.3 });
+  [-1, 1].forEach(function (xm) {
+    [-0.6, 0.6].forEach(function (zm) {
+      var leg = new THREE.Mesh(new THREE.BoxGeometry(0.12, 2.2, 0.12), legMat);
+      leg.position.set(xm * 0.9, -6.8, zm);
+      captureG.add(leg);
+    });
+  });
+  /* Leg cross brace */
+  var brace = new THREE.Mesh(new THREE.BoxGeometry(1.8, 0.08, 0.08), legMat);
+  brace.position.y = -6.5;
+  captureG.add(brace);
+
+  /* 3 visible horizontal bands */
+  var bandMat = new THREE.MeshStandardMaterial({ color: 0x88aacc, metalness: 0.5, roughness: 0.2 });
+  [-1.5, 0.5, 2.5].forEach(function (y) {
+    var band = new THREE.Mesh(new THREE.TorusGeometry(1.45, 0.08, 8, 32), bandMat);
+    band.rotation.x = Math.PI / 2;
+    band.position.y = y;
+    captureG.add(band);
+  });
+
+  /* Sight glass — vertical illuminated strip */
+  var sightGlassMat = new THREE.MeshStandardMaterial({
+    color: 0x66bbdd, emissive: 0x2997ff, emissiveIntensity: 0.2,
+    transparent: true, opacity: 0.5, roughness: 0.05
+  });
+  var sightGlass = new THREE.Mesh(new THREE.BoxGeometry(0.1, 5, 0.3), sightGlassMat);
+  sightGlass.position.set(1.38, 0, 0.5);
+  captureG.add(sightGlass);
+
+  /* Inlet pipe at top */
+  var pipeMiniMat = new THREE.MeshStandardMaterial({ color: COL.darkSteel, metalness: 0.6, roughness: 0.3 });
+  var inletPipe = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 1.8, 12), pipeMiniMat);
+  inletPipe.rotation.z = Math.PI / 2;
+  inletPipe.position.set(1.8, 3, 0);
+  captureG.add(inletPipe);
+
+  /* GAC particles — dark granular fill visible through body */
+  var GAC = 150;
+  var gacGeo = new THREE.BufferGeometry();
+  var gacPos = new Float32Array(GAC * 3);
+  for (var gi = 0; gi < GAC; gi++) {
+    var ga = Math.random() * Math.PI * 2, gr = Math.random() * 1.1;
+    gacPos[gi * 3] = Math.cos(ga) * gr;
+    gacPos[gi * 3 + 1] = (Math.random() - 0.5) * 5.5;
+    gacPos[gi * 3 + 2] = Math.sin(ga) * gr;
+  }
+  gacGeo.setAttribute('position', new THREE.BufferAttribute(gacPos, 3));
+  var gacMat = new THREE.PointsMaterial({ size: 2.0, color: 0x1a1a22, transparent: true, opacity: 0.6, sizeAttenuation: true, depthWrite: false });
+  captureG.add(new THREE.Points(gacGeo, gacMat));
+
+  /* Adsorbed PFAS particles — red glow */
+  var ADS = 40;
+  var adsGeo = new THREE.BufferGeometry();
+  var adsArr = new Float32Array(ADS * 3);
+  for (var ai = 0; ai < ADS; ai++) {
+    var aa = Math.random() * Math.PI * 2, ar = Math.random() * 1.0;
+    adsArr[ai * 3] = Math.cos(aa) * ar;
+    adsArr[ai * 3 + 1] = (Math.random() - 0.5) * 5;
+    adsArr[ai * 3 + 2] = Math.sin(aa) * ar;
+  }
+  adsGeo.setAttribute('position', new THREE.BufferAttribute(adsArr, 3));
+  var adsMat = new THREE.PointsMaterial({ size: 2.5, color: COL.pfas, transparent: true, opacity: 0.8, blending: THREE.AdditiveBlending, depthWrite: false, sizeAttenuation: true });
+  captureG.add(new THREE.Points(adsGeo, adsMat));
+
+  scene.add(captureG);
+
+  /* ================================================
+     MODULE 2 — MEMBRANE BANK  (Concentración NF)
+     Multiple parallel horizontal tubes in a metal frame
+     ================================================ */
+  var memG = new THREE.Group();
+  memG.position.set(POS.membrane, 0, 0);
+
+  /* Frame structure — 4 vertical posts + rails */
+  var frameMat = new THREE.MeshStandardMaterial({ color: COL.darkSteel, metalness: 0.6, roughness: 0.3 });
+  [[-1.9, -1.2], [-1.9, 1.2], [1.9, -1.2], [1.9, 1.2]].forEach(function (p) {
+    var post = new THREE.Mesh(new THREE.BoxGeometry(0.15, 6, 0.15), frameMat);
+    post.position.set(p[0], 0, p[1]);
+    memG.add(post);
+  });
+  /* Top and bottom horizontal rails */
+  [-2.8, 2.8].forEach(function (y) {
+    var railF = new THREE.Mesh(new THREE.BoxGeometry(3.8, 0.12, 0.12), frameMat);
+    railF.position.set(0, y, -1.2);
+    memG.add(railF);
+    var railB = railF.clone();
+    railB.position.z = 1.2;
+    memG.add(railB);
+    var railS1 = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.12, 2.4), frameMat);
+    railS1.position.set(-1.9, y, 0);
+    memG.add(railS1);
+    var railS2 = railS1.clone();
+    railS2.position.x = 1.9;
+    memG.add(railS2);
+  });
+
+  /* 4 teal horizontal membrane tubes stacked in the frame */
+  var memTubeMat = new THREE.MeshStandardMaterial({ color: 0x22aaaa, metalness: 0.3, roughness: 0.35 });
+  var memLayers = [];
+  var memYPositions = [1.5, 0.5, -0.5, -1.5];
+  memYPositions.forEach(function (yp) {
+    var tube = new THREE.Mesh(new THREE.CylinderGeometry(0.55, 0.55, 3.4, 16), memTubeMat.clone());
+    tube.rotation.z = Math.PI / 2;
+    tube.position.y = yp;
+    memG.add(tube);
+    memLayers.push(tube);
+    /* End caps — hemisphere at each end */
+    [-1.7, 1.7].forEach(function (ex) {
+      var cap = new THREE.Mesh(
+        new THREE.SphereGeometry(0.55, 12, 8, 0, Math.PI * 2, 0, Math.PI / 2),
+        new THREE.MeshStandardMaterial({ color: 0x1a8888, metalness: 0.4, roughness: 0.3 })
+      );
+      cap.rotation.z = ex > 0 ? -Math.PI / 2 : Math.PI / 2;
+      cap.position.set(ex, yp, 0);
+      memG.add(cap);
+    });
+  });
+
+  /* Permeate header pipe — vertical on right side */
+  var memHWire = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.18, 0.18, 4.5, 12),
+    new THREE.MeshStandardMaterial({ color: 0x228888, metalness: 0.4, roughness: 0.35 })
+  );
+  memHWire.position.set(2.1, 0, 0);
+  memG.add(memHWire);
+
+  /* Small pipes connecting each tube to the header */
+  memYPositions.forEach(function (yp) {
+    var conn = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 0.5, 8), memTubeMat);
+    conn.rotation.z = Math.PI / 2;
+    conn.position.set(1.95, yp, 0);
+    memG.add(conn);
+  });
+
+  /* Reject/concentrate pipe — top, red-tinted */
+  var rejectPipe = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.15, 0.15, 2.0, 10),
+    new THREE.MeshStandardMaterial({ color: 0xcc6644, emissive: 0xcc6644, emissiveIntensity: 0.12, metalness: 0.4, roughness: 0.35 })
+  );
+  rejectPipe.rotation.z = Math.PI / 2;
+  rejectPipe.position.set(0, 2.5, 0);
+  memG.add(rejectPipe);
+
+  /* Spacer decoration */
+  var spacerMesh = new THREE.Mesh(
+    new THREE.TorusGeometry(0.8, 0.03, 6, 20),
+    new THREE.MeshBasicMaterial({ color: COL.teal, transparent: true, opacity: 0.15, wireframe: true })
+  );
+  spacerMesh.rotation.y = Math.PI / 2;
+  memG.add(spacerMesh);
+
+  /* Internal membrane sheet hints (very subtle) */
+  var memSheets = [];
+  for (var msi = 0; msi < 4; msi++) {
+    var ms = new THREE.Mesh(
+      new THREE.PlaneGeometry(3.0, 0.8),
+      new THREE.MeshBasicMaterial({ color: COL.teal, transparent: true, opacity: 0.04, side: THREE.DoubleSide })
+    );
+    ms.position.y = memYPositions[msi];
+    ms.rotation.y = Math.PI / 2;
+    memG.add(ms);
+    memSheets.push(ms);
+  }
+
+  /* Base plate */
+  var memBase = new THREE.Mesh(
+    new THREE.BoxGeometry(4.4, 0.25, 3.0),
+    new THREE.MeshStandardMaterial({ color: 0x3a4a5a, metalness: 0.5, roughness: 0.35 })
+  );
+  memBase.position.y = -3.2;
+  memG.add(memBase);
+
+  scene.add(memG);
+
+  /* ================================================
+     MODULE 3 — SCWO REACTOR  (Destrucción)
+     LARGE SPHERE — the only spherical shape
+     ================================================ */
+  var reactorG = new THREE.Group();
+  reactorG.position.set(POS.reactor, 0, 0);
+
+  /* Main sphere — thick, metallic copper/orange */
+  var reactorBodyMat = new THREE.MeshStandardMaterial({ color: 0xaa6622, metalness: 0.5, roughness: 0.25 });
+  reactorG.add(new THREE.Mesh(new THREE.SphereGeometry(2.5, 32, 24), reactorBodyMat));
+
+  /* Wireframe edge (subtle) */
+  var vesselWire = new THREE.Mesh(
+    new THREE.SphereGeometry(2.52, 32, 24),
+    new THREE.MeshStandardMaterial({ color: COL.orange, transparent: true, opacity: 0.06, wireframe: true })
+  );
+  reactorG.add(vesselWire);
+
+  /* Equatorial reinforcement ring — horizontal torus */
+  reactorG.add(function () {
+    var ring = new THREE.Mesh(
+      new THREE.TorusGeometry(2.65, 0.2, 12, 32),
+      new THREE.MeshStandardMaterial({ color: 0x886633, metalness: 0.6, roughness: 0.2 })
+    );
+    ring.rotation.x = Math.PI / 2;
+    return ring;
+  }());
+
+  /* Second ring — vertical, 90deg from the first */
+  reactorG.add(new THREE.Mesh(
+    new THREE.TorusGeometry(2.65, 0.15, 12, 32),
+    new THREE.MeshStandardMaterial({ color: 0x886633, metalness: 0.6, roughness: 0.2 })
+  ));
+
+  /* Supercritical zone — inner glowing core */
+  var scZone = new THREE.Mesh(
+    new THREE.SphereGeometry(1.5, 20, 16),
+    new THREE.MeshStandardMaterial({
+      color: COL.hotCore, emissive: COL.orange, emissiveIntensity: 1.5,
+      transparent: true, opacity: 0.6
+    })
+  );
+  reactorG.add(scZone);
+
+  /* Outer glow sphere */
+  var scGlow = new THREE.Mesh(
+    new THREE.SphereGeometry(3.0, 24, 18),
+    new THREE.MeshBasicMaterial({
+      color: COL.orange, transparent: true, opacity: 0.1,
+      blending: THREE.AdditiveBlending, depthWrite: false
+    })
+  );
+  reactorG.add(scGlow);
+
+  /* Insulation jacket */
+  var insulMat = new THREE.MeshStandardMaterial({
+    color: 0x665533, transparent: true, opacity: 0.35,
+    roughness: 0.8, metalness: 0.1, side: THREE.DoubleSide
+  });
+  reactorG.add(new THREE.Mesh(new THREE.SphereGeometry(2.8, 20, 16), insulMat));
+
+  /* Orbiting heat rings */
+  var heatRings = [];
+  for (var hri = 0; hri < 3; hri++) {
+    var hr = new THREE.Mesh(
+      new THREE.TorusGeometry(2.0 + hri * 0.4, 0.06, 6, 24),
+      new THREE.MeshStandardMaterial({
+        color: COL.orange, emissive: COL.orange, emissiveIntensity: 0.6,
+        transparent: true, opacity: 0.3
+      })
+    );
+    hr.rotation.set(hri * 1.0, hri * 0.5, 0);
+    reactorG.add(hr);
+    heatRings.push(hr);
+  }
+
+  /* Top/bottom nozzles */
+  var nozzleMat = new THREE.MeshStandardMaterial({ color: COL.darkSteel, metalness: 0.6, roughness: 0.3 });
+  [2.5, -2.5].forEach(function (y) {
+    var nz = new THREE.Mesh(new THREE.CylinderGeometry(0.25, 0.3, 0.8, 12), nozzleMat);
+    nz.position.y = y;
+    reactorG.add(nz);
+  });
+
+  /* Support saddles */
+  [-1.2, 1.2].forEach(function (x) {
+    var saddle = new THREE.Mesh(
+      new THREE.TorusGeometry(2.5, 0.15, 6, 16, Math.PI),
+      new THREE.MeshStandardMaterial({ color: COL.darkSteel, metalness: 0.5, roughness: 0.3 })
+    );
+    saddle.rotation.y = Math.PI / 2;
+    saddle.position.set(x, -2.5, 0);
+    reactorG.add(saddle);
+  });
+
+  /* Base */
+  var rBase = new THREE.Mesh(
+    new THREE.BoxGeometry(3.5, 0.3, 3.5),
+    new THREE.MeshStandardMaterial({ color: 0x3a4a5a, metalness: 0.5, roughness: 0.35 })
+  );
+  rBase.position.y = -3.8;
+  reactorG.add(rBase);
+
+  /* Decomposition particles */
+  var DECOMP = 60;
+  var decompGeo = new THREE.BufferGeometry();
+  var decompPos = new Float32Array(DECOMP * 3);
+  var decompVel = new Float32Array(DECOMP * 3);
+  var decompLife = new Float32Array(DECOMP);
+  function resetDecomp(i) {
+    var a = Math.random() * Math.PI * 2, b = Math.random() * Math.PI;
+    decompPos[i * 3] = POS.reactor + Math.sin(b) * Math.cos(a) * 0.5;
+    decompPos[i * 3 + 1] = Math.sin(b) * Math.sin(a) * 0.5;
+    decompPos[i * 3 + 2] = Math.cos(b) * 0.5;
+    decompVel[i * 3] = (Math.random() - 0.5) * 0.02;
+    decompVel[i * 3 + 1] = Math.random() * 0.015;
+    decompVel[i * 3 + 2] = (Math.random() - 0.5) * 0.02;
+    decompLife[i] = 0;
+  }
+  for (var di = 0; di < DECOMP; di++) { resetDecomp(di); decompLife[di] = Math.random(); }
+  decompGeo.setAttribute('position', new THREE.BufferAttribute(decompPos, 3));
+  var decompMat = new THREE.PointsMaterial({
+    size: 2.0, color: COL.hotCore, transparent: true, opacity: 0.6,
+    blending: THREE.AdditiveBlending, depthWrite: false, sizeAttenuation: true
+  });
+  scene.add(new THREE.Points(decompGeo, decompMat));
+
+  /* F- ions */
+  var FION = 30;
+  var fIonGeo = new THREE.BufferGeometry();
+  var fIonPos = new Float32Array(FION * 3);
+  var fIonVel = new Float32Array(FION * 3);
+  var fIonLife = new Float32Array(FION);
+  function resetFIon(i) {
+    fIonPos[i * 3] = POS.reactor + (Math.random() - 0.5);
+    fIonPos[i * 3 + 1] = (Math.random() - 0.5);
+    fIonPos[i * 3 + 2] = (Math.random() - 0.5);
+    fIonVel[i * 3] = (Math.random() - 0.5) * 0.015;
+    fIonVel[i * 3 + 1] = Math.random() * 0.01;
+    fIonVel[i * 3 + 2] = (Math.random() - 0.5) * 0.015;
+    fIonLife[i] = 0;
+  }
+  for (var fi = 0; fi < FION; fi++) { resetFIon(fi); fIonLife[fi] = Math.random(); }
+  fIonGeo.setAttribute('position', new THREE.BufferAttribute(fIonPos, 3));
+  var fIonMat = new THREE.PointsMaterial({
+    size: 1.8, color: COL.fluoride, transparent: true, opacity: 0.5,
+    blending: THREE.AdditiveBlending, depthWrite: false, sizeAttenuation: true
+  });
+  scene.add(new THREE.Points(fIonGeo, fIonMat));
+
+  scene.add(reactorG);
+
+  /* ================================================
+     MODULE 4 — VERIFICATION INSTRUMENT  (Verificacion)
+     Upright cabinet with a glowing screen
+     ================================================ */
+  var verifyG = new THREE.Group();
+  verifyG.position.set(POS.verify, 0, 0);
+
+  /* Cabinet body */
+  var cabinetMat = new THREE.MeshStandardMaterial({ color: 0x2a3a3a, metalness: 0.4, roughness: 0.3 });
+  verifyG.add(new THREE.Mesh(new THREE.BoxGeometry(3.0, 4.0, 2.0), cabinetMat));
+
+  /* Green-lit screen */
+  var screenMat = new THREE.MeshStandardMaterial({
+    color: 0x0a2a0a, emissive: COL.green, emissiveIntensity: 0.3,
+    metalness: 0.1, roughness: 0.2
+  });
+  var screenPanel = new THREE.Mesh(new THREE.PlaneGeometry(2.4, 2.0), screenMat);
+  screenPanel.position.set(0, 0.5, 1.01);
+  verifyG.add(screenPanel);
+
+  /* Screen border frame */
+  var screenFrame = new THREE.Mesh(
+    new THREE.BoxGeometry(2.7, 2.3, 0.08),
+    new THREE.MeshStandardMaterial({ color: 0x44aa44, metalness: 0.5, roughness: 0.25 })
+  );
+  screenFrame.position.set(0, 0.5, 1.0);
+  verifyG.add(screenFrame);
+
+  /* Chromatogram line on screen */
+  var chromPoints = [];
+  for (var ci = 0; ci < 20; ci++) {
+    var cx = -1.0 + (ci / 19) * 2.0;
+    var cy = 0.5 + Math.sin(ci * 0.8) * 0.3 + (ci > 8 && ci < 14 ? Math.exp(-Math.pow(ci - 11, 2) / 3) * 0.6 : 0);
+    chromPoints.push(new THREE.Vector3(cx, cy, 1.05));
+  }
+  var chromLine = new THREE.Line(
+    new THREE.BufferGeometry().setFromPoints(chromPoints),
+    new THREE.LineBasicMaterial({ color: COL.green, transparent: true, opacity: 0.8 })
+  );
+  verifyG.add(chromLine);
+
+  /* Inlet lens / sample port */
+  var lens = new THREE.Mesh(
+    new THREE.SphereGeometry(0.2, 12, 8),
+    new THREE.MeshStandardMaterial({ color: 0x44cc44, emissive: COL.green, emissiveIntensity: 0.3, transparent: true, opacity: 0.7 })
+  );
+  lens.position.set(-1.2, -0.8, 1.01);
+  verifyG.add(lens);
+
+  /* LED indicators */
+  [0x30d158, 0x30d158, 0x30d158, 0xffcc00].forEach(function (c, i) {
+    var led = new THREE.Mesh(
+      new THREE.SphereGeometry(0.08, 8, 6),
+      new THREE.MeshStandardMaterial({ color: c, emissive: c, emissiveIntensity: 0.5 })
+    );
+    led.position.set(-0.6 + i * 0.4, -1.5, 1.01);
+    verifyG.add(led);
+  });
+
+  /* Rotating vial tray */
+  var vialTray = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.6, 0.6, 0.15, 16),
+    new THREE.MeshStandardMaterial({ color: 0x446644, metalness: 0.4, roughness: 0.3 })
+  );
+  vialTray.position.set(1.0, -0.8, 0.3);
+  verifyG.add(vialTray);
+  for (var vi = 0; vi < 6; vi++) {
+    var va = (vi / 6) * Math.PI * 2;
+    var vial = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.06, 0.06, 0.35, 8),
+      new THREE.MeshStandardMaterial({ color: 0x88cc88, transparent: true, opacity: 0.6 })
+    );
+    vial.position.set(Math.cos(va) * 0.35, 0.2, Math.sin(va) * 0.35);
+    vialTray.add(vial);
+  }
+
+  /* Confirmation ring */
+  var fRing = new THREE.Mesh(
+    new THREE.RingGeometry(1.4, 1.6, 24),
+    new THREE.MeshBasicMaterial({
+      color: COL.green, transparent: true, opacity: 0.3,
+      side: THREE.DoubleSide, blending: THREE.AdditiveBlending, depthWrite: false
+    })
+  );
+  fRing.position.set(0, 0.5, 1.1);
+  verifyG.add(fRing);
+
+  /* Confirmation pulses */
+  var confPulses = [];
+  for (var cpi = 0; cpi < 3; cpi++) {
+    var cp = new THREE.Mesh(
+      new THREE.RingGeometry(0.8, 1.0, 20),
+      new THREE.MeshBasicMaterial({
+        color: COL.green, transparent: true, opacity: 0.2,
+        side: THREE.DoubleSide, blending: THREE.AdditiveBlending, depthWrite: false
+      })
+    );
+    cp.position.set(0, 0.5, 1.12);
+    cp.userData.phase = (cpi / 3) * Math.PI * 2;
+    verifyG.add(cp);
+    confPulses.push(cp);
+  }
+
+  /* Base */
+  var vBase = new THREE.Mesh(
+    new THREE.BoxGeometry(3.5, 0.3, 2.5),
+    new THREE.MeshStandardMaterial({ color: 0x3a4a5a, metalness: 0.5, roughness: 0.35 })
+  );
+  vBase.position.y = -2.3;
+  verifyG.add(vBase);
+
+  scene.add(verifyG);
+
+  /* ================================================
+     CONNECTING PIPES — thicker & more visible
+     ================================================ */
+  var pipeMat = new THREE.MeshStandardMaterial({ color: COL.steel, metalness: 0.6, roughness: 0.2 });
+  var pipeSegs = [
+    [POS.capture + 2, POS.membrane - 2.2],
+    [POS.membrane + 2.2, POS.reactor - 3],
+    [POS.reactor + 3, POS.verify - 1.8]
+  ];
+  pipeSegs.forEach(function (seg) {
+    var len = seg[1] - seg[0];
+    var mx = (seg[0] + seg[1]) / 2;
+    var pipe = new THREE.Mesh(new THREE.CylinderGeometry(0.25, 0.25, len, 12), pipeMat);
+    pipe.rotation.z = Math.PI / 2;
+    pipe.position.set(mx, 0, 0);
+    scene.add(pipe);
+  });
+  /* Flanges at connection points */
+  var flangeGeo = new THREE.TorusGeometry(0.4, 0.06, 8, 24);
+  var flangeMat = new THREE.MeshStandardMaterial({ color: 0x778899, metalness: 0.7, roughness: 0.2 });
+  pipeSegs.forEach(function (seg) {
+    [seg[0], seg[1]].forEach(function (x) {
+      var fl = new THREE.Mesh(flangeGeo, flangeMat);
+      fl.rotation.y = Math.PI / 2;
+      fl.position.set(x, 0, 0);
+      scene.add(fl);
+    });
+  });
+  /* Large flow arrows between modules */
+  pipeSegs.forEach(function (seg) {
+    var ax = (seg[0] + seg[1]) / 2;
+    var arr = new THREE.Mesh(
+      new THREE.ConeGeometry(0.35, 0.9, 8),
+      new THREE.MeshStandardMaterial({ color: COL.water, emissive: COL.water, emissiveIntensity: 0.3, metalness: 0.3, roughness: 0.4 })
+    );
+    arr.rotation.z = -Math.PI / 2;
+    arr.position.set(ax, 0, 0);
+    scene.add(arr);
+  });
+
+  /* ================================================
+     FLOW PULSE RINGS
+     ================================================ */
+  var pulseRings = [];
+  var PULSE_COUNT = 6;
+  for (var pri = 0; pri < PULSE_COUNT; pri++) {
+    var prMat = new THREE.MeshBasicMaterial({
+      color: COL.water, transparent: true, opacity: 0,
+      side: THREE.DoubleSide, blending: THREE.AdditiveBlending, depthWrite: false
+    });
+    var prMesh = new THREE.Mesh(new THREE.RingGeometry(0.2, 0.4, 16), prMat);
+    prMesh.rotation.y = Math.PI / 2;
+    prMesh.userData.progress = pri / PULSE_COUNT;
+    prMesh.userData.speed = 0.06 + Math.random() * 0.03;
+    scene.add(prMesh);
+    pulseRings.push(prMesh);
+  }
+
+  /* ================================================
+     DUAL PARTICLE SYSTEM
+     ================================================ */
+  var FLOW_A = 120, FLOW_B = 60;
+  var FLOW_T = FLOW_A + FLOW_B;
+  var flowGeo = new THREE.BufferGeometry();
+  var flowPos = new Float32Array(FLOW_T * 3);
+  var flowCol = new Float32Array(FLOW_T * 3);
+  var flowProg = new Float32Array(FLOW_T);
+  var flowSpd = new Float32Array(FLOW_T);
+  var flowLane = new Float32Array(FLOW_T * 2);
+  var flowType = new Uint8Array(FLOW_T);
+  var totalSpan = POS.verify - POS.capture;
+  var contCols = [new THREE.Color(0xff4444), new THREE.Color(0xff6633), new THREE.Color(0xff9500), new THREE.Color(0x30d158)];
+  var cleanCols = [new THREE.Color(0x2997ff), new THREE.Color(0x2997ff), new THREE.Color(0x30d5c8), new THREE.Color(0x30d158)];
+  var sBounds = [0, 0.33, 0.66, 1];
+
+  function streamCol(p, type) {
+    var cs = type === 0 ? contCols : cleanCols;
+    for (var i = 0; i < 3; i++) {
+      if (p <= sBounds[i + 1]) {
+        var t = (p - sBounds[i]) / (sBounds[i + 1] - sBounds[i]);
+        return cs[i].clone().lerp(cs[i + 1], t);
+      }
+    }
+    return cs[3];
+  }
+
+  for (var ii = 0; ii < FLOW_T; ii++) {
+    flowType[ii] = ii < FLOW_A ? 0 : 1;
+    flowProg[ii] = Math.random();
+    flowSpd[ii] = 0.05 + Math.random() * 0.06;
+    var spread = flowType[ii] === 0 ? 0.8 : 0.5;
+    flowLane[ii * 2] = (Math.random() - 0.5) * spread;
+    flowLane[ii * 2 + 1] = (Math.random() - 0.5) * spread;
+    flowPos[ii * 3] = POS.capture + flowProg[ii] * totalSpan;
+    flowPos[ii * 3 + 1] = flowLane[ii * 2];
+    flowPos[ii * 3 + 2] = flowLane[ii * 2 + 1];
+    var fc = streamCol(flowProg[ii], flowType[ii]);
+    flowCol[ii * 3] = fc.r; flowCol[ii * 3 + 1] = fc.g; flowCol[ii * 3 + 2] = fc.b;
+  }
+  flowGeo.setAttribute('position', new THREE.BufferAttribute(flowPos, 3));
+  flowGeo.setAttribute('color', new THREE.BufferAttribute(flowCol, 3));
+  scene.add(new THREE.Points(flowGeo, new THREE.PointsMaterial({
+    size: 2.5, transparent: true, opacity: 0.6, vertexColors: true,
+    blending: THREE.AdditiveBlending, depthWrite: false, sizeAttenuation: true
+  })));
+
+  /* Ambient particles */
+  var AMB = 120;
+  var ambGeo = new THREE.BufferGeometry();
+  var ambPos = new Float32Array(AMB * 3);
+  var ambVel = new Float32Array(AMB * 3);
+  for (var aj = 0; aj < AMB; aj++) {
+    ambPos[aj * 3] = (Math.random() - 0.5) * 40;
+    ambPos[aj * 3 + 1] = (Math.random() - 0.5) * 18;
+    ambPos[aj * 3 + 2] = (Math.random() - 0.5) * 12 - 4;
+    ambVel[aj * 3] = (Math.random() - 0.5) * 0.0015;
+    ambVel[aj * 3 + 1] = (Math.random() - 0.5) * 0.0015;
+    ambVel[aj * 3 + 2] = (Math.random() - 0.5) * 0.0008;
+  }
+  ambGeo.setAttribute('position', new THREE.BufferAttribute(ambPos, 3));
+  scene.add(new THREE.Points(ambGeo, new THREE.PointsMaterial({
+    size: 0.5, transparent: true, opacity: 0.18, color: 0x6688aa,
+    blending: THREE.AdditiveBlending, depthWrite: false, sizeAttenuation: true
+  })));
+
+  /* ================================================
+     LABELS — numbered, larger, prominent
+     ================================================ */
+  var labelData = [
+    { text: '\u2460 CAPTURA', sub: 'Carb\u00f3n activado granular', pos: new THREE.Vector3(POS.capture, -5.8, 0), color: '#2997ff' },
+    { text: '\u2461 CONCENTRACI\u00d3N', sub: 'Nanofiltración \u00d7100', pos: new THREE.Vector3(POS.membrane, -4.8, 0), color: '#30d5c8' },
+    { text: '\u2462 DESTRUCCI\u00d3N', sub: 'SCWO \u00b7 374 \u00b0C \u00b7 221 bar', pos: new THREE.Vector3(POS.reactor, -5.5, 0), color: '#ff9500' },
+    { text: '\u2463 VERIFICACI\u00d3N', sub: 'LC-MS/MS \u00b7 Certificado', pos: new THREE.Vector3(POS.verify, -4.0, 0), color: '#30d158' }
+  ];
+
+  var labelEls = labelData.map(function (d) {
+    var el = document.createElement('div');
+    el.innerHTML = '<div style="font-weight:800;letter-spacing:.08em;margin-bottom:3px;text-shadow:0 0 16px ' + d.color + '60;font-size:13px">' + d.text + '</div><div style="font-size:9px;opacity:.6;letter-spacing:.04em">' + d.sub + '</div>';
+    Object.assign(el.style, {
+      position: 'absolute', pointerEvents: 'none',
+      fontFamily: 'Inter, sans-serif',
+      color: d.color, opacity: '0', lineHeight: '1.4',
+      whiteSpace: 'nowrap', textAlign: 'center',
+      transform: 'translate(-50%, -50%)',
+      padding: '8px 16px', borderRadius: '10px',
+      background: 'rgba(4,4,9,.85)',
+      border: '1.5px solid ' + d.color + '40',
+      boxShadow: '0 0 20px ' + d.color + '20',
+      backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)',
+      transition: 'opacity .8s ease'
+    });
+    wrap.appendChild(el);
+    return { el: el, pos: d.pos };
+  });
+  setTimeout(function () { labelEls.forEach(function (l) { l.el.style.opacity = '.95'; }); }, 600);
+
+  function updateLabels() {
+    labelEls.forEach(function (item) {
+      var v = item.pos.clone().project(camera);
+      item.el.style.left = Math.max(60, Math.min(W() - 60, (v.x * 0.5 + 0.5) * W())) + 'px';
+      item.el.style.top = (-v.y * 0.5 + 0.5) * H() + 'px';
+    });
+  }
+
+  /* Mouse interaction */
+  var mx = 0, my = 0;
+  wrap.addEventListener('mousemove', function (e) {
+    var r = wrap.getBoundingClientRect();
+    mx = ((e.clientX - r.left) / r.width - 0.5) * 2;
+    my = ((e.clientY - r.top) / r.height - 0.5) * 2;
+  }, { passive: true });
+  wrap.addEventListener('mouseleave', function () { mx = 0; my = 0; }, { passive: true });
+
+  /* ================================================
+     ANIMATION LOOP
+     ================================================ */
+  var clock = new THREE.Clock();
+  var drift = 0;
+
+  function animate() {
+    requestAnimationFrame(animate);
+    if (window.__zeroPFAS_paused) return;
+    var t = clock.getElapsedTime();
+    drift += 0.001;
+
+    /* Camera — cinematic parallax with organic drift */
+    var camX = mx * 1.4 + Math.sin(drift * 0.8) * 0.4;
+    var camY = 3.5 - my * 0.7 + Math.cos(drift * 0.6) * 0.25;
+    var camZ = 28 + Math.sin(drift * 0.35) * 0.3;
+    camera.position.x += (camX - camera.position.x) * 0.010;
+    camera.position.y += (camY - camera.position.y) * 0.010;
+    camera.position.z += (camZ - camera.position.z) * 0.010;
+    camera.lookAt(Math.sin(drift * 0.15) * 0.2, Math.cos(drift * 0.12) * 0.1, 0);
+
+    /* Point light pulses */
+    captureLight.intensity = 2.2 + Math.sin(t * 0.8) * 0.4;
+    reactorLight.intensity = 3.0 + Math.sin(t * 1.2) * 0.6;
+    membraneLight.intensity = 2.0 + Math.sin(t * 0.9 + 1) * 0.3;
+    verifyLight.intensity = 1.8 + Math.sin(t * 0.7 + 2) * 0.25;
+
+    /* -- CAPTURE column -- */
+    colWire.rotation.y = t * 0.03;
+    gacMat.opacity = 0.5 + Math.sin(t * 1.2) * 0.05;
+    adsMat.opacity = 0.7 + Math.sin(t * 1.8) * 0.08;
+    sightGlassMat.emissiveIntensity = 0.15 + Math.sin(t * 1.0) * 0.1;
+
+    /* -- MEMBRANE module -- */
+    memLayers.forEach(function (layer, i) {
+      layer.rotation.z = Math.PI / 2 + t * (0.008 + i * 0.003);
+    });
+    memSheets.forEach(function (s, i) {
+      s.material.opacity = 0.04 + Math.sin(t * 1.0 + i * 0.8) * 0.015;
+    });
+    memHWire.rotation.y = t * 0.01;
+    rejectPipe.material.emissiveIntensity = 0.12 + Math.sin(t * 1.8) * 0.06;
+    spacerMesh.rotation.y = t * 0.008;
+
+    /* -- SCWO REACTOR -- */
+    var rB = 1 + Math.sin(t * 1.0) * 0.015;
+    vesselWire.scale.set(rB, rB, rB);
+    scZone.material.opacity = 0.5 + Math.sin(t * 1.8) * 0.1;
+    scZone.material.emissiveIntensity = 1.2 + Math.sin(t * 2.0) * 0.4;
+    var scS = 1 + Math.sin(t * 2.2) * 0.06;
+    scZone.scale.set(scS, scS, scS);
+    scGlow.material.opacity = 0.1 + Math.sin(t * 1.5) * 0.04;
+    var gS = 1 + Math.sin(t * 1.3) * 0.04;
+    scGlow.scale.set(gS, gS, gS);
+    insulMat.opacity = 0.35 + Math.sin(t * 0.6) * 0.05;
+    heatRings.forEach(function (hr, i) {
+      hr.rotation.x = t * (0.25 + i * 0.08);
+      hr.material.opacity = 0.25 + Math.sin(t * 1.5 + i) * 0.05;
+      hr.material.emissiveIntensity = 0.5 + Math.sin(t * 2 + i * 0.5) * 0.2;
+    });
+
+    /* Decomposition particles */
+    var dA = decompGeo.attributes.position.array;
+    for (var i = 0; i < DECOMP; i++) {
+      decompLife[i] += 0.006;
+      if (decompLife[i] > 1) resetDecomp(i);
+      dA[i * 3] += decompVel[i * 3];
+      dA[i * 3 + 1] += decompVel[i * 3 + 1];
+      dA[i * 3 + 2] += decompVel[i * 3 + 2];
+    }
+    decompGeo.attributes.position.needsUpdate = true;
+    decompMat.opacity = 0.55 + Math.sin(t * 2.5) * 0.1;
+
+    /* F- ions */
+    var fA = fIonGeo.attributes.position.array;
+    for (var i = 0; i < FION; i++) {
+      fIonLife[i] += 0.004;
+      if (fIonLife[i] > 1) resetFIon(i);
+      fA[i * 3] += fIonVel[i * 3];
+      fA[i * 3 + 1] += fIonVel[i * 3 + 1];
+      fA[i * 3 + 2] += fIonVel[i * 3 + 2];
+    }
+    fIonGeo.attributes.position.needsUpdate = true;
+    fIonMat.opacity = 0.5 + Math.sin(t * 1.8) * 0.1;
+
+    /* -- VERIFICATION -- */
+    lens.material.emissiveIntensity = 0.3 + Math.sin(t * 1.5) * 0.1;
+    chromLine.material.opacity = 0.7 + Math.sin(t * 1.2) * 0.15;
+    vialTray.rotation.y = t * 0.05;
+    confPulses.forEach(function (cp) {
+      var ph = (t * 0.5 + cp.userData.phase) % (Math.PI * 2);
+      var p = ph / (Math.PI * 2);
+      var s = 1 + p * 3.5;
+      cp.scale.set(s, s, s);
+      cp.material.opacity = (1 - p) * 0.3;
+    });
+    fRing.material.opacity = 0.3 + Math.sin(t * 1.2) * 0.08;
+
+    /* -- Dual flow particles -- */
+    var fP = flowGeo.attributes.position.array;
+    var fC = flowGeo.attributes.color.array;
+    for (var i = 0; i < FLOW_T; i++) {
+      var nearMod = Math.min(
+        Math.abs(flowProg[i]),
+        Math.abs(flowProg[i] - 0.327),
+        Math.abs(flowProg[i] - 0.673),
+        Math.abs(flowProg[i] - 1.0)
+      );
+      var spMod = 0.45 + Math.min(nearMod * 6.0, 0.55);
+      flowProg[i] += flowSpd[i] * 0.003 * spMod;
+      if (flowProg[i] > 1) {
+        flowProg[i] = 0;
+        var sp = flowType[i] === 0 ? 0.8 : 0.5;
+        flowLane[i * 2] = (Math.random() - 0.5) * sp;
+        flowLane[i * 2 + 1] = (Math.random() - 0.5) * sp;
+      }
+      var p = flowProg[i];
+      var x = POS.capture + p * totalSpan;
+      fP[i * 3] = x;
+      fP[i * 3 + 1] = flowLane[i * 2] + Math.sin(t * 0.6 + i * 0.15) * 0.03;
+      fP[i * 3 + 2] = flowLane[i * 2 + 1] + Math.cos(t * 0.6 + i * 0.15) * 0.03;
+      var c = streamCol(p, flowType[i]);
+      fC[i * 3] = c.r; fC[i * 3 + 1] = c.g; fC[i * 3 + 2] = c.b;
+    }
+    flowGeo.attributes.position.needsUpdate = true;
+    flowGeo.attributes.color.needsUpdate = true;
+
+    /* -- Ambient -- */
+    var aP = ambGeo.attributes.position.array;
+    for (var i = 0; i < AMB; i++) {
+      aP[i * 3] += ambVel[i * 3];
+      aP[i * 3 + 1] += ambVel[i * 3 + 1];
+      aP[i * 3 + 2] += ambVel[i * 3 + 2];
+      if (Math.abs(aP[i * 3]) > 20) ambVel[i * 3] *= -1;
+      if (Math.abs(aP[i * 3 + 1]) > 9) ambVel[i * 3 + 1] *= -1;
+      if (Math.abs(aP[i * 3 + 2]) > 8) ambVel[i * 3 + 2] *= -1;
+    }
+    ambGeo.attributes.position.needsUpdate = true;
+    gridMesh.material.opacity = 0.06 + Math.sin(t * 0.25) * 0.01;
+
+    /* -- Flow pulse rings -- */
+    pulseRings.forEach(function (ring) {
+      ring.userData.progress += ring.userData.speed * 0.004;
+      if (ring.userData.progress > 1) ring.userData.progress -= 1;
+      var rp = ring.userData.progress;
+      ring.position.x = POS.capture + rp * totalSpan;
+      var fade = Math.sin(rp * Math.PI);
+      ring.material.opacity = fade * 0.2;
+      var rs = 0.5 + fade * 0.5;
+      ring.scale.set(rs, rs, rs);
+    });
+
+    updateLabels();
+    renderer.render(scene, camera);
+  }
+  animate();
+
+  window.addEventListener('resize', function () {
+    camera.aspect = W() / H();
+    camera.updateProjectionMatrix();
+    renderer.setSize(W(), H());
+  });
+})();

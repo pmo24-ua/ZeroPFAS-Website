@@ -1,0 +1,1192 @@
+/* three-scene.js — Realistic PFAS treatment pipeline visualization */
+(function () {
+  'use strict';
+
+  var canvas = document.getElementById('hero-canvas');
+  if (!canvas) return;
+  var wrap = canvas.parentElement;
+
+  function W() { return wrap.clientWidth || window.innerWidth; }
+  function H() { return wrap.clientHeight || 460; }
+
+  var renderer;
+  try {
+    renderer = new THREE.WebGLRenderer({ canvas: canvas, alpha: false, antialias: true });
+  } catch (e) { return; }
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.setClearColor(0x05050a, 1);
+  renderer.setSize(W(), H());
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 1.15;
+  renderer.outputEncoding = THREE.sRGBEncoding;
+
+  var scene = new THREE.Scene();
+  scene.fog = new THREE.FogExp2(0x05050a, 0.008);
+
+  var camera = new THREE.PerspectiveCamera(40, W() / H(), 0.1, 200);
+  camera.position.set(0, 3.5, 28);
+  camera.lookAt(0, 0, 0);
+
+  /* -------- Lighting -------- */
+  scene.add(new THREE.AmbientLight(0x8090b0, 0.35));
+  var dirLight = new THREE.DirectionalLight(0xddeeff, 0.8);
+  dirLight.position.set(8, 12, 10);
+  scene.add(dirLight);
+  scene.add(function () {
+    var f = new THREE.DirectionalLight(0x6688cc, 0.25);
+    f.position.set(-6, 5, -8);
+    return f;
+  }());
+
+  var POS = { capture: -10.5, membrane: -3.5, reactor: 3.5, verify: 10.5 };
+  var COL = {
+    pfas: 0xff4444, water: 0x2997ff, teal: 0x30d5c8, orange: 0xff9500,
+    hotCore: 0xffcc33, green: 0x30d158, steel: 0x8899aa, darkSteel: 0x556677,
+    fluoride: 0x40e0d0
+  };
+
+  /* Module lighting — colored glows */
+  var captureLight = new THREE.PointLight(0x4488cc, 2.0, 14);
+  captureLight.position.set(POS.capture, 3, 5);
+  scene.add(captureLight);
+  var membraneLight = new THREE.PointLight(0x30d5c8, 1.8, 14);
+  membraneLight.position.set(POS.membrane, 2, 5);
+  scene.add(membraneLight);
+  var reactorLight = new THREE.PointLight(0xff8800, 3.2, 18);
+  reactorLight.position.set(POS.reactor, 2, 5);
+  scene.add(reactorLight);
+  var verifyLight = new THREE.PointLight(0x30d158, 1.6, 14);
+  verifyLight.position.set(POS.verify, 2, 5);
+  scene.add(verifyLight);
+  scene.add(function () {
+    var r = new THREE.PointLight(0x4466aa, 0.8, 50);
+    r.position.set(0, 6, -12);
+    return r;
+  }());
+
+  /* Ground grid */
+  var gridMesh = new THREE.Mesh(
+    new THREE.PlaneGeometry(45, 22, 45, 22),
+    new THREE.MeshBasicMaterial({ color: 0x1a1a3e, transparent: true, opacity: 0.08, wireframe: true, side: THREE.DoubleSide })
+  );
+  gridMesh.rotation.x = -Math.PI / 2;
+  gridMesh.position.y = -5.5;
+  scene.add(gridMesh);
+
+  /* Shared materials */
+  var steelMat = new THREE.MeshStandardMaterial({ color: 0x7788aa, metalness: 0.65, roughness: 0.2 });
+  var darkSteelMat = new THREE.MeshStandardMaterial({ color: COL.darkSteel, metalness: 0.6, roughness: 0.28 });
+  var frameMat = new THREE.MeshStandardMaterial({ color: 0x4a5a6a, metalness: 0.6, roughness: 0.3 });
+
+  /* ================================================
+     MODULE 1 — GAC PRESSURE VESSEL  (Captura)
+     Realistic vertical industrial filter tank:
+     blue-gray steel body, torispherical heads,
+     skirt base, manway, ladder, piping
+     ================================================ */
+  var captureG = new THREE.Group();
+  captureG.position.set(POS.capture, 0, 0);
+
+  /* Main shell — tall vertical cylinder, industrial blue-gray */
+  var vesselCol = 0x607898;
+  var vesselBodyMat = new THREE.MeshStandardMaterial({ color: vesselCol, metalness: 0.55, roughness: 0.22 });
+  captureG.add(new THREE.Mesh(new THREE.CylinderGeometry(1.5, 1.5, 6.5, 32), vesselBodyMat));
+
+  /* Subtle edge glow */
+  var colWire = new THREE.Mesh(
+    new THREE.CylinderGeometry(1.52, 1.52, 6.52, 32, 1, true),
+    new THREE.MeshStandardMaterial({ color: 0x6699bb, transparent: true, opacity: 0.08, side: THREE.DoubleSide })
+  );
+  captureG.add(colWire);
+
+  /* Torispherical dished head — top (flattened dome, realistic) */
+  var topHead = new THREE.Mesh(
+    new THREE.SphereGeometry(1.5, 24, 10, 0, Math.PI * 2, 0, Math.PI * 0.35),
+    new THREE.MeshStandardMaterial({ color: 0x6a82a0, metalness: 0.55, roughness: 0.2 })
+  );
+  topHead.position.y = 3.0;
+  captureG.add(topHead);
+
+  /* Bottom dish head */
+  var botHead = topHead.clone();
+  botHead.rotation.x = Math.PI;
+  botHead.position.y = -3.0;
+  captureG.add(botHead);
+
+  /* Top manway hatch — circular plate with bolt ring */
+  var manwayPlate = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.5, 0.5, 0.12, 20),
+    new THREE.MeshStandardMaterial({ color: 0x8899aa, metalness: 0.7, roughness: 0.15 })
+  );
+  manwayPlate.position.y = 3.8;
+  captureG.add(manwayPlate);
+  /* Manway rim */
+  var manwayRim = new THREE.Mesh(
+    new THREE.TorusGeometry(0.55, 0.06, 8, 20),
+    steelMat
+  );
+  manwayRim.rotation.x = Math.PI / 2;
+  manwayRim.position.y = 3.82;
+  captureG.add(manwayRim);
+  /* 8 bolt heads around manway */
+  for (var bi = 0; bi < 8; bi++) {
+    var ba = (bi / 8) * Math.PI * 2;
+    var bolt = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.04, 0.04, 0.08, 6),
+      steelMat
+    );
+    bolt.position.set(Math.cos(ba) * 0.48, 3.86, Math.sin(ba) * 0.48);
+    captureG.add(bolt);
+  }
+
+  /* Cylindrical skirt base — realistic foundation */
+  var skirt = new THREE.Mesh(
+    new THREE.CylinderGeometry(1.6, 1.7, 1.8, 24, 1, true),
+    new THREE.MeshStandardMaterial({ color: 0x4a5a6a, metalness: 0.5, roughness: 0.3, side: THREE.DoubleSide })
+  );
+  skirt.position.y = -4.15;
+  captureG.add(skirt);
+  /* Skirt base ring */
+  var skirtBase = new THREE.Mesh(
+    new THREE.CylinderGeometry(1.8, 1.8, 0.2, 24),
+    new THREE.MeshStandardMaterial({ color: 0x3a4a5a, metalness: 0.6, roughness: 0.25 })
+  );
+  skirtBase.position.y = -5.1;
+  captureG.add(skirtBase);
+  /* Rectangular cutouts in skirt (access openings) */
+  [-0.4, 0.4].forEach(function (z) {
+    var cutout = new THREE.Mesh(
+      new THREE.BoxGeometry(0.6, 0.9, 0.05),
+      new THREE.MeshStandardMaterial({ color: 0x1a2030, metalness: 0.3, roughness: 0.5 })
+    );
+    cutout.position.set(0, -4.3, z > 0 ? 1.62 : -1.62);
+    cutout.rotation.y = z > 0 ? 0 : Math.PI;
+    captureG.add(cutout);
+  });
+
+  /* Structural reinforcement bands — welded rings */
+  var bandMat = new THREE.MeshStandardMaterial({ color: 0x7a8a9a, metalness: 0.6, roughness: 0.18 });
+  [-2.0, -0.5, 1.0, 2.5].forEach(function (y) {
+    var band = new THREE.Mesh(new THREE.TorusGeometry(1.54, 0.06, 8, 32), bandMat);
+    band.rotation.x = Math.PI / 2;
+    band.position.y = y;
+    captureG.add(band);
+  });
+
+  /* Ladder — vertical rails + rungs on the side */
+  var ladderMat = new THREE.MeshStandardMaterial({ color: 0x667788, metalness: 0.5, roughness: 0.3 });
+  [-0.12, 0.12].forEach(function (dz) {
+    var rail = new THREE.Mesh(new THREE.BoxGeometry(0.04, 7.0, 0.04), ladderMat);
+    rail.position.set(1.58, 0, dz);
+    captureG.add(rail);
+  });
+  for (var ri = -6; ri <= 6; ri++) {
+    var rung = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.03, 0.22), ladderMat);
+    rung.position.set(1.58, ri * 0.5, 0);
+    captureG.add(rung);
+  }
+
+  /* Sight glass — vertical illuminated strip */
+  var sightGlassMat = new THREE.MeshStandardMaterial({
+    color: 0x66bbdd, emissive: 0x2997ff, emissiveIntensity: 0.2,
+    transparent: true, opacity: 0.55, roughness: 0.05
+  });
+  captureG.add(function () {
+    var sg = new THREE.Mesh(new THREE.BoxGeometry(0.08, 4.5, 0.25), sightGlassMat);
+    sg.position.set(-1.48, 0, 0.6);
+    return sg;
+  }());
+
+  /* Inlet nozzle at top — horizontal pipe with flange */
+  var nozzlePipe = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.22, 0.22, 1.4, 12),
+    darkSteelMat
+  );
+  nozzlePipe.rotation.z = Math.PI / 2;
+  nozzlePipe.position.set(2.0, 2.2, 0);
+  captureG.add(nozzlePipe);
+  var nozzleFlange = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.38, 0.38, 0.1, 16),
+    steelMat
+  );
+  nozzleFlange.rotation.z = Math.PI / 2;
+  nozzleFlange.position.set(2.7, 2.2, 0);
+  captureG.add(nozzleFlange);
+
+  /* Outlet nozzle at bottom */
+  var outPipe = nozzlePipe.clone();
+  outPipe.position.set(2.0, -2.2, 0);
+  captureG.add(outPipe);
+  var outFlange = nozzleFlange.clone();
+  outFlange.position.set(2.7, -2.2, 0);
+  captureG.add(outFlange);
+
+  /* Pressure gauge — small circle on upper shell */
+  var gauge = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.18, 0.18, 0.06, 16),
+    new THREE.MeshStandardMaterial({ color: 0xdddddd, metalness: 0.3, roughness: 0.2 })
+  );
+  gauge.rotation.x = Math.PI / 2;
+  gauge.position.set(0, 2.0, 1.53);
+  captureG.add(gauge);
+  var gaugeFace = new THREE.Mesh(
+    new THREE.CircleGeometry(0.14, 16),
+    new THREE.MeshBasicMaterial({ color: 0x111111 })
+  );
+  gaugeFace.position.set(0, 2.0, 1.57);
+  captureG.add(gaugeFace);
+
+  /* GAC fill particles — dark granular */
+  var GAC = 150;
+  var gacGeo = new THREE.BufferGeometry();
+  var gacPos = new Float32Array(GAC * 3);
+  for (var gi = 0; gi < GAC; gi++) {
+    var ga = Math.random() * Math.PI * 2, gr = Math.random() * 1.15;
+    gacPos[gi * 3] = Math.cos(ga) * gr;
+    gacPos[gi * 3 + 1] = (Math.random() - 0.5) * 5.5;
+    gacPos[gi * 3 + 2] = Math.sin(ga) * gr;
+  }
+  gacGeo.setAttribute('position', new THREE.BufferAttribute(gacPos, 3));
+  var gacMat = new THREE.PointsMaterial({ size: 1.8, color: 0x1d1d28, transparent: true, opacity: 0.5, sizeAttenuation: true, depthWrite: false });
+  captureG.add(new THREE.Points(gacGeo, gacMat));
+
+  /* Adsorbed PFAS — red glow particles */
+  var ADS = 35;
+  var adsGeo = new THREE.BufferGeometry();
+  var adsArr = new Float32Array(ADS * 3);
+  for (var ai = 0; ai < ADS; ai++) {
+    var aa = Math.random() * Math.PI * 2, ar = Math.random() * 1.0;
+    adsArr[ai * 3] = Math.cos(aa) * ar;
+    adsArr[ai * 3 + 1] = (Math.random() - 0.5) * 5;
+    adsArr[ai * 3 + 2] = Math.sin(aa) * ar;
+  }
+  adsGeo.setAttribute('position', new THREE.BufferAttribute(adsArr, 3));
+  var adsMat = new THREE.PointsMaterial({ size: 2.2, color: COL.pfas, transparent: true, opacity: 0.7, blending: THREE.AdditiveBlending, depthWrite: false, sizeAttenuation: true });
+  captureG.add(new THREE.Points(adsGeo, adsMat));
+
+  scene.add(captureG);
+
+  /* ================================================
+     MODULE 2 — MEMBRANE FILTRATION SKID  (Concentración NF)
+     Realistic: white FRP horizontal pressure vessels
+     with blue/red end caps in a steel frame,
+     feed & permeate manifold piping
+     ================================================ */
+  var memG = new THREE.Group();
+  memG.position.set(POS.membrane, 0, 0);
+
+  /* Steel skid frame — H-frame with cross members */
+  var skidCol = 0x4a5a6a;
+  var skidMat = new THREE.MeshStandardMaterial({ color: skidCol, metalness: 0.6, roughness: 0.28 });
+
+  /* 4 vertical legs */
+  [[-2.2, -1.0], [-2.2, 1.0], [2.2, -1.0], [2.2, 1.0]].forEach(function (p) {
+    var leg = new THREE.Mesh(new THREE.BoxGeometry(0.15, 5.8, 0.15), skidMat);
+    leg.position.set(p[0], -0.2, p[1]);
+    memG.add(leg);
+  });
+  /* Horizontal cross beams (top, middle, bottom) */
+  [-2.9, 0, 2.9].forEach(function (y) {
+    /* Front/back beams */
+    [-1.0, 1.0].forEach(function (z) {
+      var beam = new THREE.Mesh(new THREE.BoxGeometry(4.4, 0.12, 0.12), skidMat);
+      beam.position.set(0, y, z);
+      memG.add(beam);
+    });
+    /* Side beams */
+    [-2.2, 2.2].forEach(function (x) {
+      var sb = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.12, 2.0), skidMat);
+      sb.position.set(x, y, 0);
+      memG.add(sb);
+    });
+  });
+
+  /* 3 FRP membrane pressure vessels — WHITE bodies (realistic!) */
+  var frpMat = new THREE.MeshStandardMaterial({ color: 0xe8e8e8, metalness: 0.1, roughness: 0.5 });
+  var memLayers = [];
+  var memYPositions = [1.6, 0, -1.6];
+  memYPositions.forEach(function (yp) {
+    /* White FRP tube body */
+    var tube = new THREE.Mesh(new THREE.CylinderGeometry(0.6, 0.6, 3.8, 20), frpMat.clone());
+    tube.rotation.z = Math.PI / 2;
+    tube.position.y = yp;
+    memG.add(tube);
+    memLayers.push(tube);
+
+    /* BLUE end cap (feed side, left) — distinctive color coding */
+    var blueCap = new THREE.Mesh(
+      new THREE.SphereGeometry(0.6, 14, 10, 0, Math.PI * 2, 0, Math.PI / 2),
+      new THREE.MeshStandardMaterial({ color: 0x2266cc, metalness: 0.3, roughness: 0.35 })
+    );
+    blueCap.rotation.z = Math.PI / 2;
+    blueCap.position.set(-1.9, yp, 0);
+    memG.add(blueCap);
+
+    /* RED end cap (concentrate side, right) — industry standard */
+    var redCap = new THREE.Mesh(
+      new THREE.SphereGeometry(0.6, 14, 10, 0, Math.PI * 2, 0, Math.PI / 2),
+      new THREE.MeshStandardMaterial({ color: 0xcc3333, metalness: 0.3, roughness: 0.35 })
+    );
+    redCap.rotation.z = -Math.PI / 2;
+    redCap.position.set(1.9, yp, 0);
+    memG.add(redCap);
+
+    /* Clamps/saddle brackets holding each tube */
+    [-1.0, 1.0].forEach(function (cx) {
+      var clamp = new THREE.Mesh(
+        new THREE.TorusGeometry(0.64, 0.04, 6, 16, Math.PI),
+        skidMat
+      );
+      clamp.rotation.y = Math.PI / 2;
+      clamp.rotation.z = Math.PI;
+      clamp.position.set(cx, yp - 0.55, 0);
+      memG.add(clamp);
+    });
+  });
+
+  /* Feed manifold — vertical header pipe on LEFT (blue side) */
+  var memHWire = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.18, 0.18, 4.5, 12),
+    new THREE.MeshStandardMaterial({ color: 0x3366aa, metalness: 0.45, roughness: 0.3 })
+  );
+  memHWire.position.set(-2.5, 0, 0);
+  memG.add(memHWire);
+  /* Branch connections from feed header to each vessel */
+  memYPositions.forEach(function (yp) {
+    var branch = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 0.7, 8), darkSteelMat);
+    branch.rotation.z = Math.PI / 2;
+    branch.position.set(-2.3, yp, 0);
+    memG.add(branch);
+  });
+
+  /* Permeate manifold — vertical pipe on RIGHT (clean side) */
+  var permHeader = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.15, 0.15, 4.5, 12),
+    new THREE.MeshStandardMaterial({ color: 0x2288aa, metalness: 0.45, roughness: 0.3 })
+  );
+  permHeader.position.set(2.5, 0, 0);
+  memG.add(permHeader);
+  memYPositions.forEach(function (yp) {
+    var pBranch = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 0.5, 8), darkSteelMat);
+    pBranch.rotation.z = Math.PI / 2;
+    pBranch.position.set(2.35, yp, 0);
+    memG.add(pBranch);
+  });
+
+  /* Concentrate/reject pipe — top, orange-ish */
+  var rejectPipe = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.12, 0.12, 3.5, 10),
+    new THREE.MeshStandardMaterial({ color: 0xcc6644, emissive: 0xcc4422, emissiveIntensity: 0.08, metalness: 0.4, roughness: 0.35 })
+  );
+  rejectPipe.rotation.z = Math.PI / 2;
+  rejectPipe.position.set(0, 3.0, 0);
+  memG.add(rejectPipe);
+
+  /* Pressure gauges between stages */
+  [0.8, -0.8].forEach(function (yp) {
+    var pg = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.12, 0.12, 0.04, 12),
+      new THREE.MeshStandardMaterial({ color: 0xdddddd, metalness: 0.3, roughness: 0.2 })
+    );
+    pg.rotation.x = Math.PI / 2;
+    pg.position.set(-2.5, yp, 0.2);
+    memG.add(pg);
+  });
+
+  /* Spacer decoration */
+  var spacerMesh = new THREE.Mesh(
+    new THREE.TorusGeometry(0.8, 0.02, 6, 20),
+    new THREE.MeshBasicMaterial({ color: COL.teal, transparent: true, opacity: 0.1, wireframe: true })
+  );
+  spacerMesh.rotation.y = Math.PI / 2;
+  memG.add(spacerMesh);
+
+  /* Membrane sheet hints — very subtle inner glow */
+  var memSheets = [];
+  for (var msi = 0; msi < 3; msi++) {
+    var ms = new THREE.Mesh(
+      new THREE.PlaneGeometry(3.4, 0.9),
+      new THREE.MeshBasicMaterial({ color: COL.teal, transparent: true, opacity: 0.03, side: THREE.DoubleSide })
+    );
+    ms.position.y = memYPositions[msi];
+    ms.rotation.y = Math.PI / 2;
+    memG.add(ms);
+    memSheets.push(ms);
+  }
+
+  /* Base plate — concrete pad */
+  var memBase = new THREE.Mesh(
+    new THREE.BoxGeometry(5.0, 0.25, 2.8),
+    new THREE.MeshStandardMaterial({ color: 0x505860, metalness: 0.3, roughness: 0.6 })
+  );
+  memBase.position.y = -3.4;
+  memG.add(memBase);
+
+  scene.add(memG);
+
+  /* ================================================
+     MODULE 3 — SCWO REACTOR  (Destrucción)
+     Realistic horizontal thick-walled autoclave:
+     heavy flanged cylinder, silver insulation cladding,
+     orange glow seeping through gaps, support saddles
+     ================================================ */
+  var reactorG = new THREE.Group();
+  reactorG.position.set(POS.reactor, 0, 0);
+
+  /* MAIN VESSEL — thick horizontal cylinder (Inconel/Hastelloy dark gray) */
+  var reactorBodyMat = new THREE.MeshStandardMaterial({ color: 0x5a5a60, metalness: 0.7, roughness: 0.18 });
+  var reactorBody = new THREE.Mesh(
+    new THREE.CylinderGeometry(2.0, 2.0, 5.0, 32),
+    reactorBodyMat
+  );
+  reactorBody.rotation.z = Math.PI / 2;
+  reactorG.add(reactorBody);
+
+  /* Subtle wireframe */
+  var vesselWire = new THREE.Mesh(
+    new THREE.CylinderGeometry(2.02, 2.02, 5.02, 32, 1, true),
+    new THREE.MeshStandardMaterial({ color: COL.orange, transparent: true, opacity: 0.04, wireframe: true, side: THREE.DoubleSide })
+  );
+  vesselWire.rotation.z = Math.PI / 2;
+  reactorG.add(vesselWire);
+
+  /* HEAVY BOLTED FLANGES at both ends — very visible flat discs with bolts */
+  [-2.5, 2.5].forEach(function (ex) {
+    /* Flange disc */
+    var fDisc = new THREE.Mesh(
+      new THREE.CylinderGeometry(2.6, 2.6, 0.25, 32),
+      new THREE.MeshStandardMaterial({ color: 0x6a6a70, metalness: 0.7, roughness: 0.15 })
+    );
+    fDisc.rotation.z = Math.PI / 2;
+    fDisc.position.x = ex;
+    reactorG.add(fDisc);
+    /* 12 hex bolt heads around each flange */
+    for (var bi = 0; bi < 12; bi++) {
+      var ba = (bi / 12) * Math.PI * 2;
+      var bHead = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.08, 0.08, 0.12, 6),
+        steelMat
+      );
+      bHead.rotation.z = Math.PI / 2;
+      bHead.position.set(ex + (ex > 0 ? 0.1 : -0.1), Math.cos(ba) * 2.3, Math.sin(ba) * 2.3);
+      reactorG.add(bHead);
+    }
+  });
+
+  /* Dished end caps behind flanges */
+  [-2.6, 2.6].forEach(function (ex) {
+    var eCap = new THREE.Mesh(
+      new THREE.SphereGeometry(2.0, 20, 14, 0, Math.PI * 2, 0, Math.PI * 0.4),
+      reactorBodyMat
+    );
+    eCap.rotation.z = ex > 0 ? -Math.PI / 2 : Math.PI / 2;
+    eCap.position.x = ex;
+    reactorG.add(eCap);
+  });
+
+  /* SILVER INSULATION CLADDING — wraps around body, with visible gaps */
+  var insulMat = new THREE.MeshStandardMaterial({
+    color: 0xc0c0c8, metalness: 0.4, roughness: 0.35,
+    transparent: true, opacity: 0.6, side: THREE.DoubleSide
+  });
+  /* 3 insulation segments with gaps between them (looks like real thermal blankets) */
+  [-1.4, 0, 1.4].forEach(function (cx) {
+    var insul = new THREE.Mesh(
+      new THREE.CylinderGeometry(2.15, 2.15, 1.2, 24, 1, true),
+      insulMat.clone()
+    );
+    insul.rotation.z = Math.PI / 2;
+    insul.position.x = cx;
+    reactorG.add(insul);
+  });
+
+  /* Insulation band straps — metallic straps holding insulation */
+  [-2.0, -0.7, 0.7, 2.0].forEach(function (cx) {
+    var strap = new THREE.Mesh(
+      new THREE.TorusGeometry(2.2, 0.04, 6, 24),
+      new THREE.MeshStandardMaterial({ color: 0x888888, metalness: 0.7, roughness: 0.15 })
+    );
+    strap.rotation.y = Math.PI / 2;
+    strap.position.x = cx;
+    reactorG.add(strap);
+  });
+
+  /* ORANGE GLOW seeping through insulation gaps — the "heat" effect */
+  [-0.7, 0.7].forEach(function (cx) {
+    var gapGlow = new THREE.Mesh(
+      new THREE.TorusGeometry(2.1, 0.15, 8, 24),
+      new THREE.MeshBasicMaterial({
+        color: COL.orange, transparent: true, opacity: 0.2,
+        blending: THREE.AdditiveBlending, depthWrite: false
+      })
+    );
+    gapGlow.rotation.y = Math.PI / 2;
+    gapGlow.position.x = cx;
+    reactorG.add(gapGlow);
+  });
+
+  /* Inner supercritical zone — glowing core visible through ends */
+  var scZone = new THREE.Mesh(
+    new THREE.CylinderGeometry(1.2, 1.2, 4.0, 16),
+    new THREE.MeshStandardMaterial({
+      color: COL.hotCore, emissive: COL.orange, emissiveIntensity: 1.5,
+      transparent: true, opacity: 0.45
+    })
+  );
+  scZone.rotation.z = Math.PI / 2;
+  reactorG.add(scZone);
+
+  /* Outer glow envelope */
+  var scGlow = new THREE.Mesh(
+    new THREE.CylinderGeometry(2.5, 2.5, 5.5, 20),
+    new THREE.MeshBasicMaterial({
+      color: COL.orange, transparent: true, opacity: 0.06,
+      blending: THREE.AdditiveBlending, depthWrite: false
+    })
+  );
+  scGlow.rotation.z = Math.PI / 2;
+  reactorG.add(scGlow);
+
+  /* Heat rings — orbit around the vessel */
+  var heatRings = [];
+  for (var hri = 0; hri < 3; hri++) {
+    var hr = new THREE.Mesh(
+      new THREE.TorusGeometry(2.4 + hri * 0.3, 0.05, 6, 24),
+      new THREE.MeshStandardMaterial({
+        color: COL.orange, emissive: COL.orange, emissiveIntensity: 0.5,
+        transparent: true, opacity: 0.25
+      })
+    );
+    hr.rotation.set(hri * 1.0, hri * 0.5, 0);
+    reactorG.add(hr);
+    heatRings.push(hr);
+  }
+
+  /* Top nozzles — feed, vent, thermocouple ports */
+  [-1.0, 0, 1.0].forEach(function (cx) {
+    var nz = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.18, 0.22, 0.7, 10),
+      darkSteelMat
+    );
+    nz.position.set(cx, 2.1, 0);
+    reactorG.add(nz);
+    /* Small flange */
+    var nzf = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.32, 0.32, 0.08, 12),
+      steelMat
+    );
+    nzf.position.set(cx, 2.45, 0);
+    reactorG.add(nzf);
+  });
+
+  /* Bottom drain nozzle */
+  var drain = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.15, 0.18, 0.6, 10),
+    darkSteelMat
+  );
+  drain.position.set(0, -2.1, 0);
+  drain.rotation.x = Math.PI;
+  reactorG.add(drain);
+
+  /* HEAVY support saddles — two welded steel cradles */
+  [-1.4, 1.4].forEach(function (cx) {
+    /* Saddle arc */
+    var saddle = new THREE.Mesh(
+      new THREE.TorusGeometry(2.1, 0.18, 8, 20, Math.PI),
+      new THREE.MeshStandardMaterial({ color: 0x4a5060, metalness: 0.6, roughness: 0.25 })
+    );
+    saddle.rotation.y = Math.PI / 2;
+    saddle.rotation.x = Math.PI;
+    saddle.position.set(cx, -2.0, 0);
+    reactorG.add(saddle);
+    /* Vertical support plate under saddle */
+    var plate = new THREE.Mesh(
+      new THREE.BoxGeometry(0.15, 1.5, 2.8),
+      new THREE.MeshStandardMaterial({ color: 0x4a5060, metalness: 0.55, roughness: 0.3 })
+    );
+    plate.position.set(cx, -3.0, 0);
+    reactorG.add(plate);
+  });
+
+  /* Base pad */
+  var rBase = new THREE.Mesh(
+    new THREE.BoxGeometry(4.5, 0.3, 3.5),
+    new THREE.MeshStandardMaterial({ color: 0x505860, metalness: 0.3, roughness: 0.6 })
+  );
+  rBase.position.y = -3.8;
+  reactorG.add(rBase);
+
+  /* Decomposition particles */
+  var DECOMP = 50;
+  var decompGeo = new THREE.BufferGeometry();
+  var decompPos = new Float32Array(DECOMP * 3);
+  var decompVel = new Float32Array(DECOMP * 3);
+  var decompLife = new Float32Array(DECOMP);
+  function resetDecomp(i) {
+    var a = Math.random() * Math.PI * 2;
+    decompPos[i * 3] = POS.reactor + (Math.random() - 0.5) * 2;
+    decompPos[i * 3 + 1] = (Math.random() - 0.5) * 0.8;
+    decompPos[i * 3 + 2] = Math.sin(a) * 0.5;
+    decompVel[i * 3] = (Math.random() - 0.5) * 0.015;
+    decompVel[i * 3 + 1] = Math.random() * 0.018;
+    decompVel[i * 3 + 2] = (Math.random() - 0.5) * 0.015;
+    decompLife[i] = 0;
+  }
+  for (var di = 0; di < DECOMP; di++) { resetDecomp(di); decompLife[di] = Math.random(); }
+  decompGeo.setAttribute('position', new THREE.BufferAttribute(decompPos, 3));
+  var decompMat = new THREE.PointsMaterial({
+    size: 2.0, color: COL.hotCore, transparent: true, opacity: 0.55,
+    blending: THREE.AdditiveBlending, depthWrite: false, sizeAttenuation: true
+  });
+  scene.add(new THREE.Points(decompGeo, decompMat));
+
+  /* F- ions */
+  var FION = 25;
+  var fIonGeo = new THREE.BufferGeometry();
+  var fIonPos = new Float32Array(FION * 3);
+  var fIonVel = new Float32Array(FION * 3);
+  var fIonLife = new Float32Array(FION);
+  function resetFIon(i) {
+    fIonPos[i * 3] = POS.reactor + (Math.random() - 0.5) * 2;
+    fIonPos[i * 3 + 1] = (Math.random() - 0.5) * 0.6;
+    fIonPos[i * 3 + 2] = (Math.random() - 0.5) * 0.6;
+    fIonVel[i * 3] = (Math.random() - 0.5) * 0.012;
+    fIonVel[i * 3 + 1] = Math.random() * 0.01;
+    fIonVel[i * 3 + 2] = (Math.random() - 0.5) * 0.012;
+    fIonLife[i] = 0;
+  }
+  for (var fi = 0; fi < FION; fi++) { resetFIon(fi); fIonLife[fi] = Math.random(); }
+  fIonGeo.setAttribute('position', new THREE.BufferAttribute(fIonPos, 3));
+  var fIonMat = new THREE.PointsMaterial({
+    size: 1.5, color: COL.fluoride, transparent: true, opacity: 0.45,
+    blending: THREE.AdditiveBlending, depthWrite: false, sizeAttenuation: true
+  });
+  scene.add(new THREE.Points(fIonGeo, fIonMat));
+
+  scene.add(reactorG);
+
+  /* ================================================
+     MODULE 4 — LC-MS/MS INSTRUMENT  (Verificación)
+     Realistic benchtop analytical instrument:
+     white/beige main unit, separate monitor,
+     autosampler tray, sample tubing, status LEDs
+     ================================================ */
+  var verifyG = new THREE.Group();
+  verifyG.position.set(POS.verify, 0, 0);
+
+  /* Main instrument body — beige/off-white, realistic lab equipment color */
+  var instrMat = new THREE.MeshStandardMaterial({ color: 0xd5d0c8, metalness: 0.15, roughness: 0.45 });
+  var mainBody = new THREE.Mesh(new THREE.BoxGeometry(3.2, 2.2, 2.4), instrMat);
+  mainBody.position.y = -0.8;
+  verifyG.add(mainBody);
+
+  /* Dark accent stripe along the front — brand styling */
+  var accentStripe = new THREE.Mesh(
+    new THREE.BoxGeometry(3.22, 0.15, 0.03),
+    new THREE.MeshStandardMaterial({ color: 0x225533, metalness: 0.3, roughness: 0.3 })
+  );
+  accentStripe.position.set(0, -0.1, 1.21);
+  verifyG.add(accentStripe);
+
+  /* Ventilation grille — dark slotted area on front lower panel */
+  var grille = new THREE.Mesh(
+    new THREE.PlaneGeometry(2.0, 0.6),
+    new THREE.MeshStandardMaterial({ color: 0x333333, metalness: 0.2, roughness: 0.5 })
+  );
+  grille.position.set(0, -1.5, 1.21);
+  verifyG.add(grille);
+  /* Grille slots */
+  for (var gs = 0; gs < 8; gs++) {
+    var slot = new THREE.Mesh(
+      new THREE.PlaneGeometry(1.8, 0.02),
+      new THREE.MeshBasicMaterial({ color: 0x111111 })
+    );
+    slot.position.set(0, -1.3 - gs * 0.06, 1.22);
+    verifyG.add(slot);
+  }
+
+  /* SEPARATE MONITOR on top — tilted display */
+  var monitorBase = new THREE.Mesh(
+    new THREE.BoxGeometry(2.4, 0.12, 1.6),
+    new THREE.MeshStandardMaterial({ color: 0x333333, metalness: 0.4, roughness: 0.3 })
+  );
+  monitorBase.position.set(0, 0.4, 0);
+  verifyG.add(monitorBase);
+
+  var monitorScreen = new THREE.Group();
+  monitorScreen.position.set(0, 1.4, -0.2);
+  monitorScreen.rotation.x = -0.25; /* tilted back slightly */
+
+  /* Screen bezel */
+  var bezel = new THREE.Mesh(
+    new THREE.BoxGeometry(2.6, 1.8, 0.1),
+    new THREE.MeshStandardMaterial({ color: 0x222222, metalness: 0.3, roughness: 0.3 })
+  );
+  monitorScreen.add(bezel);
+
+  /* Screen display — dark with green glow */
+  var screenMat = new THREE.MeshStandardMaterial({
+    color: 0x0a1a0a, emissive: COL.green, emissiveIntensity: 0.25,
+    metalness: 0.1, roughness: 0.15
+  });
+  var screenFace = new THREE.Mesh(new THREE.PlaneGeometry(2.3, 1.5), screenMat);
+  screenFace.position.z = 0.06;
+  monitorScreen.add(screenFace);
+
+  verifyG.add(monitorScreen);
+
+  /* Chromatogram line drawn on screen */
+  var chromPoints = [];
+  for (var ci = 0; ci < 24; ci++) {
+    var cx = -1.0 + (ci / 23) * 2.0;
+    var cy = 1.4 + Math.sin(ci * 0.7) * 0.15 + (ci > 10 && ci < 16 ? Math.exp(-Math.pow(ci - 13, 2) / 4) * 0.45 : 0);
+    chromPoints.push(new THREE.Vector3(cx, cy, -0.12));
+  }
+  var chromLine = new THREE.Line(
+    new THREE.BufferGeometry().setFromPoints(chromPoints),
+    new THREE.LineBasicMaterial({ color: COL.green, transparent: true, opacity: 0.8 })
+  );
+  verifyG.add(chromLine);
+
+  /* AUTOSAMPLER — tray with vials on right side of instrument */
+  var samplerBody = new THREE.Mesh(
+    new THREE.BoxGeometry(1.2, 1.0, 1.4),
+    new THREE.MeshStandardMaterial({ color: 0xccc8c0, metalness: 0.15, roughness: 0.45 })
+  );
+  samplerBody.position.set(2.2, -1.0, 0.3);
+  verifyG.add(samplerBody);
+  /* Sampler lid — slightly transparent */
+  var samplerLid = new THREE.Mesh(
+    new THREE.BoxGeometry(1.1, 0.06, 1.3),
+    new THREE.MeshStandardMaterial({ color: 0xaabbcc, metalness: 0.1, roughness: 0.2, transparent: true, opacity: 0.5 })
+  );
+  samplerLid.position.set(2.2, -0.45, 0.3);
+  verifyG.add(samplerLid);
+
+  /* Rotating vial tray inside autosampler */
+  var vialTray = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.4, 0.4, 0.08, 16),
+    new THREE.MeshStandardMaterial({ color: 0x667766, metalness: 0.3, roughness: 0.3 })
+  );
+  vialTray.position.set(2.2, -0.7, 0.3);
+  verifyG.add(vialTray);
+  for (var vi = 0; vi < 8; vi++) {
+    var va = (vi / 8) * Math.PI * 2;
+    var vial = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.035, 0.035, 0.3, 8),
+      new THREE.MeshStandardMaterial({ color: 0x88cc88, transparent: true, opacity: 0.55 })
+    );
+    vial.position.set(Math.cos(va) * 0.28, 0.2, Math.sin(va) * 0.28);
+    vialTray.add(vial);
+  }
+
+  /* Sample inlet tube — thin PEEK tubing from sampler to instrument */
+  var tubingPts = [
+    new THREE.Vector3(1.6, -0.6, 0.4),
+    new THREE.Vector3(1.2, -0.3, 0.6),
+    new THREE.Vector3(0.8, -0.2, 0.3)
+  ];
+  var tubingCurve = new THREE.CatmullRomCurve3(tubingPts);
+  var tubing = new THREE.Mesh(
+    new THREE.TubeGeometry(tubingCurve, 12, 0.03, 6, false),
+    new THREE.MeshStandardMaterial({ color: 0xcc8833, metalness: 0.2, roughness: 0.4 })
+  );
+  verifyG.add(tubing);
+
+  /* Inlet lens / sample port */
+  var lens = new THREE.Mesh(
+    new THREE.SphereGeometry(0.12, 10, 8),
+    new THREE.MeshStandardMaterial({ color: 0x44cc44, emissive: COL.green, emissiveIntensity: 0.25, transparent: true, opacity: 0.7 })
+  );
+  lens.position.set(0.8, -0.2, 1.22);
+  verifyG.add(lens);
+
+  /* Status LEDs — row on front panel */
+  var ledColors = [0x30d158, 0x30d158, 0x30d158, 0xffcc00, 0x4488ff];
+  ledColors.forEach(function (c, i) {
+    var led = new THREE.Mesh(
+      new THREE.SphereGeometry(0.05, 8, 6),
+      new THREE.MeshStandardMaterial({ color: c, emissive: c, emissiveIntensity: 0.5 })
+    );
+    led.position.set(-1.2 + i * 0.25, -0.1, 1.22);
+    verifyG.add(led);
+  });
+
+  /* Power button */
+  var pwrBtn = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.08, 0.08, 0.03, 12),
+    new THREE.MeshStandardMaterial({ color: 0x333333, metalness: 0.5, roughness: 0.3 })
+  );
+  pwrBtn.rotation.x = Math.PI / 2;
+  pwrBtn.position.set(1.4, -0.1, 1.22);
+  verifyG.add(pwrBtn);
+
+  /* Confirmation ring — green halo around the monitor */
+  var fRing = new THREE.Mesh(
+    new THREE.RingGeometry(1.3, 1.5, 24),
+    new THREE.MeshBasicMaterial({
+      color: COL.green, transparent: true, opacity: 0.2,
+      side: THREE.DoubleSide, blending: THREE.AdditiveBlending, depthWrite: false
+    })
+  );
+  fRing.position.set(0, 1.4, -0.1);
+  fRing.rotation.x = -0.25;
+  verifyG.add(fRing);
+
+  /* Confirmation pulses */
+  var confPulses = [];
+  for (var cpi = 0; cpi < 3; cpi++) {
+    var cpMesh = new THREE.Mesh(
+      new THREE.RingGeometry(0.8, 1.0, 20),
+      new THREE.MeshBasicMaterial({
+        color: COL.green, transparent: true, opacity: 0.15,
+        side: THREE.DoubleSide, blending: THREE.AdditiveBlending, depthWrite: false
+      })
+    );
+    cpMesh.position.set(0, 1.4, -0.08);
+    cpMesh.rotation.x = -0.25;
+    cpMesh.userData.phase = (cpi / 3) * Math.PI * 2;
+    verifyG.add(cpMesh);
+    confPulses.push(cpMesh);
+  }
+
+  /* Base — lab bench surface hint */
+  var vBase = new THREE.Mesh(
+    new THREE.BoxGeometry(5.0, 0.2, 3.0),
+    new THREE.MeshStandardMaterial({ color: 0x4a4a50, metalness: 0.35, roughness: 0.4 })
+  );
+  vBase.position.y = -2.0;
+  verifyG.add(vBase);
+
+  scene.add(verifyG);
+
+  /* ================================================
+     CONNECTING PIPES — industrial process piping
+     ================================================ */
+  var pipeMat = new THREE.MeshStandardMaterial({ color: COL.steel, metalness: 0.6, roughness: 0.2 });
+  var pipeSegs = [
+    [POS.capture + 2.8, POS.membrane - 2.6],
+    [POS.membrane + 2.8, POS.reactor - 2.8],
+    [POS.reactor + 2.8, POS.verify - 2.8]
+  ];
+  pipeSegs.forEach(function (seg) {
+    var len = seg[1] - seg[0];
+    var mx = (seg[0] + seg[1]) / 2;
+    var pipe = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.22, len, 12), pipeMat);
+    pipe.rotation.z = Math.PI / 2;
+    pipe.position.set(mx, 0, 0);
+    scene.add(pipe);
+  });
+  /* Flanges */
+  var flangeGeo = new THREE.TorusGeometry(0.36, 0.05, 8, 24);
+  var flangeMat = new THREE.MeshStandardMaterial({ color: 0x778899, metalness: 0.7, roughness: 0.18 });
+  pipeSegs.forEach(function (seg) {
+    [seg[0], seg[1]].forEach(function (x) {
+      var fl = new THREE.Mesh(flangeGeo, flangeMat);
+      fl.rotation.y = Math.PI / 2;
+      fl.position.set(x, 0, 0);
+      scene.add(fl);
+    });
+  });
+  /* Flow direction arrows */
+  pipeSegs.forEach(function (seg) {
+    var ax = (seg[0] + seg[1]) / 2;
+    var arr = new THREE.Mesh(
+      new THREE.ConeGeometry(0.3, 0.8, 8),
+      new THREE.MeshStandardMaterial({ color: COL.water, emissive: COL.water, emissiveIntensity: 0.25, metalness: 0.3, roughness: 0.4 })
+    );
+    arr.rotation.z = -Math.PI / 2;
+    arr.position.set(ax, 0, 0);
+    scene.add(arr);
+  });
+
+  /* ================================================
+     FLOW PULSE RINGS
+     ================================================ */
+  var pulseRings = [];
+  for (var pri = 0; pri < 6; pri++) {
+    var prMat = new THREE.MeshBasicMaterial({
+      color: COL.water, transparent: true, opacity: 0,
+      side: THREE.DoubleSide, blending: THREE.AdditiveBlending, depthWrite: false
+    });
+    var prMesh = new THREE.Mesh(new THREE.RingGeometry(0.18, 0.36, 16), prMat);
+    prMesh.rotation.y = Math.PI / 2;
+    prMesh.userData.progress = pri / 6;
+    prMesh.userData.speed = 0.06 + Math.random() * 0.03;
+    scene.add(prMesh);
+    pulseRings.push(prMesh);
+  }
+
+  /* ================================================
+     DUAL PARTICLE SYSTEM
+     ================================================ */
+  var FLOW_A = 100, FLOW_B = 50;
+  var FLOW_T = FLOW_A + FLOW_B;
+  var flowGeo = new THREE.BufferGeometry();
+  var flowPos = new Float32Array(FLOW_T * 3);
+  var flowCol = new Float32Array(FLOW_T * 3);
+  var flowProg = new Float32Array(FLOW_T);
+  var flowSpd = new Float32Array(FLOW_T);
+  var flowLane = new Float32Array(FLOW_T * 2);
+  var flowType = new Uint8Array(FLOW_T);
+  var totalSpan = POS.verify - POS.capture;
+  var contCols = [new THREE.Color(0xff4444), new THREE.Color(0xff6633), new THREE.Color(0xff9500), new THREE.Color(0x30d158)];
+  var cleanCols = [new THREE.Color(0x2997ff), new THREE.Color(0x2997ff), new THREE.Color(0x30d5c8), new THREE.Color(0x30d158)];
+  var sBounds = [0, 0.33, 0.66, 1];
+  function streamCol(p, type) {
+    var cs = type === 0 ? contCols : cleanCols;
+    for (var i = 0; i < 3; i++) {
+      if (p <= sBounds[i + 1]) {
+        var t2 = (p - sBounds[i]) / (sBounds[i + 1] - sBounds[i]);
+        return cs[i].clone().lerp(cs[i + 1], t2);
+      }
+    }
+    return cs[3];
+  }
+  for (var ii = 0; ii < FLOW_T; ii++) {
+    flowType[ii] = ii < FLOW_A ? 0 : 1;
+    flowProg[ii] = Math.random();
+    flowSpd[ii] = 0.05 + Math.random() * 0.06;
+    var spread = flowType[ii] === 0 ? 0.7 : 0.4;
+    flowLane[ii * 2] = (Math.random() - 0.5) * spread;
+    flowLane[ii * 2 + 1] = (Math.random() - 0.5) * spread;
+    flowPos[ii * 3] = POS.capture + flowProg[ii] * totalSpan;
+    flowPos[ii * 3 + 1] = flowLane[ii * 2];
+    flowPos[ii * 3 + 2] = flowLane[ii * 2 + 1];
+    var fc = streamCol(flowProg[ii], flowType[ii]);
+    flowCol[ii * 3] = fc.r; flowCol[ii * 3 + 1] = fc.g; flowCol[ii * 3 + 2] = fc.b;
+  }
+  flowGeo.setAttribute('position', new THREE.BufferAttribute(flowPos, 3));
+  flowGeo.setAttribute('color', new THREE.BufferAttribute(flowCol, 3));
+  scene.add(new THREE.Points(flowGeo, new THREE.PointsMaterial({
+    size: 2.2, transparent: true, opacity: 0.55, vertexColors: true,
+    blending: THREE.AdditiveBlending, depthWrite: false, sizeAttenuation: true
+  })));
+
+  /* Ambient particles */
+  var AMB = 100;
+  var ambGeo = new THREE.BufferGeometry();
+  var ambPos = new Float32Array(AMB * 3);
+  var ambVel = new Float32Array(AMB * 3);
+  for (var aj = 0; aj < AMB; aj++) {
+    ambPos[aj * 3] = (Math.random() - 0.5) * 40;
+    ambPos[aj * 3 + 1] = (Math.random() - 0.5) * 18;
+    ambPos[aj * 3 + 2] = (Math.random() - 0.5) * 12 - 4;
+    ambVel[aj * 3] = (Math.random() - 0.5) * 0.0012;
+    ambVel[aj * 3 + 1] = (Math.random() - 0.5) * 0.0012;
+    ambVel[aj * 3 + 2] = (Math.random() - 0.5) * 0.0006;
+  }
+  ambGeo.setAttribute('position', new THREE.BufferAttribute(ambPos, 3));
+  scene.add(new THREE.Points(ambGeo, new THREE.PointsMaterial({
+    size: 0.45, transparent: true, opacity: 0.15, color: 0x6688aa,
+    blending: THREE.AdditiveBlending, depthWrite: false, sizeAttenuation: true
+  })));
+
+  /* ================================================
+     LABELS
+     ================================================ */
+  var labelData = [
+    { text: '\u2460 CAPTURA', sub: 'Columna GAC \u00b7 Adsorci\u00f3n', pos: new THREE.Vector3(POS.capture, -6.0, 0), color: '#5599cc' },
+    { text: '\u2461 CONCENTRACI\u00d3N', sub: 'Membranas NF \u00b7 \u00d7100', pos: new THREE.Vector3(POS.membrane, -4.8, 0), color: '#30d5c8' },
+    { text: '\u2462 DESTRUCCI\u00d3N', sub: 'Reactor SCWO \u00b7 374 \u00b0C', pos: new THREE.Vector3(POS.reactor, -5.5, 0), color: '#ff9500' },
+    { text: '\u2463 VERIFICACI\u00d3N', sub: 'LC-MS/MS \u00b7 Certificado', pos: new THREE.Vector3(POS.verify, -3.8, 0), color: '#30d158' }
+  ];
+  var labelEls = labelData.map(function (d) {
+    var el = document.createElement('div');
+    el.innerHTML = '<div style="font-weight:800;letter-spacing:.08em;margin-bottom:3px;text-shadow:0 0 14px ' + d.color + '50;font-size:12px">' + d.text + '</div><div style="font-size:9px;opacity:.55;letter-spacing:.04em">' + d.sub + '</div>';
+    Object.assign(el.style, {
+      position: 'absolute', pointerEvents: 'none',
+      fontFamily: 'Inter, sans-serif',
+      color: d.color, opacity: '0', lineHeight: '1.4',
+      whiteSpace: 'nowrap', textAlign: 'center',
+      transform: 'translate(-50%, -50%)',
+      padding: '7px 14px', borderRadius: '8px',
+      background: 'rgba(4,4,9,.85)',
+      border: '1px solid ' + d.color + '35',
+      boxShadow: '0 0 16px ' + d.color + '18',
+      backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)',
+      transition: 'opacity .8s ease'
+    });
+    wrap.appendChild(el);
+    return { el: el, pos: d.pos };
+  });
+  setTimeout(function () { labelEls.forEach(function (l) { l.el.style.opacity = '.92'; }); }, 600);
+
+  function updateLabels() {
+    labelEls.forEach(function (item) {
+      var v = item.pos.clone().project(camera);
+      item.el.style.left = Math.max(60, Math.min(W() - 60, (v.x * 0.5 + 0.5) * W())) + 'px';
+      item.el.style.top = (-v.y * 0.5 + 0.5) * H() + 'px';
+    });
+  }
+
+  /* Mouse */
+  var mx = 0, my = 0;
+  wrap.addEventListener('mousemove', function (e) {
+    var r = wrap.getBoundingClientRect();
+    mx = ((e.clientX - r.left) / r.width - 0.5) * 2;
+    my = ((e.clientY - r.top) / r.height - 0.5) * 2;
+  }, { passive: true });
+  wrap.addEventListener('mouseleave', function () { mx = 0; my = 0; }, { passive: true });
+
+  /* ================================================
+     ANIMATION LOOP
+     ================================================ */
+  var clock = new THREE.Clock();
+  var drift = 0;
+
+  function animate() {
+    requestAnimationFrame(animate);
+    if (window.__zeroPFAS_paused) return;
+    var t = clock.getElapsedTime();
+    drift += 0.001;
+
+    /* Camera */
+    var camX = mx * 1.4 + Math.sin(drift * 0.8) * 0.4;
+    var camY = 3.5 - my * 0.7 + Math.cos(drift * 0.6) * 0.25;
+    var camZ = 28 + Math.sin(drift * 0.35) * 0.3;
+    camera.position.x += (camX - camera.position.x) * 0.010;
+    camera.position.y += (camY - camera.position.y) * 0.010;
+    camera.position.z += (camZ - camera.position.z) * 0.010;
+    camera.lookAt(Math.sin(drift * 0.15) * 0.2, Math.cos(drift * 0.12) * 0.1, 0);
+
+    /* Light pulses */
+    captureLight.intensity = 2.0 + Math.sin(t * 0.8) * 0.3;
+    reactorLight.intensity = 3.2 + Math.sin(t * 1.2) * 0.6;
+    membraneLight.intensity = 1.8 + Math.sin(t * 0.9 + 1) * 0.25;
+    verifyLight.intensity = 1.6 + Math.sin(t * 0.7 + 2) * 0.2;
+
+    /* -- CAPTURE -- */
+    colWire.rotation.y = t * 0.02;
+    gacMat.opacity = 0.45 + Math.sin(t * 1.2) * 0.05;
+    adsMat.opacity = 0.6 + Math.sin(t * 1.8) * 0.08;
+    sightGlassMat.emissiveIntensity = 0.15 + Math.sin(t * 1.0) * 0.1;
+
+    /* -- MEMBRANE -- */
+    memLayers.forEach(function (layer, i) {
+      layer.rotation.z = Math.PI / 2 + t * (0.005 + i * 0.002);
+    });
+    memSheets.forEach(function (s, i) {
+      s.material.opacity = 0.03 + Math.sin(t * 1.0 + i * 0.8) * 0.01;
+    });
+    memHWire.rotation.y = t * 0.008;
+    rejectPipe.material.emissiveIntensity = 0.08 + Math.sin(t * 1.8) * 0.04;
+    spacerMesh.rotation.y = t * 0.006;
+
+    /* -- REACTOR -- */
+    var rB = 1 + Math.sin(t * 1.0) * 0.01;
+    vesselWire.scale.set(1, rB, rB);
+    scZone.material.opacity = 0.4 + Math.sin(t * 1.8) * 0.08;
+    scZone.material.emissiveIntensity = 1.2 + Math.sin(t * 2.0) * 0.4;
+    var scS = 1 + Math.sin(t * 2.2) * 0.04;
+    scZone.scale.set(scS, scS, scS);
+    scGlow.material.opacity = 0.06 + Math.sin(t * 1.5) * 0.03;
+    var gS = 1 + Math.sin(t * 1.3) * 0.03;
+    scGlow.scale.set(gS, gS, gS);
+    insulMat.opacity = 0.55 + Math.sin(t * 0.6) * 0.05;
+    heatRings.forEach(function (hr, i) {
+      hr.rotation.x = t * (0.2 + i * 0.06);
+      hr.material.opacity = 0.2 + Math.sin(t * 1.5 + i) * 0.05;
+      hr.material.emissiveIntensity = 0.4 + Math.sin(t * 2 + i * 0.5) * 0.2;
+    });
+
+    var dA = decompGeo.attributes.position.array;
+    for (var i = 0; i < DECOMP; i++) {
+      decompLife[i] += 0.006;
+      if (decompLife[i] > 1) resetDecomp(i);
+      dA[i * 3] += decompVel[i * 3];
+      dA[i * 3 + 1] += decompVel[i * 3 + 1];
+      dA[i * 3 + 2] += decompVel[i * 3 + 2];
+    }
+    decompGeo.attributes.position.needsUpdate = true;
+    decompMat.opacity = 0.5 + Math.sin(t * 2.5) * 0.1;
+
+    var fA = fIonGeo.attributes.position.array;
+    for (var i = 0; i < FION; i++) {
+      fIonLife[i] += 0.004;
+      if (fIonLife[i] > 1) resetFIon(i);
+      fA[i * 3] += fIonVel[i * 3];
+      fA[i * 3 + 1] += fIonVel[i * 3 + 1];
+      fA[i * 3 + 2] += fIonVel[i * 3 + 2];
+    }
+    fIonGeo.attributes.position.needsUpdate = true;
+    fIonMat.opacity = 0.4 + Math.sin(t * 1.8) * 0.1;
+
+    /* -- VERIFICATION -- */
+    lens.material.emissiveIntensity = 0.2 + Math.sin(t * 1.5) * 0.08;
+    chromLine.material.opacity = 0.7 + Math.sin(t * 1.2) * 0.15;
+    vialTray.rotation.y = t * 0.04;
+    confPulses.forEach(function (cp) {
+      var ph = (t * 0.5 + cp.userData.phase) % (Math.PI * 2);
+      var p = ph / (Math.PI * 2);
+      var s = 1 + p * 3;
+      cp.scale.set(s, s, s);
+      cp.material.opacity = (1 - p) * 0.25;
+    });
+    fRing.material.opacity = 0.2 + Math.sin(t * 1.2) * 0.06;
+
+    /* -- Flow particles -- */
+    var fP = flowGeo.attributes.position.array;
+    var fC = flowGeo.attributes.color.array;
+    for (var i = 0; i < FLOW_T; i++) {
+      var nearMod = Math.min(
+        Math.abs(flowProg[i]),
+        Math.abs(flowProg[i] - 0.33),
+        Math.abs(flowProg[i] - 0.66),
+        Math.abs(flowProg[i] - 1.0)
+      );
+      var spMod = 0.45 + Math.min(nearMod * 6.0, 0.55);
+      flowProg[i] += flowSpd[i] * 0.003 * spMod;
+      if (flowProg[i] > 1) {
+        flowProg[i] = 0;
+        var sp = flowType[i] === 0 ? 0.7 : 0.4;
+        flowLane[i * 2] = (Math.random() - 0.5) * sp;
+        flowLane[i * 2 + 1] = (Math.random() - 0.5) * sp;
+      }
+      var p = flowProg[i];
+      var x = POS.capture + p * totalSpan;
+      fP[i * 3] = x;
+      fP[i * 3 + 1] = flowLane[i * 2] + Math.sin(t * 0.5 + i * 0.12) * 0.02;
+      fP[i * 3 + 2] = flowLane[i * 2 + 1] + Math.cos(t * 0.5 + i * 0.12) * 0.02;
+      var c = streamCol(p, flowType[i]);
+      fC[i * 3] = c.r; fC[i * 3 + 1] = c.g; fC[i * 3 + 2] = c.b;
+    }
+    flowGeo.attributes.position.needsUpdate = true;
+    flowGeo.attributes.color.needsUpdate = true;
+
+    /* Ambient */
+    var aP = ambGeo.attributes.position.array;
+    for (var i = 0; i < AMB; i++) {
+      aP[i * 3] += ambVel[i * 3];
+      aP[i * 3 + 1] += ambVel[i * 3 + 1];
+      aP[i * 3 + 2] += ambVel[i * 3 + 2];
+      if (Math.abs(aP[i * 3]) > 20) ambVel[i * 3] *= -1;
+      if (Math.abs(aP[i * 3 + 1]) > 9) ambVel[i * 3 + 1] *= -1;
+      if (Math.abs(aP[i * 3 + 2]) > 8) ambVel[i * 3 + 2] *= -1;
+    }
+    ambGeo.attributes.position.needsUpdate = true;
+    gridMesh.material.opacity = 0.06 + Math.sin(t * 0.25) * 0.01;
+
+    /* Pulse rings */
+    pulseRings.forEach(function (ring) {
+      ring.userData.progress += ring.userData.speed * 0.004;
+      if (ring.userData.progress > 1) ring.userData.progress -= 1;
+      var rp = ring.userData.progress;
+      ring.position.x = POS.capture + rp * totalSpan;
+      var fade = Math.sin(rp * Math.PI);
+      ring.material.opacity = fade * 0.18;
+      var rs = 0.5 + fade * 0.5;
+      ring.scale.set(rs, rs, rs);
+    });
+
+    updateLabels();
+    renderer.render(scene, camera);
+  }
+  animate();
+
+  window.addEventListener('resize', function () {
+    camera.aspect = W() / H();
+    camera.updateProjectionMatrix();
+    renderer.setSize(W(), H());
+  });
+})();
