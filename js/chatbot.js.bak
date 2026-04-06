@@ -1,594 +1,11 @@
-/* ===== ZeroPFAS Chatbot v6 — Conversational AI with Semantic Understanding ===== */
-/* Architecture: TextProcessor → SynonymEngine → SemanticEngine → ConversationContext
-   → IntentClassifier → ResponseGenerator → UI
-   Each module exposes a clean API. To extend: add entries to KB, synonym groups, or topic graph. */
+/* ===== ZeroPFAS Chatbot v5 — Intent Classification + Bilingual Smart FAQ (ES/EN) ===== */
 (function () {
   'use strict';
 
-  /* ════════════════════════════════════════════════════════════════════
-     MODULE 1 — TEXT PROCESSING PIPELINE
-     Normalization, tokenization, stemming, edit-distance, n-gram similarity.
-     ════════════════════════════════════════════════════════════════════ */
-  var TextProcessor = (function () {
-    var STOPWORDS = {
-      es: {a:1,al:1,ante:1,con:1,de:1,del:1,el:1,ella:1,en:1,es:1,esa:1,ese:1,eso:1,esta:1,este:1,esto:1,hay:1,la:1,las:1,le:1,les:1,lo:1,los:1,me:1,mi:1,muy:1,no:1,nos:1,o:1,para:1,pero:1,por:1,que:1,se:1,si:1,sin:1,son:1,su:1,te:1,tu:1,tus:1,un:1,una:1,uno:1,unas:1,unos:1,y:1,ya:1,yo:1,como:1,mas:1,ser:1,ver:1,dar:1,ir:1,fue:1,ha:1,he:1,tiene:1,tengo:1,hace:1},
-      en: {a:1,an:1,and:1,are:1,as:1,at:1,be:1,been:1,but:1,by:1,can:1,did:1,do:1,does:1,for:1,from:1,had:1,has:1,have:1,he:1,her:1,him:1,his:1,how:1,i:1,if:1,in:1,into:1,is:1,it:1,its:1,just:1,me:1,my:1,no:1,not:1,of:1,on:1,or:1,our:1,she:1,so:1,than:1,that:1,the:1,them:1,then:1,they:1,this:1,to:1,up:1,us:1,was:1,we:1,were:1,what:1,when:1,who:1,will:1,with:1,you:1,your:1}
-    };
-
-    function normalize(str) {
-      return str.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^\w\s]/g, ' ').replace(/\s+/g, ' ').trim();
-    }
-
-    function stemES(w) {
-      return w.replace(/(cion|ciones|miento|mientos|mente|idad|idades|ismo|ismos|ista|istas)$/i, '')
-        .replace(/(ando|iendo|ado|ido|ada|ida|ados|idos|adas|idas)$/i, '')
-        .replace(/(ar|er|ir|arse|erse|irse)$/i, '')
-        .replace(/(amos|emos|imos|an|en|as|es|os)$/i, '')
-        .replace(/(ble|bles|dor|dora|dores|doras)$/i, '');
-    }
-    function stemEN(w) {
-      return w.replace(/(tion|tions|ment|ments|ness|ity|ism|isms|ist|ists|ous|ive|ful|less|able|ible)$/i, '')
-        .replace(/(ating|ing|ed|er|est|ly)$/i, '')
-        .replace(/(ize|ise|ify|ate)$/i, '')
-        .replace(/(al|ial|ical)$/i, '');
-    }
-    function stem(w, lang) { return w.length <= 3 ? w : (lang === 'es' ? stemES(w) : stemEN(w)); }
-
-    function tokenize(text, lang) {
-      var norm = normalize(text);
-      var raw = norm.split(' ').filter(function (t) { return t.length > 1; });
-      var sw = STOPWORDS[lang] || STOPWORDS.es;
-      var meaningful = raw.filter(function (t) { return !sw[t]; });
-      return {
-        raw: raw,
-        meaningful: meaningful,
-        stemmed: meaningful.map(function (t) { return stem(t, lang); }),
-        normalized: norm
-      };
-    }
-
-    /* Levenshtein edit distance */
-    function editDistance(a, b) {
-      if (a === b) return 0;
-      var la = a.length, lb = b.length;
-      if (!la) return lb;
-      if (!lb) return la;
-      var prev = [], curr = [], i, j;
-      for (j = 0; j <= la; j++) prev[j] = j;
-      for (i = 1; i <= lb; i++) {
-        curr[0] = i;
-        for (j = 1; j <= la; j++) {
-          curr[j] = b[i - 1] === a[j - 1]
-            ? prev[j - 1]
-            : Math.min(prev[j - 1], prev[j], curr[j - 1]) + 1;
-        }
-        var tmp = prev; prev = curr; curr = tmp;
-      }
-      return prev[la];
-    }
-
-    /* Character-level n-gram set (default trigrams) */
-    function charNgrams(word, n) {
-      n = n || 3;
-      var grams = {}, padded = '$' + word + '$';
-      for (var i = 0; i <= padded.length - n; i++) grams[padded.substring(i, i + n)] = 1;
-      return grams;
-    }
-
-    /* Jaccard similarity on character trigrams */
-    function ngramSimilarity(a, b) {
-      if (a === b) return 1.0;
-      if (a.length < 2 || b.length < 2) return 0;
-      var ga = charNgrams(a, 3), gb = charNgrams(b, 3);
-      var inter = 0, sizeA = 0, sizeB = 0, k;
-      for (k in ga) { sizeA++; if (gb[k]) inter++; }
-      for (k in gb) sizeB++;
-      var union = sizeA + sizeB - inter;
-      return union === 0 ? 0 : inter / union;
-    }
-
-    return {
-      normalize: normalize, tokenize: tokenize, stem: stem,
-      editDistance: editDistance, ngramSimilarity: ngramSimilarity,
-      STOPWORDS: STOPWORDS
-    };
-  })();
-
-  /* ════════════════════════════════════════════════════════════════════
-     MODULE 2 — SYNONYM & SEMANTIC EXPANSION
-     Groups of semantically related words. When any member appears in a
-     query, ALL members become candidate match tokens — dramatically
-     improving recall without sacrificing precision (IDF handles that).
-     To extend: add new groups or append terms to existing groups.
-     ════════════════════════════════════════════════════════════════════ */
-  var SynonymEngine = (function () {
-    var GROUPS = {
-      es: [
-        ['pfas','contaminantes eternos','forever chemicals','perfluorados','fluorados','quimicos eternos','sustancias perfluoradas','polifluorados'],
-        ['peligro','peligroso','dañino','nocivo','toxico','riesgo','daño','malo','perjudicial','amenaza','veneno'],
-        ['salud','enfermedad','cancer','enfermo','dolencia','patologia','organismo','cuerpo'],
-        ['eliminar','destruir','romper','descomponer','degradar','quitar','limpiar','purificar','depurar'],
-        ['precio','coste','costo','tarifa','presupuesto','cuanto cuesta','cuanto vale','pagar','economico','caro','barato','inversion'],
-        ['producto','dispositivo','filtro','aparato','equipo','maquina','purificador','sistema filtrado'],
-        ['tecnologia','metodo','procedimiento','proceso','mecanismo','tecnica','innovacion','ciencia'],
-        ['normativa','regulacion','legislacion','ley','directiva','norma','legal','regla','obligatorio'],
-        ['verificar','comprobar','demostrar','certificar','probar','medir','analizar','testear','prueba','evidencia'],
-        ['contacto','contactar','hablar','escribir','comunicar','email','correo','mensaje','llamar','soporte'],
-        ['equipo','fundador','creador','responsable','detras','inventor','cientifico','investigador'],
-        ['agua','grifo','potable','fuente','suministro','acuifero'],
-        ['medio ambiente','ecologia','naturaleza','planeta','ecosistema','medioambiental','verde','sostenible'],
-        ['ayudar','proteger','prevenir','actuar','contribuir','colaborar','participar'],
-        ['industrial','gran escala','planta','fabrica','municipal','empresa','comercial','infraestructura'],
-        ['nfc','chip','trazabilidad','rastreo','seguimiento','monitorizacion','smart','inteligente'],
-        ['comprar','adquirir','obtener','conseguir','pedir','encargar','venta','tienda'],
-        ['instalar','instalacion','montar','colocar','poner','configurar'],
-        ['casa','hogar','domestico','residencial','vivienda','cocina','fregadero','particular'],
-        ['diferencia','ventaja','mejor','comparar','unico','especial','superior','innovador'],
-        ['funcionar','como funciona','opera','trabaja','sirve','mecanismo'],
-        ['que es','que son','definicion','significado','explicar','describir','informacion','concepto'],
-        ['preocupar','preocupado','preocupada','inquieto','inquieta','miedo','temor','temer','asustado','asustada','angustia','ansiedad'],
-        ['familia','hijo','hija','hijos','nino','nina','ninos','bebe','bebes','menor','menores','pequeno','pequena','embarazada','embarazo'],
-        ['verdad','verdadero','real','cierto','efectivo','eficaz','fiable','confiable','probado','demostrado','garantia','certificado'],
-        ['bueno','buena','malo','mala','seguro','segura','peligroso','peligrosa','saludable','nocivo','toxico','limpio','limpia','sucio','sucia'],
-        ['beber','tomar','ingerir','consumir','tragar','bebida'],
-        ['contaminar','contaminado','contaminada','contaminacion','contaminante','contaminantes','polucionar','polucion']
-      ],
-      en: [
-        ['pfas','forever chemicals','perfluoroalkyl','fluorinated chemicals','eternal chemicals','polyfluoroalkyl'],
-        ['danger','dangerous','harmful','toxic','risk','hazard','threat','poisonous'],
-        ['health','disease','cancer','illness','condition','body','blood'],
-        ['eliminate','destroy','break','decompose','degrade','remove','clean','purify'],
-        ['price','cost','pricing','budget','how much','affordable','expensive','cheap','investment'],
-        ['product','device','filter','appliance','equipment','machine','purifier','system'],
-        ['technology','method','procedure','process','mechanism','technique','innovation','science'],
-        ['regulation','legislation','law','directive','rule','legal','standard','mandatory'],
-        ['verify','prove','certify','test','measure','analyze','validate','evidence'],
-        ['contact','reach','write','email','message','call','inquire','support'],
-        ['team','founder','creator','who','behind','inventor','scientist','researcher'],
-        ['water','tap','drinking','supply','faucet','aquifer'],
-        ['environment','ecology','nature','planet','ecosystem','environmental','green','sustainable'],
-        ['help','protect','prevent','contribute','action','participate'],
-        ['industrial','large scale','plant','factory','municipal','commercial','enterprise','infrastructure'],
-        ['nfc','chip','traceability','tracking','monitoring','smart','intelligent'],
-        ['buy','purchase','acquire','get','order','shop','sale'],
-        ['install','installation','setup','mount','place','configure'],
-        ['home','house','domestic','residential','household','kitchen','sink'],
-        ['difference','advantage','better','compare','unique','special','superior','innovative'],
-        ['work','how works','operate','function','mechanism'],
-        ['what is','what are','definition','meaning','explain','describe','information','concept'],
-        ['worry','worried','concern','concerned','anxious','anxiety','fear','afraid','scared','frightened','uneasy'],
-        ['family','son','daughter','children','kids','child','baby','babies','minor','minors','toddler','pregnant','pregnancy'],
-        ['true','truth','real','certain','effective','reliable','trustworthy','proven','demonstrated','guarantee','certified'],
-        ['good','bad','safe','unsafe','dangerous','healthy','harmful','toxic','clean','dirty','polluted'],
-        ['drink','consume','ingest','swallow','beverage'],
-        ['contaminate','contaminated','contamination','contaminant','contaminants','pollute','pollution','polluted']
-      ]
-    };
-
-    var _lookup = {};
-    function _buildLookup(lang) {
-      if (_lookup[lang]) return;
-      _lookup[lang] = {};
-      var groups = GROUPS[lang] || [];
-      for (var g = 0; g < groups.length; g++) {
-        for (var i = 0; i < groups[g].length; i++) {
-          var tokens = TextProcessor.normalize(groups[g][i]).split(' ');
-          for (var t = 0; t < tokens.length; t++) {
-            if (tokens[t].length < 2) continue;
-            if (!_lookup[lang][tokens[t]]) _lookup[lang][tokens[t]] = [];
-            if (_lookup[lang][tokens[t]].indexOf(g) === -1) _lookup[lang][tokens[t]].push(g);
-          }
-        }
-      }
-    }
-
-    /** Expand a list of tokens with all synonyms from matching groups */
-    function expand(tokens, lang) {
-      _buildLookup(lang);
-      var lk = _lookup[lang] || {};
-      var result = {};
-      var seenGroups = {};
-      var i, j, k;
-      for (i = 0; i < tokens.length; i++) result[tokens[i]] = 1;
-      for (i = 0; i < tokens.length; i++) {
-        var groupIds = lk[tokens[i]];
-        if (!groupIds) continue;
-        for (j = 0; j < groupIds.length; j++) {
-          if (seenGroups[groupIds[j]]) continue;
-          seenGroups[groupIds[j]] = 1;
-          var group = GROUPS[lang][groupIds[j]];
-          for (k = 0; k < group.length; k++) {
-            var parts = TextProcessor.normalize(group[k]).split(' ');
-            for (var p = 0; p < parts.length; p++) {
-              if (parts[p].length > 2) result[parts[p]] = 1;
-            }
-          }
-        }
-      }
-      var out = [];
-      for (var key in result) out.push(key);
-      return out;
-    }
-
-    return { expand: expand };
-  })();
-
-  /* ════════════════════════════════════════════════════════════════════
-     MODULE 3 — SEMANTIC SCORING ENGINE
-     Multi-signal matching with IDF weighting, synonym expansion,
-     fuzzy n-gram tolerance, and context boosting.
-     Signals per query-token × doc-token pair:
-       Phrase match in input  → 15 × avgIDF
-       Exact token match      →  8 × IDF   (original query token)
-       Synonym-expanded match →  5 × IDF
-       Stem match             →  4 × IDF
-       Fuzzy n-gram match     →  3 × sim × IDF
-     Final score = Σ signals × entryWeight × contextBoost
-     ════════════════════════════════════════════════════════════════════ */
-  var SemanticEngine = (function () {
-    var _indices = {};
-
-    /** Pre-compute IDF and inverted index from FAQ keyword lists */
-    function buildIndex(faqEntries, lang) {
-      if (_indices[lang]) return _indices[lang];
-      var N = faqEntries.length;
-      var docTokenSets = [];
-      var allTerms = {};
-      var docFreq = {};
-      var i, j, k;
-      for (i = 0; i < N; i++) {
-        var ts = {};
-        var kws = faqEntries[i].keywords;
-        for (j = 0; j < kws.length; j++) {
-          var parts = TextProcessor.normalize(kws[j]).split(' ');
-          for (k = 0; k < parts.length; k++) {
-            if (parts[k].length > 1) { ts[parts[k]] = 1; allTerms[parts[k]] = 1; }
-          }
-        }
-        docTokenSets.push(ts);
-      }
-      for (var term in allTerms) {
-        var count = 0;
-        for (i = 0; i < N; i++) { if (docTokenSets[i][term]) count++; }
-        docFreq[term] = count;
-      }
-      var idf = {};
-      for (var term in allTerms) {
-        idf[term] = Math.log((N + 1) / (docFreq[term] + 1)) + 1;
-      }
-      /* Stem→terms reverse index for stem matching */
-      var stemIdx = {};
-      for (var term in allTerms) {
-        var s = TextProcessor.stem(term, lang);
-        if (!stemIdx[s]) stemIdx[s] = [];
-        stemIdx[s].push(term);
-      }
-      _indices[lang] = { docTokenSets: docTokenSets, vocab: allTerms, idf: idf, stemIdx: stemIdx, N: N };
-      return _indices[lang];
-    }
-
-    /** Score query against all FAQ entries. Returns sorted [{entry, score, confidence, signals}] */
-    function scoreQuery(query, faqEntries, lang, contextBoosts) {
-      var idx = buildIndex(faqEntries, lang);
-      var parsed = TextProcessor.tokenize(query, lang);
-      if (parsed.meaningful.length === 0) return [];
-
-      /* Synonym expansion */
-      var expanded = SynonymEngine.expand(parsed.meaningful, lang);
-      var origSet = {};
-      for (var m = 0; m < parsed.meaningful.length; m++) origSet[parsed.meaningful[m]] = 1;
-
-      /* Fuzzy-correct tokens not in vocabulary */
-      var allTokens = {};
-      for (var e = 0; e < expanded.length; e++) allTokens[expanded[e]] = 1;
-      for (m = 0; m < parsed.meaningful.length; m++) {
-        var tok = parsed.meaningful[m];
-        if (!idx.vocab[tok] && tok.length >= 4) {
-          var bestMatch = null, bestSim = 0;
-          for (var vt in idx.vocab) {
-            if (Math.abs(vt.length - tok.length) > 3) continue;
-            var sim = TextProcessor.ngramSimilarity(tok, vt);
-            if (sim > bestSim && sim > 0.35) { bestSim = sim; bestMatch = vt; }
-          }
-          if (bestMatch) allTokens[bestMatch] = 1;
-        }
-      }
-
-      var tokenArr = [];
-      for (var key in allTokens) tokenArr.push(key);
-      var stemArr = tokenArr.map(function (t) { return TextProcessor.stem(t, lang); });
-
-      var results = [];
-      for (var i = 0; i < faqEntries.length; i++) {
-        var entry = faqEntries[i];
-        var doc = idx.docTokenSets[i];
-        var score = 0;
-        var signals = { phrase: 0, exact: 0, synonym: 0, stem: 0, fuzzy: 0 };
-
-        /* Signal 1: Multi-word phrase present in raw input */
-        for (var p = 0; p < entry.keywords.length; p++) {
-          var kwN = TextProcessor.normalize(entry.keywords[p]);
-          if (kwN.indexOf(' ') !== -1 && parsed.normalized.indexOf(kwN) !== -1) {
-            var pts = kwN.split(' ');
-            var avgIdf = 0;
-            for (var pi = 0; pi < pts.length; pi++) avgIdf += (idx.idf[pts[pi]] || 1);
-            avgIdf /= pts.length;
-            score += 15 * avgIdf;
-            signals.phrase++;
-          }
-        }
-
-        /* Signals 2-5: Token-level */
-        for (var t = 0; t < tokenArr.length; t++) {
-          var qTok = tokenArr[t];
-          var qStem = stemArr[t];
-          var idfW = idx.idf[qTok] || 1.5;
-          if (doc[qTok]) {
-            if (origSet[qTok]) { score += 8 * idfW; signals.exact++; }
-            else                { score += 5 * idfW; signals.synonym++; }
-          } else {
-            var stemHit = false;
-            for (var dTok in doc) {
-              if (TextProcessor.stem(dTok, lang) === qStem && qStem.length >= 3) {
-                score += 4 * (idx.idf[dTok] || 1);
-                signals.stem++;
-                stemHit = true;
-                break;
-              }
-            }
-            if (!stemHit && qTok.length >= 4) {
-              var bestF = 0;
-              for (var dTok in doc) {
-                if (dTok.length < 4) continue;
-                var fs = TextProcessor.ngramSimilarity(qTok, dTok);
-                if (fs > bestF) bestF = fs;
-              }
-              if (bestF > 0.4) { score += 3 * bestF * idfW; signals.fuzzy++; }
-            }
-          }
-        }
-
-        score *= (entry.weight || 1.0);
-        if (contextBoosts && contextBoosts[entry.id]) score *= contextBoosts[entry.id];
-        if (score > 0) results.push({ entry: entry, score: score, signals: signals, confidence: 0 });
-      }
-
-      results.sort(function (a, b) { return b.score - a.score; });
-
-      /* Confidence: combines absolute score strength + gap from 2nd place */
-      if (results.length > 0) {
-        var top = results[0].score;
-        var sec = results.length > 1 ? results[1].score : 0;
-        var gap = top - sec;
-        for (i = 0; i < results.length; i++) {
-          var absC = Math.min(results[i].score / 25, 1.0);
-          var relC = results.length > 1 ? Math.min(gap / (top + 0.001), 1.0) : 1.0;
-          results[i].confidence = absC * 0.7 + relC * 0.3;
-        }
-      }
-      return results;
-    }
-
-    return { buildIndex: buildIndex, scoreQuery: scoreQuery };
-  })();
-
-  /* ════════════════════════════════════════════════════════════════════
-     MODULE 4 — CONVERSATION CONTEXT MANAGER
-     Tracks history, visited topics, topic relationships. Enables
-     follow-up detection, anaphora resolution, context-aware boosting.
-     ════════════════════════════════════════════════════════════════════ */
-  var ConversationCtx = (function () {
-    var _history = [];
-    var _topicStack = [];
-    var _currentTopic = null;
-    var _lastFollowUp = null;
-    var MAX_HISTORY = 20;
-
-    var TOPIC_GRAPH = {
-      'pfas-intro':     ['pfas-danger','environment','regulation','scwo'],
-      'pfas-danger':    ['pfas-intro','how-to-help','water-safe','environment'],
-      'scwo':           ['verification','product','industrial','pfas-intro'],
-      'product':        ['nfc','pricing','scwo','water-safe','difference'],
-      'regulation':     ['pfas-intro','pfas-danger','product','industrial'],
-      'verification':   ['scwo','industrial','product'],
-      'industrial':     ['scwo','verification','product','pricing'],
-      'nfc':            ['product','pricing'],
-      'contact':        ['pricing','team'],
-      'team':           ['zeropfas-about','contact'],
-      'pricing':        ['product','industrial','contact'],
-      'water-safe':     ['product','pfas-danger','regulation'],
-      'difference':     ['scwo','verification','product'],
-      'zeropfas-about': ['team','scwo','product'],
-      'environment':    ['pfas-intro','pfas-danger','how-to-help'],
-      'how-to-help':    ['product','water-safe','contact']
-    };
-
-    var FOLLOWUP = {
-      es: /\b(dime mas|cuentame mas|cuenta mas|mas informacion|mas info|mas detalles|ampliar|profundizar|sigue|continua|y que mas|que mas|mas sobre|algo mas|otra cosa|explica mas|detalla|amplia|saber mas|desarrolla|mas)\b/i,
-      en: /\b(tell me more|more info|more information|more details|elaborate|continue|go on|expand|what else|anything else|more about|explain more|keep going|further|additional)\b/i
-    };
-
-    var REFERBACK = {
-      es: /\b(eso|esto|lo anterior|el anterior|la anterior|del que|de lo que|sobre eso|de eso|al respecto|sobre esto|de esto)\b/i,
-      en: /\b(that|this|the previous|about that|about this|regarding that|regarding this)\b/i
-    };
-
-    function push(userMsg, topicId) {
-      _history.push({ user: userMsg, topicId: topicId, ts: Date.now() });
-      if (_history.length > MAX_HISTORY) _history.shift();
-      if (topicId) {
-        _currentTopic = topicId;
-        var i = _topicStack.indexOf(topicId);
-        if (i !== -1) _topicStack.splice(i, 1);
-        _topicStack.push(topicId);
-      }
-    }
-
-    function setLastFollowUp(arr) { _lastFollowUp = arr; }
-    function getLastFollowUp()    { return _lastFollowUp; }
-    function getTopic()           { return _currentTopic; }
-    function getStack()           { return _topicStack.slice(); }
-
-    function isFollowUp(text, lang) {
-      return (FOLLOWUP[lang] || FOLLOWUP.es).test(text);
-    }
-    function hasReferback(text, lang) {
-      return (REFERBACK[lang] || REFERBACK.es).test(text);
-    }
-
-    /** Unvisited topics adjacent to current in the topic graph */
-    function relatedUnvisited() {
-      if (!_currentTopic) return [];
-      var adj = TOPIC_GRAPH[_currentTopic] || [];
-      var visited = {};
-      for (var i = 0; i < _topicStack.length; i++) visited[_topicStack[i]] = 1;
-      return adj.filter(function (t) { return !visited[t]; });
-    }
-
-    /** Next unvisited related topic (or null) */
-    function resolveFollowUp() {
-      var uv = relatedUnvisited();
-      return uv.length > 0 ? uv[0] : null;
-    }
-
-    /** Scoring boosts based on conversation state */
-    function getBoosts() {
-      var b = {};
-      if (!_currentTopic) return b;
-      b[_currentTopic] = 1.15;
-      var adj = TOPIC_GRAPH[_currentTopic] || [];
-      for (var i = 0; i < adj.length; i++) b[adj[i]] = 1.1;
-      return b;
-    }
-
-    function reset() { _history = []; _topicStack = []; _currentTopic = null; _lastFollowUp = null; }
-
-    return {
-      push: push, getTopic: getTopic, getStack: getStack,
-      setLastFollowUp: setLastFollowUp, getLastFollowUp: getLastFollowUp,
-      isFollowUp: isFollowUp, hasReferback: hasReferback,
-      relatedUnvisited: relatedUnvisited, resolveFollowUp: resolveFollowUp,
-      getBoosts: getBoosts, reset: reset, TOPIC_GRAPH: TOPIC_GRAPH
-    };
-  })();
-
-  /* ════════════════════════════════════════════════════════════════════
-     MODULE 4b — NATURAL LANGUAGE UNDERSTANDING (NLU)
-     Sentence-level intent detection via regex patterns on full text.
-     Produces ADDITIVE scores for FAQ entries — works even when
-     token-level scoring returns 0 (no keyword overlap).
-     ════════════════════════════════════════════════════════════════════ */
-  var NLU = (function () {
-    var PATTERNS = {
-      es: [
-        /* Question archetypes */
-        {test: /\b(qu[eé]\s+(es|son|significa|quiere\s+decir)|explic[aá](me|r|nos)|cu[eé]ntame\s+(sobre|de|qu[eé])|dime\s+(qu[eé]|sobre)|informaci[oó]n\s+(sobre|de)|h[aá]bla(me)?\s+(de|sobre))\b/i, targets: {'pfas-intro': 3.0, 'zeropfas-about': 1.5}},
-        {test: /\b(c[oó]mo\s+(funciona|se\s+(hace|elimina|destruye|rompe|consigue|usa|utiliza)|trabaja|opera|lo\s+hac[eé])|de\s+qu[eé]\s+(manera|forma)|mediante\s+qu[eé]|cu[aá]l\s+es\s+el\s+(proceso|m[eé]todo)|en\s+qu[eé]\s+consiste)\b/i, targets: {'scwo': 3.0, 'product': 1.5}},
-        {test: /\b(es\s+segur[oa]|es\s+peligros[oa]|puede\s+(afectar|da[nñ]ar|hacer\s+da[nñ]o|enfermar)|riesgo\s+(para|de|en)|da[nñ]a|perjudica|seguridad\s+(del|de)|saludable|insegur[oa])\b/i, targets: {'pfas-danger': 3.0, 'water-safe': 2.5}},
-        /* Water concern */
-        {test: /\b(agua\s+(de\s+mi|del|que\s+(beb|tom)|de\s+casa|del\s+grifo|corriente|embotellad)|beb(o|er|emos|en)\s+agua|tomar\s+agua|mi\s+grifo|puedo\s+beber|calidad\s+(del|de\s+mi)\s+agua)\b/i, targets: {'water-safe': 3.5, 'product': 1.5, 'pfas-danger': 1.2}},
-        {test: /\b(agua\s+contaminad|contaminaci[oó]n\s+(del|de)\s+agua|agua\s+(mal[oa]|sucia|t[oó]xic))\b/i, targets: {'water-safe': 3.0, 'pfas-danger': 2.0, 'pfas-intro': 1.0}},
-        /* Purchase / Product interest */
-        {test: /\b(comprar|adquirir|d[oó]nde\s+(compro|lo\s+venden|consigo|puedo)|cu[aá]nto\s+(cuesta|vale|es)|precio|quiero\s+(un|el|comprar)|venden|ofrecen|para\s+mi\s+casa|instalar\s+en\s+(mi|casa|hogar))\b/i, targets: {'product': 3.0, 'pricing': 2.5, 'nfc': 1.0}},
-        {test: /\b(filtro|purificador|sistema\s+(de\s+filtrado|de\s+purificaci|para\s+agua)|debajo\s+del\s+fregadero|aparato\s+para\s+(el\s+)?agua)\b/i, targets: {'product': 3.0, 'pricing': 1.5}},
-        /* What can I do / Protection */
-        {test: /\b(qu[eé]\s+(puedo|debo|deber[ií]a)\s+hacer|c[oó]mo\s+(me\s+protejo|proteger|evitar|prevenir|act[uú]o|ayudo|contribu)|hay\s+(algo|alguna\s+forma)|se\s+puede\s+(hacer|evitar)|qu[eé]\s+hago|consejos?|recomendaci[oó]n|formas?\s+de\s+(proteger|ayudar|actuar|evitar))\b/i, targets: {'how-to-help': 3.5, 'product': 1.5, 'water-safe': 1.2}},
-        /* Regulations */
-        {test: /\b(normativa|regulaci[oó]n|ley(es)?|legal|obligatori[oa]|cumplir|permitid[oa]|prohibid[oa]|l[ií]mites?|cuando\s+entra|fecha|plazo|EPA|ECHA|directiva|europ[ea]|estados\s+unidos|2026)\b/i, targets: {'regulation': 3.5}},
-        /* Team / About */
-        {test: /\b(qui[eé]n(es)?\s+(sois|son|est[aá]|cre[oó]|fund[oó]|lidera|dirige)|equipo|fundador(es)?|startup|detr[aá]s\s+de|sobre\s+(vosotros|ustedes|zeropfas|la\s+empresa)|a\s+qu[eé]\s+(os\s+dedic[aá]is|se\s+dedican))\b/i, targets: {'team': 2.5, 'zeropfas-about': 3.0}},
-        /* Verification / Trust */
-        {test: /\b(funciona\s+(de\s+verdad|realmente|bien)|es\s+(verdad|cierto|real|efectiv[oa]|eficaz|fiable)|c[oó]mo\s+(sab[eé][ins]|demuestr|prueb|verific|comprueb)|de\s+verdad|seguro\s+que|confiar|garant[ií]a|certificad[oa]|fi[aá]r(me|se|nos)|mentira|enga[nñ]o|estafa|timo)\b/i, targets: {'verification': 3.5, 'scwo': 1.2}},
-        /* Difference / Comparison */
-        {test: /\b(qu[eé]\s+(os|les|te)\s+diferencia|por\s+qu[eé]\s+(zeropfas|vosotros|elegir(os)?|ustedes)|mejor\s+que|comparad[oa]?\s+con|diferencia|ventaja|[uú]nic[oa]|especial|frente\s+a\s+otros|otros\s+(filtros|sistemas|m[eé]todos))\b/i, targets: {'difference': 3.5, 'scwo': 1.2}},
-        /* Contact */
-        {test: /\b(contactar|hablar\s+con\s+(alguien|una\s+persona|vosotros|ustedes)|c[oó]mo\s+(os\s+contacto|contacto|llego)|email|tel[eé]fono|quiero\s+hablar|necesito\s+ayuda\s+(de\s+una\s+persona|humana)|formulario)\b/i, targets: {'contact': 3.5}},
-        /* Environmental */
-        {test: /\b(medio\s*ambiente|naturaleza|planeta|ecosistema|contaminaci[oó]n\s+(del|de\s+los|ambiental)|r[ií]os?|lagos?|mares?|oc[eé]anos?|suelos?|animales?|peces?|cadena\s+alimentaria|impacto\s+(ambiental|en\s+el))\b/i, targets: {'environment': 3.5, 'pfas-intro': 1.2}},
-        /* Industrial */
-        {test: /\b(industrial|gran\s+escala|f[aá]brica|planta\s+(de|industrial)|municipal|ciudad|EDAR|depuradora|grandes\s+vol[uú]menes|mucha\s+agua|negocio|comercial|soluci[oó]n\s+para\s+empresas)\b/i, targets: {'industrial': 3.5, 'pricing': 1.3}},
-        /* NFC / Monitoring */
-        {test: /\b(nfc|chip|trazabilidad|monitorizar|seguimiento|app|aplicaci[oó]n|cu[aá]ndo\s+cambiar|cu[aá]nto\s+dura|vida\s+[uú]til|recambio|cartucho|reemplazar|sustituir)\b/i, targets: {'nfc': 3.5, 'product': 1.3}},
-        /* General concern (emotional, no domain words needed) */
-        {test: /\b(me\s+preocupa|tengo\s+miedo|estoy\s+preocupad[oa]|me\s+da\s+miedo|me\s+asusta|no\s+s[eé]\s+si|deber[ií]a\s+preocuparme|es\s+(grave|serio|importante)|qu[eé]\s+tan\s+(grave|serio|malo))\b/i, targets: {'pfas-danger': 2.5, 'water-safe': 2.5, 'how-to-help': 2.0}},
-        /* Family / Children concern */
-        {test: /\b(mi\s+familia|mis\s+hijos|mis\s+ni[nñ]os|ni[nñ]os|beb[eé]s?|embarazad[oa]|embarazo|proteger\s+a\s+mi|mi\s+hij[oa]|menores|peque[nñ]os|hijos\s+peque[nñ]os)\b/i, targets: {'pfas-danger': 2.5, 'how-to-help': 2.5, 'water-safe': 2.0}},
-        /* Skepticism / Doubt */
-        {test: /\b(no\s+creo|imposible|no\s+se\s+puede|no\s+funciona|dudo|dudas?|no\s+me\s+(creo|f[ií][oa])|suena\s+(raro|fake|mentira)|es\s+(posible|imposible)|es\s+(un\s+)?(fraude|timo|enga[nñ]o|estafa)|demasiado\s+bueno)\b/i, targets: {'verification': 3.0, 'scwo': 2.0}},
-        /* Cancer / Health specific */
-        {test: /\b(c[aá]ncer|tumor|enfermedad|enferm[oa]|causan?|provocan?|producen?\s+(c[aá]ncer|enfermedad)|tiroides|h[ií]gado|ri[nñ][oó]n|hormona|sistema\s+inmun|fertilidad|reproducci[oó]n)\b/i, targets: {'pfas-danger': 3.5, 'pfas-intro': 1.5}},
-        /* What I drink / consume / tap output */
-        {test: /\b(lo\s+que\s+(beb|com|consum|tom)|lo\s+que\s+sale\s+del\s+grifo|beber\s+del\s+grifo|agua\s+que\s+sale)\b/i, targets: {'water-safe': 3.0, 'pfas-danger': 1.5}},
-        /* "Quiero saber" intent */
-        {test: /\b(quiero\s+saber|me\s+gustaria\s+saber|necesito\s+saber|quisiera\s+(saber|entender|conocer)|me\s+interesa|siento\s+curiosidad)\b/i, targets: {'pfas-intro': 2.0, 'zeropfas-about': 1.5}},
-        /* PFAS in water specifically */
-        {test: /\b(pfas\s+en\s+(el\s+)?agua|agua\s+con\s+pfas|pfas\s+del\s+grifo|hay\s+pfas)\b/i, targets: {'water-safe': 3.0, 'pfas-danger': 2.0, 'pfas-intro': 1.5}},
-      ],
-      en: [
-        /* Question archetypes */
-        {test: /\b(what\s+(is|are|does)|explain|tell\s+me\s+about|information\s+(about|on)|describe)\b/i, targets: {'pfas-intro': 3.0, 'zeropfas-about': 1.5}},
-        {test: /\b(how\s+(does\s+it|do\s+you|to)\s+(work|operate)|what\s+(process|method)|how\s+is\s+it\s+done|mechanism)\b/i, targets: {'scwo': 3.0, 'product': 1.5}},
-        {test: /\b(is\s+it\s+(safe|dangerous)|can\s+it\s+(affect|harm|hurt)|worried|concerned|risk(y)?|harmful|damag|fear|afraid|safety|healthy|unsafe)\b/i, targets: {'pfas-danger': 3.0, 'water-safe': 2.5}},
-        /* Water concern */
-        {test: /\b(water\s+(from|in|at)\s+my|drinking?\s+water|my\s+(tap|faucet)|can\s+i\s+drink|safe\s+to\s+drink|water\s+quality|contaminated\s+water|home\s+water)\b/i, targets: {'water-safe': 3.5, 'product': 1.5, 'pfas-danger': 1.2}},
-        /* Purchase / Product */
-        {test: /\b(buy|purchase|where\s+(can\s+i|to)\s+(buy|get)|how\s+much|price|cost|want\s+(a|the|to\s+buy)|do\s+you\s+sell|available|for\s+my\s+home|install)\b/i, targets: {'product': 3.0, 'pricing': 2.5, 'nfc': 1.0}},
-        {test: /\b(filter|purifier|filtration\s+system|under\s+(the\s+)?sink|water\s+(device|appliance|system))\b/i, targets: {'product': 3.0, 'pricing': 1.5}},
-        /* What can I do */
-        {test: /\b(what\s+(can|should)\s+i\s+do|how\s+(to|can\s+i)\s+(protect|prevent|avoid|help|act)|anything\s+i\s+can|advice|recommendation|ways\s+to)\b/i, targets: {'how-to-help': 3.5, 'product': 1.5, 'water-safe': 1.2}},
-        /* Regulations */
-        {test: /\b(regulation|law|legal|mandatory|comply|allowed|banned|limit|deadline|EPA|ECHA|directive|europe|united\s+states|2026)\b/i, targets: {'regulation': 3.5}},
-        /* Team / About */
-        {test: /\b(who\s+(are\s+you|created|founded|leads|is\s+behind)|team|founder|company|startup|about\s+(you|zeropfas|the\s+company))\b/i, targets: {'team': 2.5, 'zeropfas-about': 3.0}},
-        /* Verification / Trust */
-        {test: /\b(does\s+it\s+(really|actually)\s+work|is\s+it\s+(true|real|effective|reliable|proven)|how\s+do\s+you\s+(prove|verify|demonstrate|know)|guarantee|certified|trust|scam|fake|lie)\b/i, targets: {'verification': 3.5, 'scwo': 1.2}},
-        /* Difference */
-        {test: /\b(what\s+makes\s+you\s+different|why\s+(zeropfas|choose\s+you)|better\s+than|compared\s+to|difference|advantage|unique|superior|vs\s+other)\b/i, targets: {'difference': 3.5, 'scwo': 1.2}},
-        /* Contact */
-        {test: /\b(contact|talk\s+to\s+(someone|a\s+person|you)|how\s+(to|can\s+i)\s+(reach|contact)|email|phone|want\s+to\s+(talk|speak)|help\s+from\s+a\s+person|form)\b/i, targets: {'contact': 3.5}},
-        /* Environmental */
-        {test: /\b(environment|nature|planet|ecosystem|pollution|rivers?|lakes?|oceans?|soil|animals?|fish|food\s+chain|environmental\s+impact)\b/i, targets: {'environment': 3.5, 'pfas-intro': 1.2}},
-        /* Industrial */
-        {test: /\b(industrial|large\s+scale|enterprise|factory|plant|municipal|city|commercial|business|high\s+volume)\b/i, targets: {'industrial': 3.5, 'pricing': 1.3}},
-        /* NFC */
-        {test: /\b(nfc|chip|traceability|monitor|tracking|app|when\s+to\s+(change|replace)|how\s+long|lifespan|cartridge|replacement)\b/i, targets: {'nfc': 3.5, 'product': 1.3}},
-        /* General concern */
-        {test: /\b(i'?m\s+(worried|concerned|afraid|scared)|should\s+i\s+(worry|be\s+concerned)|is\s+it\s+(serious|bad|critical))\b/i, targets: {'pfas-danger': 2.5, 'water-safe': 2.5, 'how-to-help': 2.0}},
-        /* Family */
-        {test: /\b(my\s+family|my\s+(kids|children|baby)|children|babies|pregnant|pregnancy|protect\s+my|little\s+ones)\b/i, targets: {'pfas-danger': 2.5, 'how-to-help': 2.5, 'water-safe': 2.0}},
-        /* Skepticism */
-        {test: /\b(i\s+don'?t\s+(believe|think)|impossible|can'?t\s+be|doesn'?t\s+work|doubt|too\s+good\s+to\s+be\s+true|sounds?\s+(fake|like\s+a\s+scam))\b/i, targets: {'verification': 3.0, 'scwo': 2.0}},
-        /* Cancer / Health */
-        {test: /\b(cancer|tumor|disease|sick|cause|thyroid|liver|kidney|hormone|immune\s+system|fertility|reproduction)\b/i, targets: {'pfas-danger': 3.5, 'pfas-intro': 1.5}},
-        /* PFAS in water */
-        {test: /\b(pfas\s+in\s+(my\s+)?water|water\s+with\s+pfas|pfas\s+from\s+(the\s+)?tap)\b/i, targets: {'water-safe': 3.0, 'pfas-danger': 2.0, 'pfas-intro': 1.5}},
-      ]
-    };
-
-    function analyze(text, lang) {
-      var norm = TextProcessor.normalize(text);
-      var patterns = PATTERNS[lang] || PATTERNS.es;
-      var scores = {};
-      var matchCount = 0;
-      for (var i = 0; i < patterns.length; i++) {
-        if (patterns[i].test.test(text) || patterns[i].test.test(norm)) {
-          matchCount++;
-          for (var id in patterns[i].targets) {
-            scores[id] = (scores[id] || 0) + patterns[i].targets[id];
-          }
-        }
-      }
-      return { scores: scores, matchCount: matchCount };
-    }
-
-    return { analyze: analyze };
-  })();
-
-  /* ════════════════════════════════════════════════════════════════════
-     MODULE 5 — KNOWLEDGE BASE
-     FAQ entries, conversational messages, topic labels.
-     To add a topic: push to es.faq + en.faq, add TOPIC_LABELS, TOPIC_GRAPH.
-     ════════════════════════════════════════════════════════════════════ */
+  /* ================================================================
+     KNOWLEDGE BASE — Massively expanded keywords, semantic coverage
+     Every possible phrasing of a question should match something.
+     ================================================================ */
   var KB = {
     es: {
       greetings: [
@@ -1096,28 +513,31 @@
     }
   };
 
-  /* ════════════════════════════════════════════════════════════════════
-     MODULE 6 — INTENT PATTERNS & NON-DOMAIN RESPONSES
-     Regex-based guardrails for non-domain conversational intents.
-     ════════════════════════════════════════════════════════════════════ */
+  /* ================================================================
+     CONVERSATIONAL PATTERNS — expanded
+     ================================================================ */
   var PATTERNS = {
     es: {
       greetingTest: /\b(hola|buenas|buenos dias|buenas tardes|buenas noches|hey|saludos|que tal|ei|ey|wenas)\b/i,
       thanksTest: /\b(gracias|genial|perfecto|vale|ok|entendido|claro|muchas gracias|te agradezco|guay|excelente|estupendo|increible|super|fantastico|buenisimo|mola|bien|muy bien)\b/i,
       byeTest: /\b(adios|hasta luego|chao|bye|nos vemos|hasta pronto|me voy|nada mas|eso es todo)\b/i,
-      affirmativeTest: /\b(si|sí|claro|por supuesto|dale|venga|adelante|quiero|me interesa)\b/i
+      affirmativeTest: /\b(si|sí|claro|por supuesto|dale|venga|adelante|quiero|me interesa|dime mas|cuéntame mas|cuentame mas)\b/i
     },
     en: {
       greetingTest: /\b(hello|hi|hey|good morning|good afternoon|good evening|greetings|howdy|what's up|yo|sup)\b/i,
       thanksTest: /\b(thanks|thank you|great|perfect|got it|understood|awesome|appreciate|cool|nice|excellent|wonderful|amazing|brilliant|fantastic)\b/i,
       byeTest: /\b(bye|goodbye|see you|later|farewell|that's all|nothing else|i'm done|gotta go)\b/i,
-      affirmativeTest: /\b(yes|yeah|yep|sure|of course|go ahead|please|i'm interested|want to know)\b/i
+      affirmativeTest: /\b(yes|yeah|yep|sure|of course|go ahead|please|tell me more|i'm interested|want to know)\b/i
     }
   };
 
+  /* ================================================================
+     INTENT PATTERNS — Detect non-domain categories
+     Priority: ofensivo > conversational > afectivo > dominio > ambiguo > fuera_de_tema
+     ================================================================ */
   var INTENT_PATTERNS = {
     es: {
-      ofensivo: /\b(puta|puto|mierda|joder|cabron|cabrona|gilipollas|idiota|imbecil|estupido|estupida|subnormal|retrasado|retrasada|guarra|guarro|zorra|zorro|marica|maricon|bollera|follar|folla|follame|follate|cono|polla|culo|teta|tetas|verga|pendejo|pendeja|chinga|hijueputa|hijo de puta|malparido|basura|asco|asqueroso|asquerosa|maldito|maldita|hdp|ctm|cagada|cagar|come mierda|vete a la mierda|que te den|muerete|muérete|desgraciado|desgraciada|inutil|payaso|payasa|mongolo|mongola|tu madre|tu vieja|perra|perro|cerdo|cerda|aborto|tarado|tarada|chupar|chupas|chupa|chupame|chupamela|chupatela|chupala|chupapollas|mamar|mamame|mamamela|mamarla|mamada|mamadas|pajero|pajera|pajillero|masturbar|masturbacion|pene|pija|rabo|picha|cipote|capullo|zumbado|zumbada|lameculos|comemierda|soplapollas|giliflautas|gilipuertas|me la chupas|me la mamas|la tienes pequeña|te voy a matar|ojala te mueras|muere|pudrete)\b/i,
+      ofensivo: /\b(puta|puto|mierda|joder|cabron|cabrona|gilipollas|idiota|imbecil|estupido|estupida|subnormal|retrasado|retrasada|guarra|guarro|zorra|zorro|marica|maricon|bollera|follar|folla|follame|follate|cono|polla|culo|teta|tetas|verga|pendejo|pendeja|chinga|hijueputa|hijo de puta|malparido|basura|asco|asqueroso|asquerosa|maldito|maldita|hdp|ctm|cagada|cagar|come mierda|vete a la mierda|que te den|muerete|muérete|desgraciado|desgraciada|inutil|payaso|payasa|mongolo|mongola|tu madre|tu vieja|perra|perro|cerdo|cerda|aborto|tarado|tarada|chupar|chupas|chupa|chupame|chupamela|chupatela|chupala|chupapollas|mamar|mamame|mamamela|mamarla|mamada|mamadas|pajero|pajera|pajillero|masturbar|masturbacion|pene|pija|rabo|picha|cipote|capullo|zumbado|zumbada|lameculos|comemierda|soplapollas|giliflautas|imbecil|gilipuertas|me la chupas|me la mamas|la tienes pequeña|te voy a matar|ojala te mueras|muere|pudrete)\b/i,
       afectivo: /\b(me quieres|te quiero|te amo|eres guapa|eres guapo|eres bonita|eres bonito|eres lista|eres listo|eres tonta|eres tonto|tienes sentimientos|sientes algo|estas viva|estas vivo|eres real|eres humana|eres humano|que sientes|como te sientes|te gusto|me gustas|novio|novia|pareja|casarse|casarnos|casarte|cita conmigo|salir conmigo|salir contigo|tengo hambre|estoy triste|estoy solo|estoy sola|tengo frio|tengo calor|tienes nombre|como te llamas|cuantos anos tienes|donde vives|eres hombre|eres mujer|eres chico|eres chica|que eres|eres un robot|eres una maquina|eres inteligente)\b/i,
       ambiguo: /^(no entiendo|no se|no sé|que|qué|eh|mmm*|hm+|hmm+|ah|ok|vale|a ver|pues|bueno|y|aja|ajá|como|cómo|por que|por qué|nada|ni idea|no entiendo nada|perdon|perdona|como asi|emm?)$/i
     },
@@ -1128,6 +548,10 @@
     }
   };
 
+  /* ================================================================
+     NON-DOMAIN RESPONSES — Neutral replies for non-PFAS queries
+     Each category has 3 variants picked at random
+     ================================================================ */
   var NON_DOMAIN_RESPONSES = {
     es: {
       ofensivo: [
@@ -1175,294 +599,255 @@
     }
   };
 
-  /* ════════════════════════════════════════════════════════════════════
-     MODULE 7 — INTENT CLASSIFIER
-     Multi-layer intent detection using regex guardrails, conversation
-     context, and the SemanticEngine for domain routing.
-     Priority: offensive → conversational → follow-up → affective
-     → domain (semantic) → ambiguous → off-topic
-     ════════════════════════════════════════════════════════════════════ */
-  var IntentClassifier = (function () {
-    /** Language detection via word-frequency scoring */
-    function detectLang(text) {
-      var esW = /\b(qué|que|cómo|como|cuál|cual|hola|por favor|dónde|donde|puedo|quiero|tienen|necesito|ayuda|gracias|buenos|buenas|también|producto|normativa|eliminación|destrucción|verificación|peligro|salud|agua|más|esto|esta|este|para|las|los|una|del|con|hay|muy|pero|ese|esa|son|soy|tengo|tiene|hace|nos|les|sobre|sin|ser|ver|dar|año|dia|todo|nuestro|vuestra)\b/gi;
-      var enW = /\b(what|how|which|hello|please|where|can|want|need|help|thanks|also|product|regulation|elimination|destruction|verification|danger|health|water|more|the|is|are|does|this|that|for|with|from|have|has|your|you|our|been|will|would|could|should|about|they|their|these|those|some|any|much|very|just|only|into)\b/gi;
-      var esM = text.match(esW), enM = text.match(enW);
-      var esS = esM ? esM.length : 0, enS = enM ? enM.length : 0;
-      if (esS === 0 && enS === 0) return null;
-      return esS >= enS ? 'es' : 'en';
+  /* ================================================================
+     STOPWORDS — Common words that must NOT drive domain scoring
+     ================================================================ */
+  var STOPWORDS = {
+    es: { 'a':1,'al':1,'ante':1,'con':1,'de':1,'del':1,'el':1,'ella':1,'en':1,'es':1,'esa':1,'ese':1,'eso':1,'esta':1,'este':1,'esto':1,'hay':1,'la':1,'las':1,'le':1,'les':1,'lo':1,'los':1,'me':1,'mi':1,'muy':1,'no':1,'nos':1,'o':1,'para':1,'pero':1,'por':1,'que':1,'se':1,'si':1,'sin':1,'son':1,'su':1,'te':1,'tu':1,'tus':1,'un':1,'una':1,'uno':1,'unas':1,'unos':1,'y':1,'ya':1,'yo':1,'como':1,'mas':1,'ser':1,'ver':1,'dar':1,'ir':1,'fue':1,'ha':1,'he':1,'nos':1,'les':1,'tiene':1,'tengo':1,'hace':1,'eso':1 },
+    en: { 'a':1,'an':1,'and':1,'are':1,'as':1,'at':1,'be':1,'been':1,'but':1,'by':1,'can':1,'did':1,'do':1,'does':1,'for':1,'from':1,'had':1,'has':1,'have':1,'he':1,'her':1,'him':1,'his':1,'how':1,'i':1,'if':1,'in':1,'into':1,'is':1,'it':1,'its':1,'just':1,'me':1,'my':1,'no':1,'not':1,'of':1,'on':1,'or':1,'our':1,'she':1,'so':1,'than':1,'that':1,'the':1,'them':1,'then':1,'they':1,'this':1,'to':1,'up':1,'us':1,'was':1,'we':1,'were':1,'what':1,'when':1,'who':1,'will':1,'with':1,'you':1,'your':1 }
+  };
+
+  /* ================================================================
+     DOMAIN KEYWORDS — Strong signals that the query is about PFAS/water
+     At least one must match for a domain response to be allowed
+     ================================================================ */
+  var DOMAIN_KEYWORDS = {
+    es: ['pfas','pfoa','pfos','agua','filtro','filtracion','nanofiltracion','contaminacion','contaminante','contaminantes','fluorados','fluorado','perfluor','polifluor','normativa','regulacion','directiva','epa','echa','tratamiento','analisis','scwo','supercritica','supercritico','zeropfas','zero pfas','cartucho','depuradora','potabilizadora','membrana','nfc','trazabilidad','producto','dispositivo','point-of-use','destruccion','verificacion','toxico','toxica','toxicidad','peligro','peligrosos','cancer','salud','bioacumula','enlace c-f','contaminantes eternos','forever chemicals','purificador','depurador','industrial','modular','grifo','fregadero','agua potable','agua segura','daniel martinez','equipo','contacto','precio','coste','medio ambiente','ecosistema','rio','lago','acuifero'],
+    en: ['pfas','pfoa','pfos','water','filter','filtration','nanofiltration','contamination','contaminant','contaminants','fluorinated','perfluor','polyfluor','regulation','directive','epa','echa','treatment','analysis','scwo','supercritical','zeropfas','zero pfas','cartridge','membrane','nfc','traceability','product','device','point-of-use','destruction','verification','toxic','toxicity','danger','dangerous','cancer','health','bioaccumulate','c-f bond','forever chemicals','purifier','industrial','modular','tap','sink','drinking water','safe water','daniel martinez','team','contact','price','cost','environment','ecosystem','river','lake','aquifer']
+  };
+
+  /** Check if normalized text contains at least one strong domain keyword */
+  function tieneSenalDominio(textoNorm, lang) {
+    var kws = DOMAIN_KEYWORDS[lang] || DOMAIN_KEYWORDS.es;
+    for (var i = 0; i < kws.length; i++) {
+      if (textoNorm.indexOf(kws[i]) !== -1) return true;
     }
+    return false;
+  }
 
-    /**
-     * classify(text, lang) → { intent, data }
-     * Intents: greeting | farewell | thanks | affirmative | followup |
-     *          offensive | affective | domain_high | domain_medium |
-     *          domain_low | ambiguous | off_topic
-     */
-    function classify(text, lang) {
-      var norm = TextProcessor.normalize(text);
-      var ip = INTENT_PATTERNS[lang] || INTENT_PATTERNS.es;
-      var conv = PATTERNS[lang] || PATTERNS.es;
-      var wc = text.trim().split(/\s+/).length;
+  /* ================================================================
+     LANGUAGE DETECTION — improved with scoring
+     ================================================================ */
+  function detectLang(text) {
+    var esScore = 0;
+    var enScore = 0;
+    var esWords = /\b(qué|que|cómo|como|cuál|cual|hola|por favor|dónde|donde|puedo|quiero|tienen|necesito|ayuda|gracias|buenos|buenas|también|producto|normativa|eliminación|destrucción|verificación|peligro|salud|agua|más|esto|esta|este|para|las|los|una|del|con|hay|muy|pero|ese|esa|son|soy|tengo|tiene|hace|nos|les|sobre|sin|ser|ver|dar|año|dia|todo|nuestro|vuestra)\b/gi;
+    var enWords = /\b(what|how|which|hello|please|where|can|want|need|help|thanks|also|product|regulation|elimination|destruction|verification|danger|health|water|more|the|is|are|does|this|that|for|with|from|have|has|your|you|our|been|will|would|could|should|about|they|their|these|those|some|any|much|very|just|only|into|been)\b/gi;
+    var esMatches = text.match(esWords);
+    var enMatches = text.match(enWords);
+    if (esMatches) esScore = esMatches.length;
+    if (enMatches) enScore = enMatches.length;
+    if (esScore === 0 && enScore === 0) return null;
+    return esScore >= enScore ? 'es' : 'en';
+  }
 
-      /* P1 — Offensive (safety first) */
-      if (ip.ofensivo.test(text) || ip.ofensivo.test(norm)) {
-        return { intent: 'offensive' };
-      }
+  /* ================================================================
+     STEMMING — Strip common suffixes for root matching
+     ================================================================ */
+  function stemES(word) {
+    return word
+      .replace(/(ción|ciones|miento|mientos|mente|idad|idades|ismo|ismos|ista|istas)$/i, '')
+      .replace(/(ando|iendo|ado|ido|ada|ida|ados|idos|adas|idas)$/i, '')
+      .replace(/(ar|er|ir|arse|erse|irse)$/i, '')
+      .replace(/(amos|emos|imos|an|en|as|es|os)$/i, '')
+      .replace(/(ble|bles|dor|dora|dores|doras)$/i, '');
+  }
 
-      /* P2 — Conversational patterns (short utterances) */
-      if (conv.byeTest.test(text) && wc <= 5)  return { intent: 'farewell' };
-      if (conv.thanksTest.test(text) && wc <= 4) return { intent: 'thanks' };
-      if (conv.greetingTest.test(text) && wc <= 3) return { intent: 'greeting' };
+  function stemEN(word) {
+    return word
+      .replace(/(tion|tions|ment|ments|ness|ity|ism|isms|ist|ists|ous|ive|ful|less|able|ible)$/i, '')
+      .replace(/(ating|ating|ing|ed|er|est|ly)$/i, '')
+      .replace(/(ize|ise|ify|ate)$/i, '')
+      .replace(/(al|ial|ical)$/i, '');
+  }
 
-      /* P3 — Follow-up / "tell me more" (context-aware) */
-      if (ConversationCtx.isFollowUp(text, lang) && ConversationCtx.getTopic()) {
-        return { intent: 'followup' };
-      }
+  function stem(word, lang) {
+    if (word.length <= 3) return word;
+    return lang === 'es' ? stemES(word) : stemEN(word);
+  }
 
-      /* P4 — Affirmative (context-dependent) */
-      if (conv.affirmativeTest.test(text) && wc <= 3) {
-        return { intent: 'affirmative' };
-      }
+  /* ================================================================
+     NORMALIZE
+     ================================================================ */
+  function normalize(str) {
+    return str.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^\w\s]/g, ' ').replace(/\s+/g, ' ').trim();
+  }
 
-      /* P5 — Affective / personal */
-      if (ip.afectivo.test(text) || ip.afectivo.test(norm)) {
-        return { intent: 'affective' };
-      }
+  /* ================================================================
+     SMART MATCHING — Multi-layer scoring engine
+     Layer 1: Exact phrase match (highest weight)
+     Layer 2: Exact token match
+     Layer 3: Stemmed token match
+     Layer 4: Partial/substring match
+     Always returns ranked results, never truly "fails"
+     ================================================================ */
+  function findAnswer(input, lang) {
+    var bank = KB[lang];
+    var normalInput = normalize(input);
+    var sw = STOPWORDS[lang] || STOPWORDS.es;
+    /* Filter input tokens: keep only non-stopword tokens with length > 1 */
+    var allTokens = normalInput.split(' ').filter(function (t) { return t.length > 1; });
+    var inputTokens = allTokens.filter(function (t) { return !sw[t]; });
+    /* If ALL tokens are stopwords, no domain content can match */
+    if (inputTokens.length === 0) {
+      return { type: 'none', answer: bank.smartFallback, followUp: bank.defaultSuggestions, id: null };
+    }
+    var stemmedInput = inputTokens.map(function (t) { return stem(t, lang); });
+    var results = [];
 
-      /* P6 — Domain: NLU sentence patterns + semantic scoring */
-      var boosts = ConversationCtx.getBoosts();
-      if (ConversationCtx.hasReferback(text, lang) && ConversationCtx.getTopic()) {
-        var currentId = ConversationCtx.getTopic();
-        boosts[currentId] = (boosts[currentId] || 1) * 1.4;
-      }
+    for (var i = 0; i < bank.faq.length; i++) {
+      var entry = bank.faq[i];
+      var score = 0;
+      var entryWeight = entry.weight || 1.0;
 
-      /* Run NLU sentence-level analysis */
-      var nluResult = NLU.analyze(text, lang);
+      for (var j = 0; j < entry.keywords.length; j++) {
+        var kw = normalize(entry.keywords[j]);
 
-      /* Run semantic token-level scoring */
-      var results = SemanticEngine.scoreQuery(text, KB[lang].faq, lang, boosts);
-
-      /* Merge NLU scores into semantic results (ADDITIVE, not multiplicative) */
-      if (nluResult.matchCount > 0) {
-        var NLU_SCALE = 10;
-        var resultMap = {};
-        for (var ri = 0; ri < results.length; ri++) {
-          resultMap[results[ri].entry.id] = ri;
+        /* Layer 1: Exact phrase match in full input — highest score */
+        if (normalInput.indexOf(kw) !== -1) {
+          score += kw.split(' ').length * 10;
         }
-        for (var nluId in nluResult.scores) {
-          var addScore = nluResult.scores[nluId] * NLU_SCALE;
-          if (resultMap[nluId] !== undefined) {
-            results[resultMap[nluId]].score += addScore;
-            results[resultMap[nluId]].signals.nlu = (results[resultMap[nluId]].signals.nlu || 0) + 1;
-          } else {
-            var nluEntry = null;
-            var faqList = KB[lang].faq;
-            for (var fi = 0; fi < faqList.length; fi++) {
-              if (faqList[fi].id === nluId) { nluEntry = faqList[fi]; break; }
+
+        /* Layer 2 & 3: Token-level matching */
+        var kwTokens = kw.split(' ').filter(function (t) { return t.length > 1; });
+        for (var k = 0; k < kwTokens.length; k++) {
+          var kwToken = kwTokens[k];
+          var kwStem = stem(kwToken, lang);
+
+          for (var t = 0; t < inputTokens.length; t++) {
+            /* Layer 2: Exact token match */
+            if (inputTokens[t] === kwToken) {
+              score += 6;
             }
-            if (nluEntry) {
-              results.push({
-                entry: nluEntry,
-                score: addScore * (nluEntry.weight || 1.0),
-                signals: { phrase: 0, exact: 0, synonym: 0, stem: 0, fuzzy: 0, nlu: 1 },
-                confidence: 0
-              });
+            /* Layer 3: Stemmed match */
+            else if (stemmedInput[t] === kwStem && kwStem.length >= 3) {
+              score += 4;
+            }
+            /* Layer 4: Substring/partial match (one contains the other) */
+            else if (inputTokens[t].length >= 4 && kwToken.length >= 4) {
+              if (inputTokens[t].indexOf(kwToken) !== -1 || kwToken.indexOf(inputTokens[t]) !== -1) {
+                score += 3;
+              }
+              /* Starting prefix match (first 4+ chars) */
+              else {
+                var prefix = Math.min(inputTokens[t].length, kwToken.length, 5);
+                if (prefix >= 4 && inputTokens[t].substring(0, prefix) === kwToken.substring(0, prefix)) {
+                  score += 2;
+                }
+              }
             }
           }
         }
-        results.sort(function (a, b) { return b.score - a.score; });
-        if (results.length > 0) {
-          var topS = results[0].score;
-          var secS = results.length > 1 ? results[1].score : 0;
-          var gapS = topS - secS;
-          for (var ci = 0; ci < results.length; ci++) {
-            var absCC = Math.min(results[ci].score / 25, 1.0);
-            var relCC = results.length > 1 ? Math.min(gapS / (topS + 0.001), 1.0) : 1.0;
-            results[ci].confidence = absCC * 0.7 + relCC * 0.3;
-          }
-        }
       }
 
-      if (results.length > 0) {
-        var top = results[0];
-        /* HIGH confidence: strong NLU or semantic signal */
-        if (top.score >= 8 && top.confidence >= 0.25) {
-          return { intent: 'domain_high', results: results };
-        }
-        /* MEDIUM confidence */
-        if (top.score >= 3) {
-          return { intent: 'domain_medium', results: results };
-        }
-        /* LOW confidence */
-        if (top.score >= 1.5) {
-          return { intent: 'domain_low', results: results };
-        }
+      score = score * entryWeight;
+
+      if (score > 0) {
+        results.push({ entry: entry, score: score });
       }
-
-      /* P7 — Ambiguous: very short or unclear */
-      if (ip.ambiguo.test(norm)) return { intent: 'ambiguous' };
-
-      /* P8 — Off topic */
-      return { intent: 'off_topic' };
     }
 
-    return { classify: classify, detectLang: detectLang };
-  })();
+    /* Sort by score descending */
+    results.sort(function (a, b) { return b.score - a.score; });
 
-  /* ════════════════════════════════════════════════════════════════════
-     MODULE 8 — RESPONSE GENERATOR
-     Builds the final HTML response + follow-up suggestions based on
-     the classified intent and conversation state.
-     ════════════════════════════════════════════════════════════════════ */
-  var ResponseGenerator = (function () {
-    function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
-
-    function faqById(id, lang) {
-      var faq = KB[lang].faq;
-      for (var i = 0; i < faq.length; i++) { if (faq[i].id === id) return faq[i]; }
-      return null;
+    /* High-confidence match — return directly */
+    if (results.length > 0 && results[0].score >= 6) {
+      var best = results[0].entry;
+      return {
+        type: 'match',
+        answer: best.answer.replace(/\n/g, '<br>'),
+        followUp: best.followUp || null,
+        id: best.id
+      };
     }
 
-    function formatAnswer(entry) {
-      return entry.answer.replace(/\n/g, '<br>');
-    }
-
-    /** Generate a context-aware follow-up expansion */
-    function handleFollowUp(lang) {
-      var nextId = ConversationCtx.resolveFollowUp();
-      if (nextId) {
-        var entry = faqById(nextId, lang);
-        if (entry) {
-          ConversationCtx.push('(follow-up)', nextId);
-          return {
-            html: formatAnswer(entry),
-            suggestions: entry.followUp || KB[lang].defaultSuggestions,
-            topicId: nextId
-          };
-        }
-      }
-      /* No unvisited related topic — suggest related topics or defaults */
-      var unvisited = ConversationCtx.relatedUnvisited();
-      var TOPIC_LABELS_LOCAL = TOPIC_LABELS[lang] || {};
-      var sugg = unvisited.slice(0, 3).map(function (id) {
-        var lbl = TOPIC_LABELS_LOCAL[id];
-        return lbl ? lbl.label : id;
+    /* Low-confidence partial matches — return as suggestions */
+    if (results.length > 0) {
+      var topResults = results.slice(0, 3);
+      var sugTopics = topResults.map(function (r) {
+        return (r.entry.followUp && r.entry.followUp[0]) || bank.defaultSuggestions[0];
       });
-      if (sugg.length === 0) sugg = KB[lang].defaultSuggestions;
-      var msg = lang === 'es'
-        ? 'Ya hemos cubierto los temas más cercanos. ¿Te gustaría explorar algo diferente?'
-        : 'We\'ve covered the closest topics. Would you like to explore something different?';
-      return { html: msg, suggestions: sugg, topicId: null };
+      /* De-duplicate */
+      var seen = {};
+      sugTopics = sugTopics.filter(function (s) {
+        if (seen[s]) return false;
+        seen[s] = true;
+        return true;
+      });
+
+      return {
+        type: 'partial',
+        answer: bank.smartFallback,
+        followUp: sugTopics.length > 0 ? sugTopics : bank.defaultSuggestions,
+        id: null
+      };
     }
 
-    /**
-     * generate(intent, lang) → { html, suggestions, topicId }
-     */
-    function generate(intentResult, lang) {
-      var bank = KB[lang];
-      var sugg, html, topicId = null;
+    /* No matches at all — show default suggestions */
+    return {
+      type: 'none',
+      answer: bank.smartFallback,
+      followUp: bank.defaultSuggestions,
+      id: null
+    };
+  }
 
-      switch (intentResult.intent) {
-        case 'greeting':
-          html = timeGreeting(lang) + ' ' + (lang === 'es'
-            ? 'Soy el asistente de <strong>ZeroPFAS</strong>. ¿En qué puedo ayudarte?'
-            : 'I\'m the <strong>ZeroPFAS</strong> assistant. How can I help you?');
-          sugg = bank.defaultSuggestions;
-          break;
+  /* ================================================================
+     INTENT CLASSIFIER — detectarCategoria
+     Routes input to: ofensivo | despedida | agradecimiento | saludo |
+     afirmativo | afectivo | dominio | ambiguo | fuera_de_tema
+     ================================================================ */
+  function detectarCategoria(texto, lang) {
+    var norm = normalize(texto);
+    var ip = INTENT_PATTERNS[lang] || INTENT_PATTERNS.es;
+    var conv = PATTERNS[lang] || PATTERNS.es;
+    var wordCount = texto.trim().split(/\s+/).length;
 
-        case 'farewell':
-          html = bank.goodbye;
-          sugg = bank.defaultSuggestions;
-          break;
+    /* P1 — Offensive: highest priority */
+    if (ip.ofensivo.test(texto) || ip.ofensivo.test(norm)) {
+      return { categoria: 'ofensivo', resultado: null };
+    }
 
-        case 'thanks':
-          html = bank.thanksReply;
-          sugg = ConversationCtx.getLastFollowUp() || bank.defaultSuggestions;
-          break;
+    /* P2 — Conversational patterns (short utterances only) */
+    if (conv.byeTest.test(texto) && wordCount <= 5) {
+      return { categoria: 'despedida', resultado: null };
+    }
+    if (conv.thanksTest.test(texto) && wordCount <= 4) {
+      return { categoria: 'agradecimiento', resultado: null };
+    }
+    if (conv.greetingTest.test(texto) && wordCount <= 3) {
+      return { categoria: 'saludo', resultado: null };
+    }
+    if (conv.affirmativeTest && conv.affirmativeTest.test(texto) && wordCount <= 3) {
+      return { categoria: 'afirmativo', resultado: null };
+    }
 
-        case 'affirmative':
-          if (ConversationCtx.getLastFollowUp()) {
-            html = lang === 'es' ? '¡Perfecto! Elige el tema que más te interese:' : 'Great! Pick the topic you\'re most interested in:';
-            sugg = ConversationCtx.getLastFollowUp();
-          } else {
-            html = lang === 'es' ? '¡Perfecto! ¿Sobre qué te gustaría saber?' : 'Great! What would you like to know about?';
-            sugg = bank.defaultSuggestions;
-          }
-          break;
+    /* P3 — Affective / personal questions */
+    if (ip.afectivo.test(texto) || ip.afectivo.test(norm)) {
+      return { categoria: 'afectivo', resultado: null };
+    }
 
-        case 'followup':
-          return handleFollowUp(lang);
-
-        case 'offensive':
-          html = pick(NON_DOMAIN_RESPONSES[lang].ofensivo);
-          sugg = bank.defaultSuggestions;
-          break;
-
-        case 'affective':
-          html = pick(NON_DOMAIN_RESPONSES[lang].afectivo);
-          sugg = bank.defaultSuggestions;
-          break;
-
-        case 'domain_high':
-          var best = intentResult.results[0];
-          html = formatAnswer(best.entry);
-          sugg = best.entry.followUp || bank.defaultSuggestions;
-          topicId = best.entry.id;
-          break;
-
-        case 'domain_medium':
-          var top = intentResult.results[0];
-          var prefix = lang === 'es'
-            ? 'Creo que esto es lo que buscas:<br><br>'
-            : 'I think this is what you\'re looking for:<br><br>';
-          html = prefix + formatAnswer(top.entry);
-          /* Suggest follow-ups + alternative topic labels from runner-ups */
-          var altSugg = (top.entry.followUp || []).slice();
-          for (var ri = 1; ri < Math.min(intentResult.results.length, 3); ri++) {
-            var altEntry = intentResult.results[ri].entry;
-            var lbl = TOPIC_LABELS[lang] && TOPIC_LABELS[lang][altEntry.id];
-            if (lbl) altSugg.push(lbl.label);
-          }
-          /* Deduplicate */
-          var seen = {};
-          sugg = altSugg.filter(function (s) { if (seen[s]) return false; seen[s] = 1; return true; }).slice(0, 4);
-          if (sugg.length === 0) sugg = bank.defaultSuggestions;
-          topicId = top.entry.id;
-          break;
-
-        case 'domain_low':
-          html = bank.smartFallback;
-          var lowSugg = [];
-          for (var li = 0; li < Math.min(intentResult.results.length, 4); li++) {
-            var le = intentResult.results[li].entry;
-            var ll = TOPIC_LABELS[lang] && TOPIC_LABELS[lang][le.id];
-            if (ll) lowSugg.push(ll.label);
-          }
-          sugg = lowSugg.length > 0 ? lowSugg : bank.defaultSuggestions;
-          break;
-
-        case 'ambiguous':
-          html = pick(NON_DOMAIN_RESPONSES[lang].ambiguo);
-          sugg = ConversationCtx.getLastFollowUp() || bank.defaultSuggestions;
-          break;
-
-        case 'off_topic':
-        default:
-          html = pick(NON_DOMAIN_RESPONSES[lang].fuera_de_tema);
-          sugg = bank.defaultSuggestions;
-          break;
+    /* P4 — Domain: require domain signal + strong FAQ match */
+    var hasDomainSignal = tieneSenalDominio(norm, lang);
+    if (hasDomainSignal) {
+      var result = findAnswer(texto, lang);
+      if (result.type === 'match') {
+        return { categoria: 'dominio', resultado: result };
       }
-
-      return { html: html, suggestions: sugg, topicId: topicId };
     }
 
-    return { generate: generate, faqById: faqById, formatAnswer: formatAnswer };
-  })();
+    /* P5 — Ambiguous: explicit unclear phrases */
+    if (ip.ambiguo.test(norm)) {
+      return { categoria: 'ambiguo', resultado: null };
+    }
 
-  /* ════════════════════════════════════════════════════════════════════
-     TOPIC LABELS, WELCOME TOPICS, TIME GREETING
-     ════════════════════════════════════════════════════════════════════ */
+    /* P6 — Out of scope (default) */
+    return { categoria: 'fuera_de_tema', resultado: null };
+  }
+
+  /* ================================================================
+     TOPIC LABELS — For welcome screen cards & quick menu
+     ================================================================ */
   var TOPIC_LABELS = {
     es: {
       'pfas-intro':     { icon: '🧬', label: '¿Qué son los PFAS?' },
@@ -1723,10 +1108,6 @@
      INIT — Main controller with full state management
      ================================================================ */
   function init() {
-    /* Pre-build semantic indices for both languages */
-    SemanticEngine.buildIndex(KB.es.faq, 'es');
-    SemanticEngine.buildIndex(KB.en.faq, 'en');
-
     var els = buildChatbot();
     var messagesEl = document.getElementById('chatbotMessages');
     var suggestionsEl = document.getElementById('chatbotSuggestions');
@@ -1742,9 +1123,12 @@
     var firstOpen = true;
     var menuOpen = false;
     var currentLang = 'es';
+    var lastTopicId = null;
+    var lastResult = null;
     var isProcessing = false;
     var messageCount = 0;
 
+    /* Build topic menu (will rebuild on lang change) */
     function rebuildMenu() {
       renderTopicMenu(menuEl, currentLang, function (topicId) {
         closeMenu();
@@ -1752,9 +1136,13 @@
       });
     }
 
-    /* Direct topic access (welcome cards, menu, or follow-up resolution) */
+    /* Direct topic access (from welcome cards or menu) */
     function triggerTopicById(topicId) {
-      var entry = ResponseGenerator.faqById(topicId, currentLang);
+      var faq = KB[currentLang].faq;
+      var entry = null;
+      for (var i = 0; i < faq.length; i++) {
+        if (faq[i].id === topicId) { entry = faq[i]; break; }
+      }
       if (!entry) return;
 
       var labels = TOPIC_LABELS[currentLang];
@@ -1763,11 +1151,10 @@
       suggestionsEl.innerHTML = '';
 
       var typing = showTyping(messagesEl);
-      var answerHtml = ResponseGenerator.formatAnswer(entry);
+      var answerHtml = entry.answer.replace(/\n/g, '<br>');
 
-      /* Update conversation context */
-      ConversationCtx.push(label, topicId);
-      ConversationCtx.setLastFollowUp(entry.followUp || KB[currentLang].defaultSuggestions);
+      lastTopicId = topicId;
+      lastResult = { type: 'match', answer: answerHtml, followUp: entry.followUp, id: topicId };
       messageCount++;
 
       var delay = Math.min(400 + answerHtml.length * 1.2, 1400);
@@ -1780,8 +1167,14 @@
       }, delay);
     }
 
-    function closeMenu() { menuOpen = false; menuEl.classList.remove('is-open'); }
-    function toggleMenu() { menuOpen = !menuOpen; menuEl.classList.toggle('is-open', menuOpen); }
+    function closeMenu() {
+      menuOpen = false;
+      menuEl.classList.remove('is-open');
+    }
+    function toggleMenu() {
+      menuOpen = !menuOpen;
+      menuEl.classList.toggle('is-open', menuOpen);
+    }
 
     /* Restore open state */
     try {
@@ -1790,15 +1183,22 @@
       }
     } catch (e) {}
 
+    /* Show badge & tooltip after delay */
     setTimeout(function () {
-      if (!isOpen && badge) badge.classList.add('is-visible');
+      if (!isOpen && badge) {
+        badge.classList.add('is-visible');
+      }
     }, 3000);
 
     setTimeout(function () {
       if (!isOpen && tooltipEl) {
-        tooltipEl.textContent = currentLang === 'es' ? '¿Dudas sobre PFAS? ¡Pregúntame!' : 'Questions about PFAS? Ask me!';
+        var tip = currentLang === 'es' ? '¿Dudas sobre PFAS? ¡Pregúntame!' : 'Questions about PFAS? Ask me!';
+        tooltipEl.textContent = tip;
         tooltipEl.classList.add('is-visible');
-        setTimeout(function () { tooltipEl.classList.remove('is-visible'); }, 6000);
+        /* Auto-hide after 6s */
+        setTimeout(function () {
+          tooltipEl.classList.remove('is-visible');
+        }, 6000);
       }
     }, 8000);
 
@@ -1806,32 +1206,32 @@
       isOpen = !isOpen;
       els.win.classList.toggle('is-open', isOpen);
       els.toggle.classList.toggle('is-active', isOpen);
+
       if (isOpen) {
         if (badge) badge.classList.remove('is-visible');
         if (tooltipEl) tooltipEl.classList.remove('is-visible');
         if (firstOpen) {
-          renderWelcomeScreen(messagesEl, currentLang, function (topicId) { triggerTopicById(topicId); });
+          renderWelcomeScreen(messagesEl, currentLang, function (topicId) {
+            triggerTopicById(topicId);
+          });
           rebuildMenu();
           firstOpen = false;
         }
         closeMenu();
         setTimeout(function () { input.focus(); }, 100);
       }
+
       try { sessionStorage.setItem('zeroPFAS_chatOpen', isOpen ? '1' : '0'); } catch (e) {}
     }
 
-    /* ════════════════════════════════════════════════════════════════
-       handleUserInput — The main conversational loop.
-       Uses IntentClassifier + ResponseGenerator + ConversationCtx.
-       ════════════════════════════════════════════════════════════════ */
     function handleUserInput(text) {
       if (!text.trim() || isProcessing) return;
       isProcessing = true;
       closeMenu();
 
-      /* Language detection */
+      /* Detect language — only change if confident */
       var prevLang = currentLang;
-      var detected = IntentClassifier.detectLang(text);
+      var detected = detectLang(text);
       if (detected) currentLang = detected;
       if (currentLang !== prevLang) rebuildMenu();
 
@@ -1842,33 +1242,110 @@
 
       var typing = showTyping(messagesEl);
 
-      /* Classify intent through the multi-layer pipeline */
-      var intentResult = IntentClassifier.classify(text, currentLang);
+      /* ---- Intent classification (v5) ---- */
+      var cat = detectarCategoria(text, currentLang);
+      var responseHtml = null;
+      var followUpSuggestions = null;
 
-      /* Generate response from intent + context */
-      var resp = ResponseGenerator.generate(intentResult, currentLang);
+      switch (cat.categoria) {
+        case 'saludo':
+          responseHtml = timeGreeting(currentLang) + ' ' + (currentLang === 'es'
+            ? 'Soy el asistente de <strong>ZeroPFAS</strong>. ¿En qué puedo ayudarte?'
+            : 'I\'m the <strong>ZeroPFAS</strong> assistant. How can I help you?');
+          followUpSuggestions = KB[currentLang].defaultSuggestions;
+          break;
 
-      /* Update conversation context */
-      ConversationCtx.push(text, resp.topicId || null);
-      ConversationCtx.setLastFollowUp(resp.suggestions);
+        case 'despedida':
+          responseHtml = KB[currentLang].goodbye;
+          followUpSuggestions = KB[currentLang].defaultSuggestions;
+          break;
+
+        case 'agradecimiento':
+          responseHtml = KB[currentLang].thanksReply;
+          followUpSuggestions = (lastResult && lastResult.followUp)
+            ? lastResult.followUp
+            : KB[currentLang].defaultSuggestions;
+          break;
+
+        case 'afirmativo':
+          if (lastResult && lastResult.followUp) {
+            responseHtml = currentLang === 'es'
+              ? '¡Perfecto! Aquí tienes temas relacionados:'
+              : 'Great! Here are related topics:';
+            followUpSuggestions = lastResult.followUp;
+          } else {
+            responseHtml = currentLang === 'es'
+              ? '¡Perfecto! Elige un tema que te interese:'
+              : 'Great! Pick a topic you\'re interested in:';
+            followUpSuggestions = KB[currentLang].defaultSuggestions;
+          }
+          break;
+
+        case 'ofensivo':
+          var ofR = NON_DOMAIN_RESPONSES[currentLang].ofensivo;
+          responseHtml = ofR[Math.floor(Math.random() * ofR.length)];
+          followUpSuggestions = KB[currentLang].defaultSuggestions;
+          break;
+
+        case 'afectivo':
+          var afR = NON_DOMAIN_RESPONSES[currentLang].afectivo;
+          responseHtml = afR[Math.floor(Math.random() * afR.length)];
+          followUpSuggestions = KB[currentLang].defaultSuggestions;
+          break;
+
+        case 'ambiguo':
+          var amR = NON_DOMAIN_RESPONSES[currentLang].ambiguo;
+          responseHtml = amR[Math.floor(Math.random() * amR.length)];
+          followUpSuggestions = KB[currentLang].defaultSuggestions;
+          break;
+
+        case 'fuera_de_tema':
+          var ftR = NON_DOMAIN_RESPONSES[currentLang].fuera_de_tema;
+          responseHtml = ftR[Math.floor(Math.random() * ftR.length)];
+          followUpSuggestions = KB[currentLang].defaultSuggestions;
+          break;
+
+        case 'dominio':
+        default:
+          var result = cat.resultado || findAnswer(text, currentLang);
+          responseHtml = result.answer;
+          followUpSuggestions = result.followUp || KB[currentLang].defaultSuggestions;
+          if (result.id) {
+            lastTopicId = result.id;
+            lastResult = result;
+          }
+          break;
+      }
+
       messageCount++;
 
-      /* Typing delay proportional to response length */
-      var delay = Math.min(350 + resp.html.length * 1.2, 1400);
+      /* Typing delay proportional to answer length */
+      var delay = Math.min(350 + responseHtml.length * 1.2, 1400);
+
       setTimeout(function () {
         typing.remove();
-        appendMessage(messagesEl, resp.html, 'bot');
-        renderSuggestions(suggestionsEl, resp.suggestions, handleUserInput);
+        appendMessage(messagesEl, responseHtml, 'bot');
+        renderSuggestions(suggestionsEl, followUpSuggestions, handleUserInput);
         isProcessing = false;
         sendBtn.disabled = false;
       }, delay);
     }
 
     /* ---- Event Listeners ---- */
+
     els.toggle.addEventListener('click', toggleOpen);
-    closeBtn.addEventListener('click', function () { if (isOpen) toggleOpen(); });
-    menuBtn.addEventListener('click', function (e) { e.stopPropagation(); toggleMenu(); });
-    form.addEventListener('submit', function (e) { e.preventDefault(); handleUserInput(input.value); });
+    closeBtn.addEventListener('click', function () {
+      if (isOpen) toggleOpen();
+    });
+    menuBtn.addEventListener('click', function (e) {
+      e.stopPropagation();
+      toggleMenu();
+    });
+
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      handleUserInput(input.value);
+    });
 
     /* Copy button delegation */
     messagesEl.addEventListener('click', function (e) {
@@ -1884,6 +1361,8 @@
         }
         return;
       }
+
+      /* Intercept link clicks inside chat to smooth-scroll */
       var link = e.target.closest('a[href^="#"]');
       if (!link) return;
       e.preventDefault();
@@ -1891,20 +1370,40 @@
       var target = document.getElementById(targetId);
       if (target) {
         if (isOpen) toggleOpen();
-        setTimeout(function () { target.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 350);
+        setTimeout(function () {
+          target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 350);
       }
     });
 
+    /* Close menu when clicking outside */
     els.win.addEventListener('click', function (e) {
-      if (menuOpen && !e.target.closest('.chatbot-menu') && !e.target.closest('#chatbotMenuBtn')) closeMenu();
+      if (menuOpen && !e.target.closest('.chatbot-menu') && !e.target.closest('#chatbotMenuBtn')) {
+        closeMenu();
+      }
     });
+
+    /* Close on Escape */
     document.addEventListener('keydown', function (e) {
-      if (e.key === 'Escape') { if (menuOpen) { closeMenu(); return; } if (isOpen) toggleOpen(); }
+      if (e.key === 'Escape') {
+        if (menuOpen) { closeMenu(); return; }
+        if (isOpen) toggleOpen();
+      }
     });
-    els.toggle.addEventListener('mouseenter', function () { if (tooltipEl) tooltipEl.classList.remove('is-visible'); });
+
+    /* Dismiss tooltip on hover */
+    els.toggle.addEventListener('mouseenter', function () {
+      if (tooltipEl) tooltipEl.classList.remove('is-visible');
+    });
+
+    /* Input placeholder changes with language */
     input.addEventListener('input', function () {
-      var det = IntentClassifier.detectLang(input.value);
-      input.placeholder = det === 'en' ? 'Type your question…' : 'Escribe tu pregunta…';
+      var detected = detectLang(input.value);
+      if (detected === 'en') {
+        input.placeholder = 'Type your question…';
+      } else {
+        input.placeholder = 'Escribe tu pregunta…';
+      }
     });
   }
 
