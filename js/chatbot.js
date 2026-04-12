@@ -87,9 +87,35 @@
       return union === 0 ? 0 : inter / union;
     }
 
+    /* Domain-specific spelling correction */
+    var DOMAIN_DICT = {
+      es: ['pfas','scwo','contaminantes','contaminante','eternos','supercritica','oxidacion','nanofiltracion','cartucho','nfc','trazabilidad','verificacion','fluoruro','fluorado','perfluorado','polifluorado','normativa','regulacion','directiva','zeropfas','membrana','purificador','filtro','dispositivo','destruccion','eliminacion','bioacumulacion','cancer','toxico','agua','grifo','potable','peligro','peligroso','salud','enfermedad','industrial','ecologia','ecosistema','sostenible','producto','tecnologia','certificado','garantia'],
+      en: ['pfas','scwo','contaminants','contaminant','supercritical','oxidation','nanofiltration','cartridge','nfc','traceability','verification','fluoride','fluorinated','perfluoroalkyl','polyfluoroalkyl','regulation','directive','zeropfas','membrane','purifier','filter','device','destruction','elimination','bioaccumulation','cancer','toxic','water','tap','drinking','danger','dangerous','health','disease','industrial','ecology','ecosystem','environment','sustainable','product','technology','certified','guarantee']
+    };
+
+    function correctDomainSpelling(text, lang) {
+      var dict = DOMAIN_DICT[lang] || DOMAIN_DICT.es;
+      var words = text.toLowerCase().split(/\s+/);
+      var changed = false;
+      var corrected = words.map(function (w) {
+        if (w.length < 4) return w;
+        for (var i = 0; i < dict.length; i++) { if (dict[i] === w) return w; }
+        var bestMatch = null, bestDist = 3;
+        for (var i = 0; i < dict.length; i++) {
+          if (Math.abs(dict[i].length - w.length) > 2) continue;
+          var dist = editDistance(w, dict[i]);
+          if (dist > 0 && dist < bestDist) { bestDist = dist; bestMatch = dict[i]; }
+        }
+        if (bestMatch) { changed = true; return bestMatch; }
+        return w;
+      });
+      return changed ? corrected.join(' ') : text;
+    }
+
     return {
       normalize: normalize, tokenize: tokenize, stem: stem,
       editDistance: editDistance, ngramSimilarity: ngramSimilarity,
+      correctDomainSpelling: correctDomainSpelling,
       STOPWORDS: STOPWORDS
     };
   })();
@@ -104,64 +130,96 @@
   var SynonymEngine = (function () {
     var GROUPS = {
       es: [
-        ['pfas','contaminantes eternos','forever chemicals','perfluorados','fluorados','quimicos eternos','sustancias perfluoradas','polifluorados'],
-        ['peligro','peligroso','dañino','nocivo','toxico','riesgo','daño','malo','perjudicial','amenaza','veneno'],
-        ['salud','enfermedad','cancer','enfermo','dolencia','patologia','organismo','cuerpo'],
-        ['eliminar','destruir','romper','descomponer','degradar','quitar','limpiar','purificar','depurar'],
-        ['precio','coste','costo','tarifa','presupuesto','cuanto cuesta','cuanto vale','pagar','economico','caro','barato','inversion'],
-        ['producto','dispositivo','filtro','aparato','equipo','maquina','purificador','sistema filtrado'],
-        ['tecnologia','metodo','procedimiento','proceso','mecanismo','tecnica','innovacion','ciencia'],
-        ['normativa','regulacion','legislacion','ley','directiva','norma','legal','regla','obligatorio'],
-        ['verificar','comprobar','demostrar','certificar','probar','medir','analizar','testear','prueba','evidencia'],
-        ['contacto','contactar','hablar','escribir','comunicar','email','correo','mensaje','llamar','soporte'],
-        ['equipo','fundador','creador','responsable','detras','inventor','cientifico','investigador'],
-        ['agua','grifo','potable','fuente','suministro','acuifero'],
-        ['medio ambiente','ecologia','naturaleza','planeta','ecosistema','medioambiental','verde','sostenible'],
-        ['ayudar','proteger','prevenir','actuar','contribuir','colaborar','participar'],
-        ['industrial','gran escala','planta','fabrica','municipal','empresa','comercial','infraestructura'],
-        ['nfc','chip','trazabilidad','rastreo','seguimiento','monitorizacion','smart','inteligente'],
-        ['comprar','adquirir','obtener','conseguir','pedir','encargar','venta','tienda'],
-        ['instalar','instalacion','montar','colocar','poner','configurar'],
-        ['casa','hogar','domestico','residencial','vivienda','cocina','fregadero','particular'],
-        ['diferencia','ventaja','mejor','comparar','unico','especial','superior','innovador'],
-        ['funcionar','como funciona','opera','trabaja','sirve','mecanismo'],
-        ['que es','que son','definicion','significado','explicar','describir','informacion','concepto'],
-        ['preocupar','preocupado','preocupada','inquieto','inquieta','miedo','temor','temer','asustado','asustada','angustia','ansiedad'],
-        ['familia','hijo','hija','hijos','nino','nina','ninos','bebe','bebes','menor','menores','pequeno','pequena','embarazada','embarazo'],
-        ['verdad','verdadero','real','cierto','efectivo','eficaz','fiable','confiable','probado','demostrado','garantia','certificado'],
-        ['bueno','buena','malo','mala','seguro','segura','peligroso','peligrosa','saludable','nocivo','toxico','limpio','limpia','sucio','sucia'],
-        ['beber','tomar','ingerir','consumir','tragar','bebida'],
-        ['contaminar','contaminado','contaminada','contaminacion','contaminante','contaminantes','polucionar','polucion']
+        ['pfas','contaminantes eternos','forever chemicals','perfluorados','fluorados','quimicos eternos','sustancias perfluoradas','polifluorados','pfoa','pfos','genx','sustancias eternas','quimicos del agua','contaminantes invisibles','contaminantes persistentes','cop','contaminantes organicos persistentes'],
+        ['peligro','peligroso','dañino','nocivo','toxico','riesgo','daño','malo','perjudicial','amenaza','veneno','venenoso','letal','mortal','grave','critico','alarmante','preocupante','insalubre','inseguro','contaminante'],
+        ['salud','enfermedad','cancer','enfermo','dolencia','patologia','organismo','cuerpo','tumor','tiroides','higado','rinon','hormona','inmunologico','fertilidad','reproduccion','colesterol','obesidad','endocrino','sistema inmune','sangre','plasma','suero'],
+        ['eliminar','destruir','romper','descomponer','degradar','quitar','limpiar','purificar','depurar','mineralizar','oxidar','neutralizar','descontaminar','erradicar','tratar','remediar','sanear'],
+        ['precio','coste','costo','tarifa','presupuesto','cuanto cuesta','cuanto vale','pagar','economico','caro','barato','inversion','asequible','accesible','rentable','amortizar','factura','suscripcion','mensual','anual'],
+        ['producto','dispositivo','filtro','aparato','equipo','maquina','purificador','sistema filtrado','cartucho','membrana','unidad','modulo','sistema de filtracion','sistema de purificacion'],
+        ['tecnologia','metodo','procedimiento','proceso','mecanismo','tecnica','innovacion','ciencia','ingenieria','investigacion','patente','solucion','sistema','desarrollo'],
+        ['normativa','regulacion','legislacion','ley','directiva','norma','legal','regla','obligatorio','limite','umbral','maximo','minimo','cumplimiento','requisito','estandar','mcl','ppb','ppt','nanogramo','microgramo'],
+        ['verificar','comprobar','demostrar','certificar','probar','medir','analizar','testear','prueba','evidencia','resultado','informe','laboratorio','ensayo','dato','estudio','investigacion','paper','articulo','cientifico'],
+        ['contacto','contactar','hablar','escribir','comunicar','email','correo','mensaje','llamar','soporte','atencion al cliente','formulario','telefono','whatsapp','linkedin','reunion','cita','consulta'],
+        ['equipo','fundador','creador','responsable','detras','inventor','cientifico','investigador','director','ingeniero','quimico','biologo','experto','especialista','profesional'],
+        ['agua','grifo','potable','fuente','suministro','acuifero','cañeria','tuberia','red hidrica','abastecimiento','embalse','deposito','pozo','manantial','rio','lago','corriente'],
+        ['medio ambiente','ecologia','naturaleza','planeta','ecosistema','medioambiental','verde','sostenible','biodiversidad','fauna','flora','contaminacion ambiental','huella','impacto ambiental','cambio climatico'],
+        ['ayudar','proteger','prevenir','actuar','contribuir','colaborar','participar','solucionar','defender','cuidar','mejorar','reducir','evitar','minimizar'],
+        ['industrial','gran escala','planta','fabrica','municipal','empresa','comercial','infraestructura','edar','depuradora','potabilizadora','estacion','tratamiento','industria','corporativo'],
+        ['nfc','chip','trazabilidad','rastreo','seguimiento','monitorizacion','smart','inteligente','sensor','iot','conectado','digital','app','aplicacion','movil','escanear','leer'],
+        ['comprar','adquirir','obtener','conseguir','pedir','encargar','venta','tienda','reservar','solicitar','hacer pedido','disponible','disponibilidad','stock','envio'],
+        ['instalar','instalacion','montar','colocar','poner','configurar','conectar','enchufe','fontanero','bricolaje','diy','facil de instalar','sin obras'],
+        ['casa','hogar','domestico','residencial','vivienda','cocina','fregadero','particular','piso','apartamento','chalet','familia','personal','privado'],
+        ['diferencia','ventaja','mejor','comparar','unico','especial','superior','innovador','frente a','respecto a','versus','vs','competencia','alternativa','otro','otros'],
+        ['funcionar','como funciona','opera','trabaja','sirve','mecanismo','funcionamiento','operacion','modo de empleo','paso a paso','proceso'],
+        ['que es','que son','definicion','significado','explicar','describir','informacion','concepto','basico','introduccion','resumen','acerca de','sobre'],
+        ['preocupar','preocupado','preocupada','inquieto','inquieta','miedo','temor','temer','asustado','asustada','angustia','ansiedad','nervioso','nerviosa','alarma','alerta','urgente','urgencia'],
+        ['familia','hijo','hija','hijos','nino','nina','ninos','bebe','bebes','menor','menores','pequeno','pequena','embarazada','embarazo','lactancia','lactante','pediatrico','infantil','prenatal','neonatal','recien nacido','criatura','mama','papa','padre','madre'],
+        ['verdad','verdadero','real','cierto','efectivo','eficaz','fiable','confiable','probado','demostrado','garantia','certificado','avalado','respaldado','contrastado','acreditado'],
+        ['bueno','buena','malo','mala','seguro','segura','peligroso','peligrosa','saludable','nocivo','toxico','limpio','limpia','sucio','sucia','puro','pura','contaminado','contaminada','sano','sana'],
+        ['beber','tomar','ingerir','consumir','tragar','bebida','cocinar','preparar','usar agua','utilizar agua','ducharse','banarse','lavarse'],
+        ['contaminar','contaminado','contaminada','contaminacion','contaminante','contaminantes','polucionar','polucion','poluto','vertido','vertimiento','residuo','toxico','toxicidad','impureza','suciedad'],
+        /* Domain-specific synonym groups */
+        ['sarten','teflon','antiadherente','ptfe','recubrimiento','plancha','olla','utensilio','menaje'],
+        ['ropa','textil','impermeable','goretex','gore tex','chaqueta','tejido','fibra','tela','scotchgard'],
+        ['cosmetico','maquillaje','crema','champu','protector solar','desmaquillante','producto de belleza','higiene personal'],
+        ['envase','envoltorio','embalaje','packaging','carton','papel encerado','recipiente','plastico','bandeja','vaso','plato desechable'],
+        ['rio','lago','mar','oceano','arroyo','caudal','cauce','corriente','estuario','pantano','embalse','cuenca'],
+        ['suelo','tierra','subsuelo','sedimento','lodo','fango','acuifero','terreno','parcela','campo','cultivo'],
+        ['pez','peces','pescado','marisco','molusco','crustaceo','atun','salmon','trucha','sardina'],
+        ['carne','leche','huevo','lacteo','queso','yogur','mantequilla','alimento','comida','dieta','nutricion'],
+        ['espuma','espuma contra incendios','afff','bombero','extintor','extincion','retardante','ignifugo'],
+        ['estudio','investigacion','paper','publicacion','dato','estadistica','informe','reporte','resultado','hallazgo','conclusion','evidencia cientifica'],
+        ['concentracion','nivel','cantidad','medida','nanogramo','microgramo','ppb','ppt','ng/l','ug/l','limite','umbral','dosis'],
+        ['reactor','camara','presion','temperatura','supercritico','supercritica','oxidacion','mineralizacion','destruccion total','co2','fluoruro'],
+        ['membrana','osmosis','nanofiltracion','ultrafiltracion','filtracion','retencion','permeado','rechazo','poroso','selectivo'],
+        ['carbon activado','carbon activo','adsorcion','brita','jarra filtrante','filtro nevera','filtro grifo','filtro basico'],
+        ['inversion','socio','colaborador','partner','mercado','oportunidad','negocio','licencia','startup','emprender','rentabilidad','roi']
       ],
       en: [
-        ['pfas','forever chemicals','perfluoroalkyl','fluorinated chemicals','eternal chemicals','polyfluoroalkyl'],
-        ['danger','dangerous','harmful','toxic','risk','hazard','threat','poisonous'],
-        ['health','disease','cancer','illness','condition','body','blood'],
-        ['eliminate','destroy','break','decompose','degrade','remove','clean','purify'],
-        ['price','cost','pricing','budget','how much','affordable','expensive','cheap','investment'],
-        ['product','device','filter','appliance','equipment','machine','purifier','system'],
-        ['technology','method','procedure','process','mechanism','technique','innovation','science'],
-        ['regulation','legislation','law','directive','rule','legal','standard','mandatory'],
-        ['verify','prove','certify','test','measure','analyze','validate','evidence'],
-        ['contact','reach','write','email','message','call','inquire','support'],
-        ['team','founder','creator','who','behind','inventor','scientist','researcher'],
-        ['water','tap','drinking','supply','faucet','aquifer'],
-        ['environment','ecology','nature','planet','ecosystem','environmental','green','sustainable'],
-        ['help','protect','prevent','contribute','action','participate'],
-        ['industrial','large scale','plant','factory','municipal','commercial','enterprise','infrastructure'],
-        ['nfc','chip','traceability','tracking','monitoring','smart','intelligent'],
-        ['buy','purchase','acquire','get','order','shop','sale'],
-        ['install','installation','setup','mount','place','configure'],
-        ['home','house','domestic','residential','household','kitchen','sink'],
-        ['difference','advantage','better','compare','unique','special','superior','innovative'],
-        ['work','how works','operate','function','mechanism'],
-        ['what is','what are','definition','meaning','explain','describe','information','concept'],
-        ['worry','worried','concern','concerned','anxious','anxiety','fear','afraid','scared','frightened','uneasy'],
-        ['family','son','daughter','children','kids','child','baby','babies','minor','minors','toddler','pregnant','pregnancy'],
-        ['true','truth','real','certain','effective','reliable','trustworthy','proven','demonstrated','guarantee','certified'],
-        ['good','bad','safe','unsafe','dangerous','healthy','harmful','toxic','clean','dirty','polluted'],
-        ['drink','consume','ingest','swallow','beverage'],
-        ['contaminate','contaminated','contamination','contaminant','contaminants','pollute','pollution','polluted']
+        ['pfas','forever chemicals','perfluoroalkyl','fluorinated chemicals','eternal chemicals','polyfluoroalkyl','pfoa','pfos','genx','persistent chemicals','invisible contaminants','persistent organic pollutants','pops','chemical contamination'],
+        ['danger','dangerous','harmful','toxic','risk','hazard','threat','poisonous','lethal','deadly','critical','alarming','concerning','unhealthy','unsafe'],
+        ['health','disease','cancer','illness','condition','body','blood','tumor','thyroid','liver','kidney','hormone','immune','fertility','reproduction','cholesterol','obesity','endocrine','immune system','plasma','serum'],
+        ['eliminate','destroy','break','decompose','degrade','remove','clean','purify','mineralize','oxidize','neutralize','decontaminate','eradicate','treat','remediate'],
+        ['price','cost','pricing','budget','how much','affordable','expensive','cheap','investment','accessible','profitable','subscription','monthly','annual','value'],
+        ['product','device','filter','appliance','equipment','machine','purifier','system','cartridge','membrane','unit','module','filtration system','purification system'],
+        ['technology','method','procedure','process','mechanism','technique','innovation','science','engineering','research','patent','solution','development'],
+        ['regulation','legislation','law','directive','rule','legal','standard','mandatory','limit','threshold','maximum','minimum','compliance','requirement','mcl','ppb','ppt','nanogram','microgram'],
+        ['verify','prove','certify','test','measure','analyze','validate','evidence','result','report','laboratory','assay','data','study','research','paper','article','scientific'],
+        ['contact','reach','write','email','message','call','inquire','support','customer service','form','phone','whatsapp','linkedin','meeting','appointment','consultation'],
+        ['team','founder','creator','who','behind','inventor','scientist','researcher','director','engineer','chemist','biologist','expert','specialist','professional'],
+        ['water','tap','drinking','supply','faucet','aquifer','pipe','plumbing','network','reservoir','well','spring','river','lake','stream'],
+        ['environment','ecology','nature','planet','ecosystem','environmental','green','sustainable','biodiversity','wildlife','flora','environmental contamination','footprint','environmental impact','climate change'],
+        ['help','protect','prevent','contribute','action','participate','solve','defend','care','improve','reduce','avoid','minimize'],
+        ['industrial','large scale','plant','factory','municipal','commercial','enterprise','infrastructure','wastewater','treatment plant','sewage','facility','corporate'],
+        ['nfc','chip','traceability','tracking','monitoring','smart','intelligent','sensor','iot','connected','digital','app','application','mobile','scan','read'],
+        ['buy','purchase','acquire','get','order','shop','sale','reserve','request','available','availability','stock','shipping','delivery'],
+        ['install','installation','setup','mount','place','configure','connect','plumber','diy','easy to install','no construction'],
+        ['home','house','domestic','residential','household','kitchen','sink','apartment','flat','condo','family','personal','private'],
+        ['difference','advantage','better','compare','unique','special','superior','innovative','versus','vs','compared to','competition','alternative','other','others'],
+        ['work','how works','operate','function','mechanism','operation','how to use','step by step','process'],
+        ['what is','what are','definition','meaning','explain','describe','information','concept','basics','introduction','summary','about'],
+        ['worry','worried','concern','concerned','anxious','anxiety','fear','afraid','scared','frightened','uneasy','nervous','alarm','alert','urgent','urgency'],
+        ['family','son','daughter','children','kids','child','baby','babies','minor','minors','toddler','pregnant','pregnancy','breastfeeding','nursing','pediatric','infant','prenatal','neonatal','newborn','mom','dad','parent','mother','father'],
+        ['true','truth','real','certain','effective','reliable','trustworthy','proven','demonstrated','guarantee','certified','endorsed','backed','verified','accredited'],
+        ['good','bad','safe','unsafe','dangerous','healthy','harmful','toxic','clean','dirty','polluted','pure','contaminated','sound','wholesome'],
+        ['drink','consume','ingest','swallow','beverage','cook','prepare','use water','shower','bathe','wash'],
+        ['contaminate','contaminated','contamination','contaminant','contaminants','pollute','pollution','polluted','discharge','spill','residue','toxic','toxicity','impurity'],
+        /* Domain-specific synonym groups */
+        ['pan','teflon','nonstick','ptfe','coating','skillet','pot','cookware','utensil'],
+        ['clothing','textile','waterproof','goretex','gore tex','jacket','fabric','fiber','cloth','scotchgard'],
+        ['cosmetic','makeup','cream','shampoo','sunscreen','beauty product','personal care','hygiene'],
+        ['packaging','wrapper','cardboard','waxed paper','container','plastic','tray','cup','disposable plate'],
+        ['river','lake','sea','ocean','stream','flow','waterway','estuary','wetland','reservoir','watershed','basin'],
+        ['soil','ground','subsoil','sediment','sludge','mud','aquifer','terrain','field','farmland','cropland'],
+        ['fish','seafood','shellfish','mollusk','crustacean','tuna','salmon','trout','sardine'],
+        ['meat','milk','egg','dairy','cheese','yogurt','butter','food','meal','diet','nutrition'],
+        ['foam','firefighting foam','afff','firefighter','extinguisher','fire suppression','retardant','fire resistant'],
+        ['study','research','paper','publication','data','statistics','report','finding','result','conclusion','scientific evidence'],
+        ['concentration','level','amount','measurement','nanogram','microgram','ppb','ppt','ng/l','ug/l','limit','threshold','dose'],
+        ['reactor','chamber','pressure','temperature','supercritical','oxidation','mineralization','total destruction','co2','fluoride'],
+        ['membrane','osmosis','nanofiltration','ultrafiltration','filtration','retention','permeate','rejection','porous','selective'],
+        ['activated carbon','active carbon','adsorption','brita','filter pitcher','fridge filter','tap filter','basic filter'],
+        ['investment','partner','collaborator','market','opportunity','business','license','startup','entrepreneurship','profitability','roi']
       ]
     };
 
@@ -385,22 +443,43 @@
     var MAX_HISTORY = 20;
 
     var TOPIC_GRAPH = {
-      'pfas-intro':     ['pfas-danger','environment','regulation','scwo'],
-      'pfas-danger':    ['pfas-intro','how-to-help','water-safe','environment'],
-      'scwo':           ['verification','product','industrial','pfas-intro'],
-      'product':        ['nfc','pricing','scwo','water-safe','difference'],
-      'regulation':     ['pfas-intro','pfas-danger','product','industrial'],
-      'verification':   ['scwo','industrial','product'],
-      'industrial':     ['scwo','verification','product','pricing'],
-      'nfc':            ['product','pricing'],
-      'contact':        ['pricing','team'],
+      'pfas-intro':     ['pfas-danger','pfas-types','pfas-sources','cf-bond','environment','regulation','scwo'],
+      'pfas-danger':    ['pfas-intro','pfas-children','how-to-help','water-safe','environment','pfas-food'],
+      'scwo':           ['scwo-deep','verification','product','industrial','pfas-intro','other-methods'],
+      'product':        ['nfc','pricing','installation','flow-rate','filtered-water-quality','scwo','water-safe','difference','cartridge-return'],
+      'regulation':     ['regulation-eu-detail','regulation-epa-detail','pfas-intro','pfas-danger','product','industrial'],
+      'verification':   ['scwo','scwo-deep','industrial','product','report-analytics'],
+      'industrial':     ['scwo','verification','product','pricing','scalability'],
+      'nfc':            ['product','cartridge-return','report-analytics','pricing'],
+      'contact':        ['pricing','team','invest'],
       'team':           ['zeropfas-about','contact'],
       'pricing':        ['product','industrial','contact'],
-      'water-safe':     ['product','pfas-danger','regulation'],
-      'difference':     ['scwo','verification','product'],
-      'zeropfas-about': ['team','scwo','product'],
-      'environment':    ['pfas-intro','pfas-danger','how-to-help'],
-      'how-to-help':    ['product','water-safe','contact']
+      'water-safe':     ['product','filtered-water-quality','pfas-danger','regulation','pfas-water-sources','pfas-children'],
+      'difference':     ['scwo','verification','product','activated-carbon','other-methods'],
+      'zeropfas-about': ['team','scwo','product','scalability','invest'],
+      'environment':    ['pfas-intro','pfas-danger','how-to-help','pfas-water-sources'],
+      'how-to-help':    ['product','water-safe','contact','pfas-children'],
+      'pfas-types':     ['pfas-intro','pfas-danger','cf-bond','regulation'],
+      'pfas-sources':   ['pfas-intro','pfas-food','water-safe','how-to-help'],
+      'cf-bond':        ['pfas-intro','scwo','scwo-deep','other-methods'],
+      'capture-stage':  ['concentration-stage','product','scwo'],
+      'concentration-stage': ['capture-stage','scwo-deep','product'],
+      'scwo-deep':      ['scwo','verification','cf-bond','capture-stage'],
+      'cartridge-return': ['nfc','product','verification','report-analytics'],
+      'activated-carbon': ['difference','product','scwo','other-methods'],
+      'pfas-food':      ['pfas-sources','pfas-danger','water-safe','how-to-help'],
+      'pfas-history':   ['pfas-intro','pfas-types','regulation'],
+      'installation':   ['product','nfc','flow-rate','pricing'],
+      'flow-rate':      ['product','installation','pricing'],
+      'pfas-children':  ['pfas-danger','how-to-help','product','water-safe'],
+      'other-methods':  ['scwo','activated-carbon','difference','verification'],
+      'pfas-water-sources': ['water-safe','pfas-intro','environment','product'],
+      'invest':         ['contact','zeropfas-about','scalability','industrial'],
+      'regulation-eu-detail': ['regulation','regulation-epa-detail','product'],
+      'regulation-epa-detail': ['regulation','regulation-eu-detail','product'],
+      'scalability':    ['industrial','product','invest','zeropfas-about'],
+      'report-analytics': ['verification','nfc','cartridge-return'],
+      'filtered-water-quality': ['product','water-safe','nfc','installation','flow-rate']
     };
 
     var FOLLOWUP = {
@@ -463,12 +542,70 @@
 
     function reset() { _history = []; _topicStack = []; _currentTopic = null; _lastFollowUp = null; }
 
+    /** Count how many times a topic has been answered (before current turn) */
+    function getVisitCount(topicId) {
+      var count = 0;
+      for (var i = 0; i < _history.length; i++) {
+        if (_history[i].topicId === topicId) count++;
+      }
+      return count;
+    }
+
+    /** Resolve anaphoric/short queries by injecting current topic context */
+    function resolveAnaphora(text, lang) {
+      if (!_currentTopic) return text;
+
+      var normText = TextProcessor.normalize(text).trim();
+      if (!normText) return text;
+
+      var wc = normText.split(/\s+/).length;
+      var explicitReferback = hasReferback(text, lang);
+
+      // Solo tratamos como pregunta dependiente del contexto
+      // si realmente parece un follow-up corto o referencial.
+      var elliptical =
+        explicitReferback ||
+        wc <= 2 ||
+        /^(y|e|entonces|tambien|también|y si|y que|y qué|y el|y la|y los|y las|eso|esto|lo anterior|sobre eso|sobre esto)$/i.test(normText);
+
+      // Si la pregunta ya trae una ancla clara, NO metemos contexto previo.
+      var standaloneAnchor = /\b(nfc|chip|precio|cuanto|cuánto|cuesta|coste|costo|agua|grifo|epa|echa|directiva|normativa|regulacion|regulación|instalacion|instalación|caudal|flujo|cartucho|pfas|pfoa|pfos|scwo|producto)\b/i.test(normText);
+
+      if (!elliptical) return text;
+      if (standaloneAnchor && !explicitReferback && wc >= 2) return text;
+
+      var topicCtx = {
+        'pfas-intro':     {es:'pfas contaminantes eternos',en:'pfas forever chemicals'},
+        'pfas-danger':    {es:'pfas peligro salud riesgo',en:'pfas danger health risk'},
+        'scwo':           {es:'scwo tecnologia eliminar destruir',en:'scwo technology eliminate destroy'},
+        'product':        {es:'producto filtro dispositivo comprar',en:'product filter device buy'},
+        'regulation':     {es:'normativa regulacion ley',en:'regulation law directive'},
+        'verification':   {es:'verificar probar demostrar',en:'verify prove demonstrate'},
+        'industrial':     {es:'industrial planta gran escala',en:'industrial plant large scale'},
+        'nfc':            {es:'nfc chip trazabilidad',en:'nfc chip traceability'},
+        'contact':        {es:'contacto email',en:'contact email'},
+        'team':           {es:'equipo fundador zeropfas',en:'team founder zeropfas'},
+        'pricing':        {es:'precio coste cuanto',en:'price cost how much'},
+        'water-safe':     {es:'agua segura grifo potable',en:'water safe tap drinking'},
+        'difference':     {es:'diferencia ventaja mejor',en:'difference advantage better'},
+        'zeropfas-about': {es:'zeropfas empresa sobre',en:'zeropfas company about'},
+        'environment':    {es:'medio ambiente ecosistema',en:'environment ecosystem'},
+        'how-to-help':    {es:'ayudar proteger prevenir',en:'help protect prevent'}
+      };
+
+      var ctx = topicCtx[_currentTopic];
+      if (!ctx) return text;
+
+      return text + ' ' + (ctx[lang] || ctx.es);
+    }
+
     return {
       push: push, getTopic: getTopic, getStack: getStack,
       setLastFollowUp: setLastFollowUp, getLastFollowUp: getLastFollowUp,
       isFollowUp: isFollowUp, hasReferback: hasReferback,
       relatedUnvisited: relatedUnvisited, resolveFollowUp: resolveFollowUp,
-      getBoosts: getBoosts, reset: reset, TOPIC_GRAPH: TOPIC_GRAPH
+      getBoosts: getBoosts, reset: reset, getVisitCount: getVisitCount,
+      resolveAnaphora: resolveAnaphora, TOPIC_GRAPH: TOPIC_GRAPH
     };
   })();
 
@@ -523,6 +660,72 @@
         {test: /\b(quiero\s+saber|me\s+gustaria\s+saber|necesito\s+saber|quisiera\s+(saber|entender|conocer)|me\s+interesa|siento\s+curiosidad)\b/i, targets: {'pfas-intro': 2.0, 'zeropfas-about': 1.5}},
         /* PFAS in water specifically */
         {test: /\b(pfas\s+en\s+(el\s+)?agua|agua\s+con\s+pfas|pfas\s+del\s+grifo|hay\s+pfas)\b/i, targets: {'water-safe': 3.0, 'pfas-danger': 2.0, 'pfas-intro': 1.5}},
+        /* PFAS types */
+        {test: /\b(tipos?\s+de\s+pfas|pfoa|pfos|genx|cadena\s+(corta|larga)|clases?\s+de\s+pfas|cu[aá]ntos\s+tipos|familias?\s+de|variantes?|subtipos?)\b/i, targets: {'pfas-types': 3.5, 'pfas-intro': 1.5}},
+        /* PFAS sources - everyday products */
+        {test: /\b(d[oó]nde\s+(hay|est[aá]n|se\s+encuentran)|productos?\s+con\s+pfas|sart[eé]n|teflon|ropa|textil|envase|cosm[eé]tic|maquillaje|impermeable|goretex|scotchgard|espuma|antiadherente|en\s+qu[eé]\s+productos?|exposici[oó]n\s+diaria|vida\s+cotidiana)\b/i, targets: {'pfas-sources': 3.5, 'pfas-intro': 1.2}},
+        /* C-F bond chemistry */
+        {test: /\b(enlace|c-?f|carbono\s*-?\s*fl[uú]or|por\s+qu[eé]\s+(no\s+se\s+(degrada|rompe)|son\s+eternos|persisten|duran)|qu[ií]mica\s+(del|de)|estructura\s+molecular|485\s*kj|energ[ií]a\s+de\s+disociaci[oó]n|fuerza\s+del\s+enlace)\b/i, targets: {'cf-bond': 3.5, 'pfas-intro': 1.5}},
+        /* Capture stage */
+        {test: /\b(fase\s+de\s+captura|etapa\s+de\s+captura|c[oó]mo\s+(captur[aá]|atrap[aá])|resina\s+ani[oó]nica|carb[oó]n\s+(activ|activad)|adsorci[oó]n|pretratamiento|prefiltro|sedimentos)\b/i, targets: {'capture-stage': 3.5, 'product': 1.5}},
+        /* Concentration stage */
+        {test: /\b(concentraci[oó]n|concentrar|nanofiltraci[oó]n|[oó]smosis\s+inversa|membrana\s+(nf|ro)|x100|factor\s+de\s+concentraci[oó]n|reducir\s+volumen)\b/i, targets: {'concentration-stage': 3.5, 'scwo': 1.5}},
+        /* SCWO deep dive */
+        {test: /\b(agua\s+supercr[ií]tica|estado\s+supercr[ií]tico|374\s*(grados|°)|22[,.]?1\s*mpa|220\s*bar|reactor\s+scwo|dentro\s+del\s+reactor|punto\s+cr[ií]tico|fase\s+supercr[ií]tica|qu[eé]\s+(sale|pasa)\s+(del|en\s+el)\s+reactor|subproductos?|residuos?\s+t[oó]xicos?)\b/i, targets: {'scwo-deep': 3.5, 'scwo': 2.0}},
+        /* Cartridge return */
+        {test: /\b(retorno|devolver\s+(el\s+)?cartucho|cartucho\s+(usado|agotado|saturado)|recogida|circuito\s+(cerrado|de\s+retorno)|qu[eé]\s+hago\s+con\s+el\s+cartucho|cuando\s+se\s+agota)\b/i, targets: {'cartridge-return': 3.5, 'nfc': 1.5}},
+        /* Activated carbon limitations */
+        {test: /\b(carb[oó]n\s+activado|carb[oó]n\s+activo|brita|jarra|filtro\s+(normal|convencional|com[uú]n|barato)|por\s+qu[eé]\s+no\s+sirve|limitacion|solo\s+retiene|retener\s+no\s+es\s+destruir|otros\s+filtros|qu[eé]\s+filtro\s+usar?)\b/i, targets: {'activated-carbon': 3.5, 'difference': 2.0}},
+        /* PFAS in food */
+        {test: /\b(pfas\s+en\s+(la\s+)?comida|alimentos?\s+(contaminad|con\s+pfas)|cadena\s+(alimentaria|tr[oó]fica)|pescado|carne|leche|l[aá]cteo|huevo|envases?\s+(de\s+comida|alimentario)|comida\s+r[aá]pida|fast\s+food|palomitas|microondas|sart[eé]n.*teflon)\b/i, targets: {'pfas-food': 3.5, 'pfas-sources': 2.0}},
+        /* PFAS history */
+        {test: /\b(historia\s+(de\s+los\s+)?pfas|cu[aá]ndo\s+se\s+(descubri|invent)|desde\s+cu[aá]ndo|origen\s+(de\s+los\s+)?pfas|dupont|3m|dark\s+waters|pel[ií]cula|esc[aá]ndalo|demanda|juicio|cu[aá]nto\s+tiempo\s+llevan)\b/i, targets: {'pfas-history': 3.5, 'pfas-intro': 1.5}},
+        /* Installation */
+        {test: /\b(c[oó]mo\s+se\s+instala|instalaci[oó]n|f[aá]cil\s+de\s+instalar|necesito\s+fontanero|bricolaje|diy|debajo\s+(del\s+)?fregadero|espacio|dimensiones|tama[nñ]o|necesita\s+electricidad|silencioso|ruido)\b/i, targets: {'installation': 3.5, 'product': 1.5}},
+        /* Flow rate */
+        {test: /\b(caudal|litros\s+por\s+minuto|presi[oó]n|flujo|r[aá]pido|lento|cu[aá]nto\s+tarda|llenar\s+(un\s+)?vaso|2[,.]1\s*l|rendimiento\s+(del|de))\b/i, targets: {'flow-rate': 3.5, 'product': 1.5}},
+        /* PFAS & children */
+        {test: /\b(ni[nñ]os?\s+y\s+pfas|pfas\s+(en|y)\s+ni[nñ]os|leche\s+materna|biber[oó]n|f[oó]rmula|agua\s+para\s+beb[eé]|desarrollo\s+infantil|vacunas?\s+(infantil|de\s+ni[nñ]os)|afecta\s+a\s+(los\s+)?ni[nñ]os|proteger\s+a\s+mis\s+hijos)\b/i, targets: {'pfas-children': 3.5, 'pfas-danger': 2.0}},
+        /* Other treatment methods */
+        {test: /\b(otros\s+(m[eé]todos|tratamientos|tecnolog[ií]as)|alternativas?|incineraci[oó]n|incinerar|quemar|plasma|fotocatal|electroqui|bioremediaci[oó]n|bacterias|estado\s+del\s+arte|comparaci[oó]n\s+de\s+m[eé]todos|no\s+solo\s+scwo)\b/i, targets: {'other-methods': 3.5, 'scwo': 1.5}},
+        /* PFAS in water sources */
+        {test: /\b(r[ií]os?\s+(contaminad|con\s+pfas)|lagos?\s+(contaminad|con)|acu[ií]feros?|aguas?\s+subterr[aá]neas?|depuradora|potabilizadora|edar|etap|red\s+(de\s+agua|p[uú]blica)|de\s+d[oó]nde\s+vien|c[oó]mo\s+llegan\s+al\s+agua|tratamiento\s+convencional)\b/i, targets: {'pfas-water-sources': 3.5, 'water-safe': 2.0}},
+        /* Investment / collaboration */
+        {test: /\b(invertir|inversi[oó]n|inversor|capital|financiaci[oó]n|fondos|ronda|startup|colaborar|colaboraci[oó]n|partnership|socio|modelo\s+de\s+negocio|mercado|licencia|escalable)\b/i, targets: {'invest': 3.5, 'contact': 1.5}},
+        /* EU regulation detail */
+        {test: /\b(directiva\s+(europea|2020|eu)|2020\/2184|l[ií]mite\s+(europeo|de\s+la\s+ue)|echa\s+restricci[oó]n|restricci[oó]n\s+universal|0[,.]1\s*[µu]g|prohibici[oó]n\s+europa|normativa\s+europea)\b/i, targets: {'regulation-eu-detail': 3.5, 'regulation': 2.0}},
+        /* EPA regulation detail */
+        {test: /\b(epa\s+(l[ií]mite|regulaci[oó]n|normativa|4\s*ng)|mcl|maximum\s+contaminant|4\s*ng\/l|normativa\s+(epa|americana|usa)|regulaci[oó]n\s+(de\s+)?estados\s+unidos)\b/i, targets: {'regulation-epa-detail': 3.5, 'regulation': 2.0}},
+        /* Scalability */
+        {test: /\b(escalabilidad|escalar|modular|ampliable|de\s+casa\s+a\s+industria|todas\s+las\s+escalas|linea\s+dual|transferible|transferibilidad|global|licencia\s+tecnol[oó]gica|otros\s+pa[ií]ses)\b/i, targets: {'scalability': 3.5, 'industrial': 1.5}},
+        /* Reports & analytics */
+        {test: /\b(informe|reporte|datos|anal[ií]tica|dashboard|panel|monitorizar|monitorizaci[oó]n|tiempo\s+real|estad[ií]sticas?|gr[aá]fico|resultados?|c[oó]mo\s+s[eé]\s+que\s+funciona|plataforma\s+online)\b/i, targets: {'report-analytics': 3.5, 'verification': 1.5}},
+        /* Implicit statements (user states a fact, expects info) */
+        {test: /\b(he\s+(le[ií]do|visto|o[ií]do|escuchado)\s+(que|sobre|acerca)|(le[ií]|vi|escuch[eé])\s+(que|sobre|en\s+las\s+noticias|en\s+la\s+tele))\b/i, targets: {'pfas-intro': 2.5, 'pfas-danger': 2.0}},
+        {test: /\b(mi\s+agua\s+(tiene|esta|huele|sabe|contiene)|sale\s+agua\s+(rara|turbia|mala|sucia|blanca|amarilla))\b/i, targets: {'water-safe': 3.5, 'product': 2.0}},
+        {test: /\b(en\s+mi\s+(ciudad|pueblo|zona|barrio|comunidad|region)\s+(hay|tienen|detectaron|encontraron)|han\s+encontrado\s+pfas|detectaron\s+pfas|hay\s+pfas\s+en)\b/i, targets: {'pfas-water-sources': 3.0, 'water-safe': 2.5}},
+        /* Cooking / daily use with water */
+        {test: /\b(cocinar|hervir|hacer\s+(cafe|te|sopa|pasta|arroz)|lavar\s+(fruta|verdura|lechuga)|agua\s+para\s+cocinar|cocino\s+con)\b/i, targets: {'water-safe': 3.0, 'pfas-food': 2.5}},
+        /* Everyday products concern */
+        {test: /\b(mi\s+sart[eé]n|mi\s+ropa|mi\s+chaqueta|mi\s+crema|mi\s+champu|mi\s+maquillaje|uso\s+(teflon|gore|scotchgard)|tengo\s+(sartenes|ropa)\s+(con|de))\b/i, targets: {'pfas-sources': 3.5, 'pfas-danger': 1.5}},
+        /* Pet concern */
+        {test: /\b(mascota|perro|gato|animal(es)?\s+dom[eé]stico|mi\s+perro|mi\s+gato|animales|afecta\s+a\s+(los\s+)?animales)\b/i, targets: {'pfas-danger': 2.5, 'environment': 2.5}},
+        /* Shower / bath concern */
+        {test: /\b(ducha|ba[nñ]o|duchar(me|se|nos)|ba[nñ]ar(me|se|nos)|piel|absorbe\s+por\s+la\s+piel|contacto\s+con\s+la\s+piel|dermico)\b/i, targets: {'pfas-danger': 2.5, 'water-safe': 2.5}},
+        /* Cost-benefit / value */
+        {test: /\b(merece\s+la\s+pena|vale\s+la\s+pena|es\s+necesario|realmente\s+necesito|hace\s+falta|compensar|amortizar|relaci[oó]n\s+calidad|precio\s*-?\s*calidad|ahorro)\b/i, targets: {'pricing': 2.5, 'product': 2.0, 'pfas-danger': 1.5}},
+        /* Bottled water comparison */
+        {test: /\b(agua\s+(embotellada|mineral|envasada)|botella\s+de\s+agua|garrafa|manantial|comprar\s+agua|mejor\s+embotellar|beber\s+embotellada)\b/i, targets: {'water-safe': 3.0, 'activated-carbon': 2.0, 'product': 1.5}},
+        /* Building/house buying concern */
+        {test: /\b(construir|obra\s+nueva|piso\s+nuevo|casa\s+nueva|edificio|urbanizaci[oó]n|comunidad|vecinos|portero|administrador)\b/i, targets: {'installation': 2.5, 'product': 2.5}},
+        /* Environmental news concern */
+        {test: /\b(noticias|prensa|periodico|periodista|tele(vision)?|documental|reportaje|art[ií]culo|invest[ií]gaci[oó]n|estudio|universidad|publicaci[oó]n|cient[ií]fico)\b/i, targets: {'pfas-history': 2.5, 'pfas-intro': 2.0, 'verification': 1.5}},
+        /* Warranties / guarantees */
+        {test: /\b(garant[ií]a|cuanto\s+dura\s+(la\s+garant|el\s+producto)|vida\s+[uú]til|durabilidad|cuanto\s+tiempo\s+dura|a[nñ]os\s+de\s+garant|se\s+estropea|se\s+rompe|mantenimiento)\b/i, targets: {'product': 3.0, 'nfc': 2.0, 'pricing': 1.5}},
+        /* Spain-specific */
+        {test: /\b(espa[nñ]a|madrid|barcelona|valencia|sevilla|bilbao|andaluc[ií]a|catalu[nñ]a|galicia|disponible\s+en\s+espa|envian\s+a\s+espa|funciona\s+en\s+espa)\b/i, targets: {'product': 2.5, 'contact': 2.5}},
+        /* Filtered water quality */
+        {test: /\b(como\s+(esta|está|sale|queda)\s+el\s+agua|calidad\s+del\s+agua|agua\s+(filtrada|tratada|de\s+salida)|que\s+agua\s+sale|como\s+queda\s+el\s+agua)\b/i, targets: {'filtered-water-quality': 4.0, 'water-safe': 1.8, 'product': 1.0}},
       ],
       en: [
         /* Question archetypes */
@@ -562,6 +765,68 @@
         {test: /\b(cancer|tumor|disease|sick|cause|thyroid|liver|kidney|hormone|immune\s+system|fertility|reproduction)\b/i, targets: {'pfas-danger': 3.5, 'pfas-intro': 1.5}},
         /* PFAS in water */
         {test: /\b(pfas\s+in\s+(my\s+)?water|water\s+with\s+pfas|pfas\s+from\s+(the\s+)?tap)\b/i, targets: {'water-safe': 3.0, 'pfas-danger': 2.0, 'pfas-intro': 1.5}},
+        /* PFAS types */
+        {test: /\b(types?\s+of\s+pfas|pfoa|pfos|genx|short\s+chain|long\s+chain|how\s+many\s+types|families?\s+of|variants?|subtypes?)\b/i, targets: {'pfas-types': 3.5, 'pfas-intro': 1.5}},
+        /* PFAS sources */
+        {test: /\b(where\s+(are|can\s+you\s+find)\s+pfas|products?\s+with\s+pfas|teflon|nonstick|clothing|textile|packaging|cosmetics?|makeup|waterproof|goretex|scotchgard|foam|everyday\s+products?|daily\s+exposure|which\s+products?)\b/i, targets: {'pfas-sources': 3.5, 'pfas-intro': 1.2}},
+        /* C-F bond */
+        {test: /\b(c-?f\s+bond|carbon\s*-?\s*fluorine|why\s+(don'?t|won'?t)\s+they\s+(degrade|break)|why\s+(eternal|forever|persistent)|bond\s+(energy|strength|dissociation)|485\s*kj|molecular\s+structure|chemistry\s+of)\b/i, targets: {'cf-bond': 3.5, 'pfas-intro': 1.5}},
+        /* Capture stage */
+        {test: /\b(capture\s+stage|how\s+do\s+you\s+(capture|trap)|anionic\s+resin|activated\s+carbon|adsorption|pretreatment|prefilter|sediment\s+filter|first\s+(stage|step))\b/i, targets: {'capture-stage': 3.5, 'product': 1.5}},
+        /* Concentration stage */
+        {test: /\b(concentration\s+(stage|step)|nanofiltration|reverse\s+osmosis|nf\/ro|x100|concentration\s+factor|reduce\s+volume|membrane\s+stage)\b/i, targets: {'concentration-stage': 3.5, 'scwo': 1.5}},
+        /* SCWO deep */
+        {test: /\b(supercritical\s+(water|state|conditions|fluid)|374\s*(degrees|°)|22[.]?1\s*mpa|220\s*bar|scwo\s+reactor|inside\s+the\s+reactor|critical\s+point|what\s+comes\s+out|byproducts?|end\s+products?|toxic\s+residues?)\b/i, targets: {'scwo-deep': 3.5, 'scwo': 2.0}},
+        /* Cartridge return */
+        {test: /\b(return\s+(the\s+)?cartridge|used\s+cartridge|spent\s+cartridge|send\s+(it\s+)?back|collection|closed\s+loop|return\s+circuit|what\s+do\s+i\s+do\s+with|when\s+depleted)\b/i, targets: {'cartridge-return': 3.5, 'nfc': 1.5}},
+        /* Activated carbon */
+        {test: /\b(activated\s+carbon|carbon\s+filter|brita|pitcher|regular\s+filter|conventional\s+filter|cheap\s+filter|why\s+doesn'?t\s+it|limitations?|only\s+retains?|other\s+filters?|which\s+filter|market\s+filters?)\b/i, targets: {'activated-carbon': 3.5, 'difference': 2.0}},
+        /* PFAS in food */
+        {test: /\b(pfas\s+in\s+food|contaminated\s+food|food\s+chain|fish|meat|dairy|eggs?|packaging|fast\s+food|popcorn|microwave|nonstick\s+pan|food\s+(contamination|exposure)|what\s+i\s+eat)\b/i, targets: {'pfas-food': 3.5, 'pfas-sources': 2.0}},
+        /* PFAS history */
+        {test: /\b(history\s+of\s+pfas|when\s+(discover|invent|creat)|since\s+when|origin\s+of|dupont|3m|dark\s+waters|movie|film|scandal|lawsuit|case|how\s+long\s+have)\b/i, targets: {'pfas-history': 3.5, 'pfas-intro': 1.5}},
+        /* Installation */
+        {test: /\b(how\s+to\s+install|installation|easy\s+to\s+install|need\s+a\s+plumber|diy|under\s+(the\s+)?sink|space|dimensions|size|need\s+electricity|power|silent|quiet|noise)\b/i, targets: {'installation': 3.5, 'product': 1.5}},
+        /* Flow rate */
+        {test: /\b(flow\s+rate|liters?\s+per\s+minute|pressure|how\s+fast|how\s+slow|fill\s+a\s+(glass|bottle)|2[.]1\s*l|performance|capacity|throughput)\b/i, targets: {'flow-rate': 3.5, 'product': 1.5}},
+        /* PFAS & children */
+        {test: /\b(pfas\s+(and|in|for)\s+(children|kids|babies)|breast\s+milk|baby\s+(formula|water|bottle)|child\s+development|childhood\s+vaccines?|affects?\s+(children|kids|babies)|protect\s+my\s+(kids|children))\b/i, targets: {'pfas-children': 3.5, 'pfas-danger': 2.0}},
+        /* Other methods */
+        {test: /\b(other\s+(methods|treatments|technologies)|alternatives?|incineration|burn|plasma|photocatalysis|electrochemistry|bioremediation|bacteria|state\s+of\s+the\s+art|comparison|not\s+only\s+scwo|alternative\s+to)\b/i, targets: {'other-methods': 3.5, 'scwo': 1.5}},
+        /* PFAS water sources */
+        {test: /\b(rivers?\s+(contaminated|with\s+pfas)|lakes?\s+(contaminated|with)|aquifers?|groundwater|treatment\s+plant|water\s+utility|public\s+(water|supply)|where\s+do\s+they\s+come\s+from|how\s+do\s+they\s+(enter|get\s+in)|conventional\s+treatment)\b/i, targets: {'pfas-water-sources': 3.5, 'water-safe': 2.0}},
+        /* Investment */
+        {test: /\b(invest|investment|investor|capital|funding|finance|round|startup|collaborate|collaboration|partnership|partner|business\s+model|market|license|scalable|roi|opportunity)\b/i, targets: {'invest': 3.5, 'contact': 1.5}},
+        /* EU regulation detail */
+        {test: /\b(european\s+directive|directive\s+2020|2020\/2184|eu\s+limit|echa\s+restriction|universal\s+restriction|0[.]1\s*[µu]g|europe\s+ban|european\s+regulation)\b/i, targets: {'regulation-eu-detail': 3.5, 'regulation': 2.0}},
+        /* EPA regulation detail */
+        {test: /\b(epa\s+(limit|regulation|standard|rule|4\s*ng)|mcl|maximum\s+contaminant|4\s*ng\/l|us\s+regulation|usa\s+regulation|american\s+regulation)\b/i, targets: {'regulation-epa-detail': 3.5, 'regulation': 2.0}},
+        /* Scalability */
+        {test: /\b(scalability|scale\s+up|modular|expandable|home\s+to\s+industrial|all\s+scales|dual\s+line|transferable|transferability|global\s+expansion|technology\s+license|other\s+countries)\b/i, targets: {'scalability': 3.5, 'industrial': 1.5}},
+        /* Reports & analytics */
+        {test: /\b(reports?|data|analytics?|dashboard|panel|monitor|monitoring|real\s+time|statistics|graph|results?|how\s+do\s+i\s+know\s+it\s+works|platform|online\s+access)\b/i, targets: {'report-analytics': 3.5, 'verification': 1.5}},
+        /* Implicit statements (user states a fact, expects info) */
+        {test: /\b(i\s+(read|saw|heard)\s+(that|about)|(read|saw|heard)\s+(that|about|on\s+the\s+news|on\s+tv))\b/i, targets: {'pfas-intro': 2.5, 'pfas-danger': 2.0}},
+        {test: /\b(my\s+water\s+(has|is|smells|tastes|contains)|water\s+(tastes?|smells?)\s+(weird|funny|bad|off|strange))\b/i, targets: {'water-safe': 3.5, 'product': 2.0}},
+        {test: /\b(in\s+my\s+(city|town|area|neighborhood|community|region)\s+(there\s+are|they\s+(found|detected))|they\s+found\s+pfas|pfas\s+(detected|found)\s+in)\b/i, targets: {'pfas-water-sources': 3.0, 'water-safe': 2.5}},
+        /* Cooking / daily use */
+        {test: /\b(cook(ing)?|boil(ing)?|mak(e|ing)\s+(coffee|tea|soup|pasta|rice)|wash(ing)?\s+(fruit|vegetables|lettuce)|water\s+for\s+cooking|cook\s+with)\b/i, targets: {'water-safe': 3.0, 'pfas-food': 2.5}},
+        /* Everyday products concern */
+        {test: /\b(my\s+(pan|clothes|jacket|cream|shampoo|makeup)|using?\s+(teflon|gore|scotchgard)|have\s+(pans|clothes)\s+with)\b/i, targets: {'pfas-sources': 3.5, 'pfas-danger': 1.5}},
+        /* Pet concern */
+        {test: /\b(pet|dog|cat|domestic\s+animal|my\s+(dog|cat)|animals?|affect\s+animals)\b/i, targets: {'pfas-danger': 2.5, 'environment': 2.5}},
+        /* Shower / bath */
+        {test: /\b(shower|bath|skin|absorb\s+through\s+skin|skin\s+contact|dermal|showering|bathing)\b/i, targets: {'pfas-danger': 2.5, 'water-safe': 2.5}},
+        /* Cost-benefit */
+        {test: /\b(worth\s+it|is\s+it\s+necessary|do\s+i\s+really\s+need|needed|cost\s*-?\s*benefit|value\s+for\s+money|pay\s+off|savings?)\b/i, targets: {'pricing': 2.5, 'product': 2.0, 'pfas-danger': 1.5}},
+        /* Bottled water comparison */
+        {test: /\b(bottled\s+water|mineral\s+water|water\s+bottle|gallon|spring\s+water|buy\s+water|better\s+to\s+buy|drink\s+bottled)\b/i, targets: {'water-safe': 3.0, 'activated-carbon': 2.0, 'product': 1.5}},
+        /* News / media */
+        {test: /\b(news|press|journalist|television|tv|documentary|report(age)?|article|investigation|study|university|publication|scientific)\b/i, targets: {'pfas-history': 2.5, 'pfas-intro': 2.0, 'verification': 1.5}},
+        /* Warranties */
+        {test: /\b(warranty|how\s+long\s+does\s+(the\s+product|it)\s+last|lifespan|durability|years\s+of\s+warranty|breaks?|maintenance|upkeep)\b/i, targets: {'product': 3.0, 'nfc': 2.0, 'pricing': 1.5}},
+        /* Filtered water quality */
+        {test: /\b(how\s+(is|does)\s+the\s+(filtered|treated|output)\s+water|water\s+quality\s+after|what\s+water\s+comes\s+out|filtered\s+water\s+quality|how\s+clean\s+is\s+the\s+water|output\s+water)\b/i, targets: {'filtered-water-quality': 4.0, 'water-safe': 1.8, 'product': 1.0}},
       ]
     };
 
@@ -581,7 +846,33 @@
       return { scores: scores, matchCount: matchCount };
     }
 
-    return { analyze: analyze };
+    /* Emotion detection for empathetic responses */
+    var EMOTION_PATTERNS = {
+      es: {
+        worry:      /\b(me\s+preocupa|estoy\s+preocupad[oa]|tengo\s+miedo|me\s+da\s+miedo|me\s+asusta|me\s+inquieta|me\s+angustia|temo\s+que|deber[ií]a\s+preocuparme|es\s+(grave|serio))\b/i,
+        fear:       /\b(tengo\s+miedo|me\s+aterr|me\s+da\s+(p[aá]nico|terror)|aterrador|horr[io]ble|terrible|espantoso)\b/i,
+        skepticism: /\b(no\s+(creo|me\s+(creo|f[ií][oa]))|dudo|dudas|imposible|mentira|fake|fraude|timo|estafa|enga[nñ]o|demasiado\s+bueno|suena\s+(raro|fake))\b/i,
+        family:     /\b(mi(s)?\s+(familia|hij[oa]s?|ni[nñ]os?|beb[eé]s?|peque[nñ]os?)|embarazad[oa]|embarazo|proteger\s+a\s+mi)\b/i,
+        urgency:    /\b(urgente|cuando\s+(antes|ya)|ya\s+mismo|inmediatamente|necesito\s+ya|lo\s+antes\s+posible|cuanto\s+antes|emergencia)\b/i
+      },
+      en: {
+        worry:      /\b(i'?m\s+(worried|concerned)|worries\s+me|concerns\s+me|should\s+i\s+(worry|be\s+concerned)|is\s+it\s+(serious|bad))\b/i,
+        fear:       /\b(i'?m\s+(afraid|scared|terrified)|scares\s+me|frightening|horrible|terrible|terrifying)\b/i,
+        skepticism: /\b(i\s+don'?t\s+(believe|think)|doubt|impossible|fake|scam|sounds?\s+fake|too\s+good\s+to\s+be\s+true)\b/i,
+        family:     /\b(my\s+(family|kids?|children|baby|babies)|pregnant|protect\s+my|little\s+ones)\b/i,
+        urgency:    /\b(urgent|asap|immediately|right\s+now|need\s+it\s+now|emergency|as\s+soon\s+as)\b/i
+      }
+    };
+
+    function detectEmotion(text, lang) {
+      var patterns = EMOTION_PATTERNS[lang] || EMOTION_PATTERNS.es;
+      for (var emotion in patterns) {
+        if (patterns[emotion].test(text)) return emotion;
+      }
+      return null;
+    }
+
+    return { analyze: analyze, detectEmotion: detectEmotion };
   })();
 
   /* ════════════════════════════════════════════════════════════════════
@@ -858,6 +1149,375 @@
           answer: 'Hay varias formas de actuar frente a los PFAS:\n\n• 🏠 <strong>En tu hogar</strong> — instala un sistema de filtración específico para PFAS (como nuestro dispositivo point-of-use)\n• 📊 <strong>Infórmate</strong> — conoce la normativa de tu zona y la calidad de tu agua\n• 📢 <strong>Difunde</strong> — muchas personas no conocen este problema\n• 🤝 <strong>Contacta con nosotros</strong> — podemos asesorarte según tu situación\n\n¿Te interesa saber más sobre nuestro producto o la normativa?',
           followUp: ['Ver el producto', 'Normativa 2026', 'Contactar'],
           weight: 1.0
+        },
+        {
+          id: 'pfas-types',
+          keywords: [
+            'tipos', 'clases', 'familias', 'pfoa', 'pfos', 'genx', 'pfba', 'pfhxa',
+            'cadena corta', 'cadena larga', 'cuantos tipos', 'cuantos hay', 'variantes',
+            'diferentes pfas', 'compuestos pfas', 'subtipos', 'categorias', 'grupos',
+            'acido perfluorooctanoico', 'sulfonato', 'perfluorooctano', 'acido perfluoro',
+            'mas peligrosos', 'peor', 'mas comunes', 'mas frecuentes', 'lista pfas',
+            'cuales son', 'cuantos pfas existen', 'clasificacion', 'nomenclatura',
+            'todos iguales', 'son todos iguales', 'son lo mismo', 'diferencias entre pfas',
+            '4700', 'compuesto', 'sustancia', 'grupo 1', 'cancerigeno', 'iarc',
+            'cuantos compuestos', 'que pfas hay', 'principales pfas', 'pfas mas conocidos'
+          ],
+          answer: 'Existen más de <strong>4 700 compuestos PFAS</strong> diferentes. Los más conocidos:\n\n• <strong>PFOA</strong> (ácido perfluorooctanoico) — usado en teflón, clasificado como <strong>carcinógeno Grupo 1</strong> por la IARC\n• <strong>PFOS</strong> (sulfonato de perfluorooctano) — usado en espumas contra incendios, muy bioacumulativo\n• <strong>GenX</strong> — sustituto de PFOA que también resulta tóxico\n• <strong>PFBA / PFHxA</strong> — PFAS de cadena corta, más difíciles de filtrar\n\nSe clasifican en <strong>cadena larga</strong> (≥8 carbonos, más bioacumulativos) y <strong>cadena corta</strong> (más móviles en agua, más difíciles de capturar).',
+          followUp: ['¿Son peligrosos?', '¿Cómo se eliminan?', 'Normativa'],
+          weight: 1.0
+        },
+        {
+          id: 'pfas-sources',
+          keywords: [
+            'donde hay', 'donde se encuentran', 'fuentes', 'origen', 'de donde vienen',
+            'como llegan', 'como entran', 'productos con pfas', 'objetos', 'cosas',
+            'sarten', 'teflon', 'ropa', 'textil', 'envase', 'comida rapida',
+            'espuma', 'extintor', 'cosmetic', 'maquillaje', 'dental', 'hilo dental',
+            'pizza', 'palomitas', 'microondas', 'impermeable', 'goretex', 'scotchgard',
+            'papel', 'carton', 'envoltorio', 'antiadherente', 'en que productos',
+            'donde estan', 'en mi casa', 'en mi comida', 'en mi ropa', 'exposicion diaria',
+            'contacto diario', 'vida cotidiana', 'dia a dia',
+            'cocina', 'ollas', 'cacharros', 'chaqueta', 'gore tex', 'plancha',
+            'menaje', 'recubrimiento', 'pintura', 'barniz', 'alfombra', 'moqueta',
+            'cera', 'crema solar', 'protector solar', 'champu', 'gel', 'jabon',
+            'hilo', 'seda dental', 'caja pizza', 'envase comida', 'bolsa', 'plastico',
+            'ptfe', 'como me expongo', 'por donde entran', 'me afectan', 'en casa hay'
+          ],
+          answer: 'Los PFAS están en más productos de lo que imaginas:\n\n🍳 <strong>Cocina</strong> — sartenes antiadherentes (teflón), envases de comida rápida, bolsas de palomitas\n👕 <strong>Ropa</strong> — textiles impermeables (Gore-Tex), tratamientos antimanchas (Scotchgard)\n🧴 <strong>Cosmética</strong> — bases de maquillaje, cremas, hilo dental\n🧯 <strong>Industrial</strong> — espumas contra incendios (AFFF), recubrimientos industriales\n📦 <strong>Envases</strong> — cartón para alimentos, papel resistente a grasa\n\nLa principal vía de exposición es el <strong>agua potable</strong>, seguida de alimentos y productos de consumo.',
+          followUp: ['¿Mi agua es segura?', '¿Son peligrosos?', '¿Qué puedo hacer?'],
+          weight: 1.0
+        },
+        {
+          id: 'cf-bond',
+          keywords: [
+            'enlace', 'enlace c-f', 'enlace carbono fluor', 'por que no se degrada',
+            'por que no se rompe', 'por que son eternos', 'quimica', 'estructura',
+            'molecular', 'molecula', 'kj', 'kjmol', '485', 'energia',
+            'resistente', 'indestructible', 'irrompible', 'mas fuerte',
+            'disociacion', 'enlace covalente', 'fuerza del enlace', 'estabilidad',
+            'por que persisten', 'por que duran tanto', 'como es posible',
+            'por que contaminantes eternos', 'por que forever', 'fluor', 'fluoruro',
+            'carbono', 'atomo', 'atomos', 'quimica organica', 'no desaparecen',
+            'no se van', 'no se eliminan solos', 'naturaleza no puede', 'imposible romper',
+            'que los hace eternos', 'que los hace persistentes', 'duran para siempre',
+            'por que se llaman eternos', 'por que no se destruyen', 'inmune a la naturaleza'
+          ],
+          answer: 'El secreto de la persistencia de los PFAS está en su <strong>enlace C–F</strong>:\n\n• Energía de disociación: <strong>485 kJ/mol</strong> — el más fuerte en química orgánica\n• Comparación con otros enlaces:\n  – C–H: 411 kJ/mol\n  – C–O: 358 kJ/mol\n  – C–C: 346 kJ/mol\n  – <strong>C–F: 485 kJ/mol</strong> ⬆️\n\nNingún proceso natural (luz solar, bacterias, oxidación ambiental) tiene energía suficiente para romperlo. Por eso necesitamos condiciones <strong>supercríticas</strong> (>374 °C, >22,1 MPa) para destruirlos.',
+          followUp: ['Tecnología SCWO', '¿Qué son los PFAS?', 'Verificación'],
+          weight: 1.0
+        },
+        {
+          id: 'capture-stage',
+          keywords: [
+            'captura', 'fase captura', 'etapa captura', 'como capturan', 'como atrapan',
+            'resina', 'resina anionica', 'carbon activo', 'carbon activado', 'adsorcion',
+            'absorcion', 'retencion', 'retener', 'atrapar', 'primera etapa',
+            'prefiltro', 'sedimentos', 'pretratamiento', 'filtro previo',
+            'primer paso', 'primera fase', 'atrapan', 'recogen', 'como filtra',
+            'como funciona el filtro', 'que pasa primero', 'proceso de filtrado',
+            'etapas del filtro', 'fases del proceso', '98 por ciento', '98%',
+            'eficiencia', 'como retiene', 'mecanismo de captura'
+          ],
+          answer: 'La <strong>fase de captura</strong> es la primera etapa de nuestro sistema:\n\n<strong>1. Prefiltro de sedimentos</strong>\nElimina partículas físicas del agua\n\n<strong>2. Carbón activo</strong>\nCaptura contaminantes generales\n\n<strong>3. Resina aniónica selectiva</strong>\nDiseñada específicamente para PFAS — eficiencia de retención <strong>>98 %</strong>\n\nEsta etapa atrapa los PFAS sin destruirlos. Para la destrucción real, el cartucho saturado se envía a nuestra planta SCWO centralizada.',
+          followUp: ['Concentración', 'Destrucción SCWO', 'Verificación'],
+          weight: 1.0
+        },
+        {
+          id: 'concentration-stage',
+          keywords: [
+            'concentracion', 'concentrar', 'membrana', 'nanofiltracion', 'osmosis inversa',
+            'nf', 'ro', 'por que concentrar', 'reducir volumen', 'eficiencia',
+            'x100', 'factor de concentracion', 'etapa concentracion', 'separacion',
+            'segunda etapa', 'segundo paso', 'membranas', 'osmosis', 'por que no tratar todo',
+            'por que concentran', 'hace falta concentrar', 'para que concentrar',
+            'seleccion', 'molecular', 'filtracion por membrana', 'economico',
+            'ahorrar', 'optimizar', 'menos volumen', 'cien veces'
+          ],
+          answer: 'La <strong>etapa de concentración</strong> usa membranas <strong>NF/RO</strong> (nanofiltración / ósmosis inversa):\n\n• 🔬 Factor de concentración: <strong>×100</strong>\n• Reduce drásticamente el volumen a tratar en el reactor SCWO\n• Hace el proceso mucho más <strong>económico y eficiente</strong>\n\nEn lugar de tratar miles de litros, concentramos los PFAS para que el reactor SCWO solo procese una fracción. Esto permite llevar la tecnología de destrucción al <strong>ámbito doméstico</strong>.',
+          followUp: ['Destrucción SCWO', 'Ver el producto', 'Solución industrial'],
+          weight: 1.0
+        },
+        {
+          id: 'scwo-deep',
+          keywords: [
+            'agua supercritica', 'estado supercritico', 'condiciones supercriticas',
+            '374 grados', '22 mpa', '220 bar', 'reactor scwo', 'como funciona scwo',
+            'que pasa en el reactor', 'dentro del reactor', 'fase supercritica',
+            'oxidante', 'disolvente', 'punto critico', 'agua a 374',
+            'que sale del reactor', 'residuos', 'subproductos', 'productos finales',
+            'co2', 'h2o', 'fluoruro', 'f-', 'inocuo', 'seguro despues',
+            'temperatura alta', 'presion alta', 'alta presion', 'alta temperatura',
+            'reactor', 'camara supercritica', 'como destruye', 'como rompe el enlace',
+            'mineralizacion', 'destruccion total', 'fluido supercritico',
+            'que queda despues', 'deja residuos', 'es limpio', 'dioxido de carbono',
+            'iones fluoruro', 'cero residuos', 'oxidacion supercritica detalle'
+          ],
+          answer: 'Dentro del reactor <strong>SCWO</strong> ocurre algo extraordinario:\n\n🌡️ <strong>Condiciones</strong>\nTemperatura >374 °C, presión >22,1 MPa (>220 bar)\n\n💧 <strong>Estado supercrítico</strong>\nEl agua deja de ser líquido o gas — se convierte en un <strong>fluido supercrítico</strong> con propiedades únicas: disuelve compuestos orgánicos como un disolvente y los oxida simultáneamente.\n\n⚡ <strong>Proceso</strong>\nLos enlaces C–F (485 kJ/mol) se rompen completamente.\n\n✅ <strong>Productos finales</strong>\n• CO₂ (dióxido de carbono)\n• H₂O (agua)\n• F⁻ (iones fluoruro inorgánico)\n\n<strong>Cero residuos tóxicos.</strong> Todo medible y verificable.',
+          followUp: ['Verificación triple', '¿Cómo lo demuestran?', 'Ver el producto'],
+          weight: 1.0
+        },
+        {
+          id: 'cartridge-return',
+          keywords: [
+            'retorno', 'devolver', 'devolucion', 'cartucho usado', 'cartucho agotado',
+            'cartucho saturado', 'recoger', 'recogida', 'enviar cartucho',
+            'que hago con el cartucho', 'cuando se agota', 'ciclo', 'logistica',
+            'retornable', 'devolver cartucho', 'mandar cartucho', 'cadena',
+            'circuito cerrado', 'circuito de retorno',
+            'que pasa con el filtro', 'filtro gastado', 'filtro agotado', 'filtro saturado',
+            'cambiar filtro', 'cambiar cartucho', 'a donde va', 'donde va el residuo',
+            'se tira', 'se recicla', 'basura', 'residuo', 'recambio', 'repuesto',
+            'envio gratis', 'recoger a domicilio', 'servicio recogida', 'ciclo de vida'
+          ],
+          answer: 'Nuestro sistema funciona con un <strong>circuito cerrado de retorno</strong>:\n\n<strong>1.</strong> El cartucho filtra PFAS en tu hogar\n<strong>2.</strong> El chip NFC te avisa cuando está saturado\n<strong>3.</strong> Lo recoges y envías de vuelta (logística incluida)\n<strong>4.</strong> En nuestra planta central, se destruyen los PFAS capturados mediante SCWO\n<strong>5.</strong> Recibes un <strong>informe analítico</strong> confirmando la destrucción\n\nAsí no solo filtramos: <strong>destruimos y verificamos</strong>. Nada queda en un vertedero.',
+          followUp: ['Chip NFC', 'Verificación', 'Ver el producto'],
+          weight: 1.0
+        },
+        {
+          id: 'activated-carbon',
+          keywords: [
+            'carbon activado', 'carbon activo', 'filtro carbon', 'brita', 'jarra',
+            'filtro normal', 'filtro convencional', 'filtro comun', 'filtro barato',
+            'por que no sirve', 'no funciona', 'no elimina', 'limitaciones',
+            'diferencia con filtro', 'filtro vs', 'solo retiene', 'retener no es destruir',
+            'otros filtros', 'filtros del mercado', 'que filtro usar',
+            'jarra filtrante', 'filtro nevera', 'filtro grifo', 'filtro basico', 'osmosis casera',
+            'tengo un filtro', 'ya tengo filtro', 'mi filtro no vale', 'mi brita',
+            'sirve brita', 'sirve mi filtro', 'vale un filtro normal', 'se satura',
+            'saturacion', 'reliberar', 'vuelven al agua', 'no destruye', 'no descompone',
+            'jarra de agua', 'filtro de agua casero', 'mejor que brita'
+          ],
+          answer: 'Los filtros de carbón activado (como jarras Brita) tienen <strong>limitaciones importantes</strong> con PFAS:\n\n❌ <strong>No destruyen</strong> — solo retienen (adsorben) los PFAS en el carbón\n❌ <strong>Eficacia parcial</strong> — no capturan bien PFAS de cadena corta (PFBA, PFHxA)\n❌ <strong>Saturación</strong> — cuando se saturan, los PFAS pueden re-liberarse al agua\n❌ <strong>Residuo contaminado</strong> — el carbón usado sigue conteniendo los PFAS\n\nNuestra diferencia: usamos nanofiltración selectiva + <strong>destrucción SCWO verificada</strong>. Los PFAS no se transfieren de lugar — se <strong>eliminan para siempre</strong>.',
+          followUp: ['¿Por qué ZeroPFAS?', 'Ver el producto', 'Tecnología SCWO'],
+          weight: 1.0
+        },
+        {
+          id: 'pfas-food',
+          keywords: [
+            'comida', 'alimento', 'alimentos', 'comer', 'dieta', 'ingesta',
+            'pescado', 'carne', 'huevo', 'leche', 'lacteo', 'verdura', 'fruta',
+            'cadena alimentaria', 'cadena trofica', 'bioconcentracion',
+            'comida contaminada', 'alimentos contaminados', 'lo que como',
+            'envases alimentarios', 'packaging', 'envasado', 'microondas',
+            'palomitas', 'fast food', 'comida rapida', 'grasa', 'aceite',
+            'supermercado', 'mercado', 'compra', 'alimentacion', 'nutricion',
+            'cocinar con agua', 'hervir agua', 'que como', 'que comemos',
+            'arroz', 'pasta', 'sopa', 'cafe', 'te', 'infusion', 'bebida',
+            'queso', 'yogur', 'mantequilla', 'marisco', 'gambas', 'atun', 'salmon',
+            'lechuga', 'tomate', 'cultivo', 'riego', 'agricultura', 'campo',
+            'suelo contaminado', 'lodo', 'biossolido', 'abono'
+          ],
+          answer: 'Los PFAS llegan a tu comida por <strong>varias vías</strong>:\n\n🐟 <strong>Bioacumulación</strong> — pescados y mariscos de aguas contaminadas\n🥛 <strong>Lácteos y huevos</strong> — animales expuestos a agua o suelos con PFAS\n🌱 <strong>Cultivos</strong> — riego con agua contaminada o suelos tratados con lodos\n📦 <strong>Envases</strong> — cartón resistente a grasa (cajas de pizza, bolsas de palomitas, envases de fast food)\n🍳 <strong>Utensilios</strong> — sartenes antiadherentes deterioradas con teflón\n\nLa principal fuente sigue siendo el <strong>agua potable</strong>. Un filtro específico en tu hogar reduce significativamente la exposición total.',
+          followUp: ['¿Mi agua es segura?', '¿Son peligrosos?', 'Ver el producto'],
+          weight: 1.0
+        },
+        {
+          id: 'pfas-history',
+          keywords: [
+            'historia', 'cuando', 'cuando se descubrieron', 'desde cuando',
+            'origen pfas', 'quien invento', 'quien creo', '1950', '1940', '3m',
+            'dupont', 'teflon', 'scotchgard', 'dark waters', 'pelicula',
+            'cuando se prohibieron', 'escandalo', 'caso', 'demanda', 'juicio',
+            'contaminacion historica', 'cuanto tiempo llevan',
+            'cronologia', 'linea temporal', 'timeline', 'evolucion', 'primer pfas',
+            '1938', '2000', '2019', '2022', 'cuando empezaron', 'desde cuando existen',
+            'cuanto llevan contaminando', 'como empezaron', 'como se descubrieron',
+            'robert bilott', 'west virginia', 'parkersburg', 'mark ruffalo',
+            'pelicula pfas', 'documental', 'noticias pfas', 'prensa', 'mediático'
+          ],
+          answer: 'La historia de los PFAS es larga y preocupante:\n\n📅 <strong>1938</strong> — Se descubre accidentalmente el PTFE (teflón) en laboratorios de DuPont\n📅 <strong>1950s</strong> — Comienza el uso masivo en productos industriales y de consumo\n📅 <strong>2000s</strong> — Primeras evidencias de contaminación global y daños a la salud (caso DuPont/West Virginia)\n📅 <strong>2019</strong> — La película <em>Dark Waters</em> expone el escándalo al público\n📅 <strong>2022</strong> — La IARC clasifica el PFOA como <strong>carcinógeno Grupo 1</strong>\n📅 <strong>2026</strong> — Entran en vigor límites estrictos de EPA (4 ng/L) y la Directiva EU 2020/2184\n\nHan pasado más de <strong>75 años</strong> de uso antes de que se tomaran medidas serias.',
+          followUp: ['¿Qué son los PFAS?', 'Normativa 2026', '¿Son peligrosos?'],
+          weight: 1.0
+        },
+        {
+          id: 'installation',
+          keywords: [
+            'instalar', 'instalacion', 'como se instala', 'facil de instalar',
+            'necesito fontanero', 'hago yo mismo', 'bricolaje', 'diy',
+            'debajo fregadero', 'bajo fregadero', 'cocina', 'espacio',
+            'dimensiones', 'tamaño', 'cabe', 'medidas', 'peso',
+            'conectar', 'conexion', 'tuberia', 'enchufe', 'electricidad',
+            'necesita electricidad', 'corriente', 'enchufar', 'ruido', 'silencioso',
+            'donde se pone', 'donde va', 'donde se coloca', 'como se monta',
+            'montaje', 'preparacion', 'herramientas', 'hace falta fontanero',
+            'complicado de instalar', 'necesito obras', 'reforma', 'sin obras',
+            'gasta luz', 'consume electricidad', 'consumo', 'autonomo',
+            'facil', 'sencillo', 'rapido de instalar', 'cuanto tarda', 'paso a paso'
+          ],
+          answer: 'La instalación de nuestro dispositivo es <strong>sencilla</strong>:\n\n📍 <strong>Ubicación</strong> — debajo del fregadero de cocina\n🔧 <strong>Instalación</strong> — conexión directa a la tubería de agua fría\n⚡ <strong>Electricidad</strong> — <strong>no necesita</strong> conexión eléctrica para el filtrado\n🔇 <strong>Ruido</strong> — funcionamiento completamente silencioso\n📐 <strong>Tamaño</strong> — diseño compacto, cabe en la mayoría de muebles bajo fregadero\n\nPuedes instalarlo tú mismo o solicitar asistencia. El cartucho se reemplaza fácilmente con un simple clic.',
+          followUp: ['Chip NFC', '¿Cuánto cuesta?', 'Ver el producto'],
+          weight: 1.0
+        },
+        {
+          id: 'flow-rate',
+          keywords: [
+            'caudal', 'litros', 'litros por minuto', 'presion', 'bar', 'flujo',
+            'velocidad', 'rapido', 'lento', 'tarda', 'cuanto tarda',
+            'llenar', 'llenar vaso', 'llenar botella', 'rendimiento',
+            '2.1', 'capacidad filtrado', 'volumen', 'suficiente',
+            'cuanta agua', 'cuantos litros', 'presion agua', 'potencia',
+            'sale poca agua', 'reduce la presion', 'flujo normal', 'baja presion',
+            'tarda mucho', 'es rapido', 'esperar', 'tiempo', 'cuanto filtra',
+            'cuanto puede filtrar', 'litro', 'l/min', 'capacidad diaria',
+            'da abasto', 'para toda la familia', 'suficiente agua'
+          ],
+          answer: 'Nuestro dispositivo tiene un caudal nominal de <strong>2,1 L/min a 3 bar</strong> de presión.\n\n• 💧 Llenas un vaso de agua en <strong>~3 segundos</strong>\n• 🍶 Llenas una botella de 1L en <strong>~30 segundos</strong>\n• 🚿 Flujo continuo sin esperas\n\nEs un caudal similar al de un grifo convencional. No notarás diferencia en tu uso diario, pero el agua estará libre de PFAS y cumpliendo los estándares más exigentes (<strong><0,5 ng/L</strong>).',
+          followUp: ['Ver el producto', 'Instalación', '¿Cuánto cuesta?'],
+          weight: 1.0
+        },
+        {
+          id: 'pfas-children',
+          keywords: [
+            'niños', 'niñas', 'hijos', 'bebes', 'infantil', 'pediatr',
+            'leche materna', 'biberon', 'formula', 'agua para bebe',
+            'escuela', 'colegio', 'guarderia', 'parque', 'jugar',
+            'desarrollo infantil', 'crecimiento', 'inmunidad', 'vacunas',
+            'afecta a niños', 'afecta a bebes', 'pequenos', 'menores',
+            'proteger a mis hijos', 'mi bebe', 'mi hijo', 'embarazo',
+            'lactancia', 'amamantar', 'pecho', 'dar de mamar', 'prenatal',
+            'feto', 'placenta', 'neonato', 'recien nacido', 'recien nacida',
+            'hijo pequeno', 'hija pequena', 'nena', 'nene', 'criatura',
+            'vulnerables', 'sensibles', 'mas afectados', 'peso corporal',
+            'por kg', 'dosis relativa', 'sistema inmunitario', 'hormonas',
+            'tiroides infantil', 'desarrollo cerebral', 'neurotoxicidad'
+          ],
+          answer: 'Los niños y bebés son <strong>especialmente vulnerables</strong> a los PFAS:\n\n👶 <strong>Exposición prenatal</strong> — los PFAS cruzan la placenta y llegan al feto\n🍼 <strong>Leche materna</strong> — se han detectado PFAS en leche materna en todo el mundo\n💉 <strong>Sistema inmune</strong> — reducen la respuesta a vacunas infantiles (estudio EPA)\n📏 <strong>Desarrollo</strong> — pueden afectar al crecimiento y desarrollo hormonal\n⚖️ <strong>Menor peso corporal</strong> — los niños beben más agua por kg que los adultos, amplificando la exposición\n\nUn sistema de filtración en casa es una de las <strong>medidas más efectivas</strong> para proteger a los más pequeños.',
+          followUp: ['Ver el producto', '¿Son peligrosos?', '¿Qué puedo hacer?'],
+          weight: 1.0
+        },
+        {
+          id: 'other-methods',
+          keywords: [
+            'otros metodos', 'alternativas', 'otras tecnologias', 'como se elimina',
+            'incineracion', 'incinerar', 'quemar', 'plasma', 'fotocatalisis',
+            'sonoquimica', 'electroquimica', 'bioremediacion', 'bacterias',
+            'tratamientos actuales', 'estado del arte', 'metodos existentes',
+            'que opciones hay', 'que mas existe', 'comparacion metodos',
+            'existen otros', 'no solo scwo', 'alternativa scwo',
+            'que se hace en otros sitios', 'en otros paises', 'soluciones actuales',
+            'que hay en el mercado', 'ozono', 'ultravioleta', 'uv', 'radiacion',
+            'microondas', 'pirolisis', 'biodegradacion', 'hongo', 'enzima',
+            'nanotecnologia', 'nanomaterial', 'tratamiento avanzado', 'remediacion',
+            'como lo hacen otros', 'mejor tecnologia', 'tecnologia punta'
+          ],
+          answer: 'Principales métodos de tratamiento de PFAS y sus limitaciones:\n\n🔥 <strong>Incineración convencional</strong> — necesita >1 100 °C y puede generar subproductos tóxicos\n⚡ <strong>Electroquímica</strong> — funciona para bajas concentraciones, pero es lenta y costosa\n☀️ <strong>Fotocatálisis</strong> — en fase de investigación, no escalable aún\n🦠 <strong>Biorremediación</strong> — las bacterias no pueden romper el enlace C–F\n🧲 <strong>Carbón activado / resinas</strong> — solo retienen, no destruyen\n\n<strong>SCWO</strong> es la única tecnología que opera a escala con <strong>>99,9 % de destrucción</strong>, convirtiendo los PFAS en CO₂ + H₂O + F⁻ sin residuos tóxicos.',
+          followUp: ['Tecnología SCWO', '¿Por qué ZeroPFAS?', 'Verificación'],
+          weight: 1.0
+        },
+        {
+          id: 'pfas-water-sources',
+          keywords: [
+            'rios', 'lagos', 'acuiferos', 'aguas subterraneas', 'embalse',
+            'pantano', 'fuente', 'manantial', 'pozo', 'grifo', 'tuberia',
+            'depuradora', 'potabilizadora', 'edar', 'etap', 'red de agua',
+            'suministro', 'abastecimiento', 'distribucion',
+            'de donde viene', 'entra en el agua', 'como llegan al agua',
+            'agua del grifo', 'red publica', 'tratamiento convencional',
+            'vertido', 'vertidos industriales', 'escorrentia', 'lixiviado',
+            'vertedero', 'base militar', 'aeropuerto', 'bomberos', 'afff',
+            'espuma extincion', 'no eliminan', 'no filtran', '98 por ciento',
+            'contaminacion del agua', 'agua contaminada', 'mi rio', 'mi ciudad',
+            'agua de mi zona', 'de donde viene mi agua', 'planta depuradora'
+          ],
+          answer: 'Los PFAS llegan al agua por múltiples vías:\n\n🏭 <strong>Vertidos industriales</strong> — fábricas que usan o fabrican PFAS\n🧯 <strong>Espumas contra incendios</strong> — entrenamientos en bases militares, aeropuertos\n🌧️ <strong>Escorrentía</strong> — lluvia que arrastra PFAS de suelos contaminados\n🗑️ <strong>Vertederos</strong> — lixiviados de residuos que contienen PFAS\n🚰 <strong>Tratamiento convencional</strong> — las depuradoras <strong>NO eliminan</strong> PFAS\n\nEl <strong>98 %</strong> de las fuentes de agua analizadas contienen PFAS detectables. Las plantas potabilizadoras convencionales no están diseñadas para eliminarlos.',
+          followUp: ['¿Mi agua es segura?', 'Ver el producto', 'Tecnología SCWO'],
+          weight: 1.0
+        },
+        {
+          id: 'invest',
+          keywords: [
+            'invertir', 'inversion', 'inversor', 'inversores', 'capital', 'financiacion',
+            'financiar', 'fondos', 'ronda', 'startup', 'emprender', 'negocio',
+            'oportunidad', 'colaborar', 'colaboracion', 'partnership', 'socio',
+            'asociarse', 'participar', 'accionista', 'crowdfunding', 'venture',
+            'business model', 'modelo de negocio', 'rentable', 'rentabilidad',
+            'escalable', 'mercado', 'potencial', 'proyeccion'
+          ],
+          answer: 'ZeroPFAS representa una <strong>oportunidad de mercado</strong> con proyección global:\n\n📈 <strong>Mercado</strong> — el tratamiento de PFAS será obligatorio en EU y EE.UU. desde 2026\n🔬 <strong>Tecnología propia</strong> — SCWO + verificación triple, enfoque integral\n📊 <strong>Escalabilidad</strong> — modelo dual (residencial + industrial)\n🌍 <strong>Transferibilidad</strong> — aplicable a cualquier país con regulación PFAS\n\nCategorías de interés:\n• 💼 Colaboración / Partnership\n• 💰 Inversión\n• 🏢 Licencia tecnológica\n\nContacta a través del <a href="#contact">formulario</a> seleccionando tu categoría de interés.',
+          followUp: ['Contactar', 'Sobre ZeroPFAS', 'Solución industrial'],
+          weight: 1.0
+        },
+        {
+          id: 'regulation-eu-detail',
+          keywords: [
+            'directiva europea', 'directiva 2020', '2020/2184', 'europa', 'union europea',
+            'ue', 'eu', 'limite europeo', '0.1', '0.5', 'microgramo',
+            'transposicion', 'pais', 'paises', 'miembro', 'estampados',
+            'echa restriccion', 'restriccion universal', 'prohibicion europa',
+            'normativa europea', 'ley europea', 'legislacion europea', 'reglamento europeo',
+            'comision europea', 'bruselas', 'parlamento europeo', 'agua potable europa',
+            'directiva agua potable', 'espana', 'alemania', 'francia', 'italia',
+            'limite total pfas', 'obligatorio europa', 'cuando entra en vigor europa',
+            'prohibir pfas europa', 'restringir pfas', 'fabricar pfas', 'usar pfas'
+          ],
+          answer: 'La regulación europea sobre PFAS tiene dos pilares:\n\n🇪🇺 <strong>Directiva 2020/2184</strong> (Agua Potable)\n• Límite total de PFAS: <strong>0,1 µg/L</strong>\n• Los estados miembros deben transponer a ley nacional\n• Fecha de cumplimiento: <strong>2026</strong>\n\n🔬 <strong>ECHA — Restricción Universal</strong>\n• Propuesta de prohibir la <strong>fabricación y uso</strong> de todos los PFAS\n• La restricción más amplia de la historia\n• Periodo: 2025–2027\n\nNuestro producto cumple con los límites más exigentes: <strong><0,5 ng/L</strong> en agua filtrada, muy por debajo del requisito europeo.',
+          followUp: ['Normativa EPA', 'Ver el producto', '¿Qué son los PFAS?'],
+          weight: 1.0
+        },
+        {
+          id: 'regulation-epa-detail',
+          keywords: [
+            'epa', 'estados unidos', 'eeuu', 'usa', 'america', 'americano',
+            'mcl', 'maximo nivel', 'nivel maximo', '4 ng', '4ng',
+            'pfoa pfos', 'limites epa', 'regulacion americana', 'normativa usa',
+            'federal', 'estatal', 'drinking water', 'clean water act',
+            'normativa americana', 'ley americana', 'agencia proteccion ambiental',
+            'environmental protection', 'partes por trillon', 'ppt', 'ppb',
+            'nivel maximo contaminante', 'maximo nivel contaminante',
+            'pfoa limite', 'pfos limite', 'agua potable america', 'cuando en america',
+            'ley usa', 'regulacion usa', 'trump', 'biden', 'gobierno'
+          ],
+          answer: 'La regulación de la <strong>EPA</strong> (EE.UU.) sobre PFAS:\n\n🇺🇸 <strong>MCL — Maximum Contaminant Level</strong>\n• PFOA: <strong>4,0 ng/L</strong>\n• PFOS: <strong>4,0 ng/L</strong>\n• En vigor desde: <strong>2026</strong>\n\nEsto es un nivel <strong>extremadamente bajo</strong> (partes por trillón). Los sistemas de tratamiento convencionales no pueden alcanzarlo.\n\nNuestro dispositivo produce agua con <strong><0,5 ng/L</strong> — cumple y supera el estándar EPA. Esto es crítico para municipios y hogares en zonas con contaminación conocida.',
+          followUp: ['Normativa europea', 'Ver el producto', 'Solución industrial'],
+          weight: 1.0
+        },
+        {
+          id: 'scalability',
+          keywords: [
+            'escalabilidad', 'escalar', 'escala', 'crecer', 'crecimiento',
+            'modular', 'ampliable', 'adaptable', 'flexible',
+            'de casa a industria', 'todas las escalas', 'dual', 'doble linea',
+            'residencial e industrial', 'hogar y empresa',
+            'transferible', 'global', 'mundial', 'otros paises', 'licencia',
+            'expandir', 'expansion', 'ampliar', 'mas grande', 'mas capacidad',
+            'crece', 'puede crecer', 'funciona en grande', 'funciona a gran escala',
+            'tambien para empresas', 'tambien industrial', 'se puede ampliar',
+            'replicar', 'exportar', 'franquicia', 'internacionalizar'
+          ],
+          answer: 'ZeroPFAS se diseñó con <strong>escalabilidad dual</strong> desde el inicio:\n\n🏠 <strong>Línea residencial</strong>\n• Dispositivo point-of-use bajo fregadero\n• Caudal: 2,1 L/min\n• Cartuchos retornables con NFC\n\n🏭 <strong>Línea industrial</strong>\n• Reactor SCWO centralizado\n• Capacidad: >1 000 m³/día\n• Monitorización en tiempo real\n• Arquitectura modular — se amplía según demanda\n\n🌍 <strong>Transferibilidad</strong>\nLa tecnología es adaptable a cualquier país y fuente de agua. Modelo de licencia disponible para expansión global.',
+          followUp: ['Solución industrial', 'Ver el producto', 'Contactar'],
+          weight: 1.0
+        },
+        {
+          id: 'report-analytics',
+          keywords: [
+            'informe', 'reporte', 'datos', 'analisis', 'analitica',
+            'dashboard', 'panel', 'monitorizar', 'monitorizacion', 'tiempo real',
+            'que datos', 'que mide', 'estadisticas', 'grafico',
+            'resultado', 'resultados', 'como se que funciona',
+            'plataforma', 'online', 'acceder', 'ver resultados',
+            'lc-ms', 'lc ms', 'tof', 'balance de fluoruro', 'cromatografia',
+            'espectrometria', 'laboratorio', 'certificado destruccion',
+            'puedo comprobarlo', 'puedo verlo', 'transparencia', 'que me dicen',
+            'me informan', 'recibo datos', 'cuanto destruyeron', 'cuanto eliminaron',
+            'que cantidad', 'porcentaje', 'medicion', 'mediciones'
+          ],
+          answer: 'Nuestro sistema ofrece <strong>monitorización y reportes completos</strong>:\n\n📱 <strong>App / Plataforma</strong>\n• Estado del cartucho en tiempo real (vía NFC)\n• Alerta de reemplazo antes del agotamiento\n• Historial de uso acumulado\n\n📊 <strong>Informe de destrucción</strong>\nCada lote de cartuchos procesado genera un informe con:\n• Resultados LC-MS/MS (PFAS individual)\n• Fluoroorgánico total (TOF)\n• Balance de fluoruro (prueba de destrucción)\n\n✅ Sabrás exactamente <strong>cuántos PFAS se destruyeron</strong> y podrás verificarlo.',
+          followUp: ['Verificación', 'Chip NFC', 'Ver el producto'],
+          weight: 1.0
+        },
+        {
+          id: 'filtered-water-quality',
+          keywords: [
+            'como esta el agua', 'como está el agua', 'como sale el agua', 'como queda el agua',
+            'agua filtrada', 'agua tratada', 'agua de salida', 'calidad del agua',
+            'que agua sale', 'qué agua sale', 'resultado del agua', 'agua final',
+            'cumple normativa', 'agua limpia', 'agua bajo fregadero'
+          ],
+          answer: 'El agua filtrada está pensada para uso doméstico diario y para reducir la presencia de PFAS en el punto de uso.\n\n• ✅ La membrana de <strong>nanofiltración</strong> captura PFAS antes de que lleguen al grifo\n• 📋 El objetivo es que el agua tratada <strong>cumpla normativa EPA y EU</strong>\n• 🔄 El sistema usa <strong>cartucho reemplazable</strong> con seguimiento NFC para controlar su estado\n• 🔇 Todo ello en un formato <strong>compacto y silencioso</strong>, sin necesidad de electricidad para el filtrado\n\nEn la práctica, la idea es que el agua que sale del sistema ya haya pasado por un tratamiento específico frente a PFAS.',
+          followUp: ['¿Cómo funciona el NFC?', '¿Cuánto cuesta?', 'Instalación'],
+          weight: 1.05
         }
       ]
     },
@@ -1091,6 +1751,354 @@
           answer: 'There are several ways to take action against PFAS:\n\n• 🏠 <strong>At home</strong> — install a PFAS-specific filtration system (like our point-of-use device)\n• 📊 <strong>Stay informed</strong> — learn about regulations in your area and your water quality\n• 📢 <strong>Spread awareness</strong> — many people don\'t know about this problem\n• 🤝 <strong>Contact us</strong> — we can advise you based on your situation\n\nWant to know more about our product or the regulations?',
           followUp: ['See the product', '2026 regulations', 'Contact us'],
           weight: 1.0
+        },
+        {
+          id: 'pfas-types',
+          keywords: [
+            'types', 'classes', 'families', 'pfoa', 'pfos', 'genx', 'pfba', 'pfhxa',
+            'short chain', 'long chain', 'how many types', 'variants', 'different pfas',
+            'subtypes', 'categories', 'groups', 'most dangerous', 'most common',
+            'list pfas', 'perfluorooctanoic', 'sulfonate', 'acid',
+            'which ones', 'how many pfas', 'classification', 'all the same',
+            'are they all the same', 'differences between pfas', '4700',
+            'compound', 'substance', 'group 1', 'carcinogen', 'iarc',
+            'how many compounds', 'main pfas', 'best known', 'most studied'
+          ],
+          answer: 'There are over <strong>4,700 different PFAS compounds</strong>. The most well-known:\n\n• <strong>PFOA</strong> (perfluorooctanoic acid) — used in Teflon, classified as <strong>Group 1 carcinogen</strong> by IARC\n• <strong>PFOS</strong> (perfluorooctane sulfonate) — used in firefighting foams, highly bioaccumulative\n• <strong>GenX</strong> — PFOA replacement that also turned out to be toxic\n• <strong>PFBA / PFHxA</strong> — short-chain PFAS, harder to filter\n\nThey\'re classified as <strong>long-chain</strong> (≥8 carbons, more bioaccumulative) and <strong>short-chain</strong> (more mobile in water, harder to capture).',
+          followUp: ['Are they dangerous?', 'How are they removed?', 'Regulations'],
+          weight: 1.0
+        },
+        {
+          id: 'pfas-sources',
+          keywords: [
+            'where are they', 'where found', 'sources', 'origin', 'where do they come from',
+            'how do they get', 'products with pfas', 'everyday products', 'items',
+            'pan', 'teflon', 'clothing', 'textile', 'packaging', 'fast food',
+            'foam', 'extinguisher', 'cosmetics', 'makeup', 'dental floss',
+            'pizza', 'popcorn', 'microwave', 'waterproof', 'goretex', 'scotchgard',
+            'paper', 'wrapper', 'nonstick', 'which products', 'daily exposure',
+            'everyday life', 'in my home', 'in my food', 'in my clothes',
+            'kitchen', 'pots', 'pans', 'jacket', 'gore tex', 'coating',
+            'cookware', 'furniture', 'carpet', 'rug', 'stain resistant',
+            'sunscreen', 'shampoo', 'personal care', 'container', 'bag', 'plastic',
+            'ptfe', 'how am i exposed', 'exposure routes', 'contact with'
+          ],
+          answer: 'PFAS are in more products than you\'d think:\n\n🍳 <strong>Kitchen</strong> — non-stick pans (Teflon), fast food wrappers, popcorn bags\n👕 <strong>Clothing</strong> — waterproof textiles (Gore-Tex), stain-resistant treatments (Scotchgard)\n🧴 <strong>Cosmetics</strong> — foundations, creams, dental floss\n🧯 <strong>Industrial</strong> — firefighting foams (AFFF), industrial coatings\n📦 <strong>Packaging</strong> — grease-resistant cardboard, food wrapping\n\nThe main exposure route is <strong>drinking water</strong>, followed by food and consumer products.',
+          followUp: ['Is my water safe?', 'Are they dangerous?', 'What can I do?'],
+          weight: 1.0
+        },
+        {
+          id: 'cf-bond',
+          keywords: [
+            'bond', 'c-f bond', 'carbon fluorine', 'why dont they degrade',
+            'why dont they break', 'why eternal', 'chemistry', 'structure',
+            'molecular', 'molecule', 'kj', 'kjmol', '485', 'energy',
+            'resistant', 'indestructible', 'strongest bond', 'dissociation',
+            'covalent', 'bond strength', 'stability', 'why persist', 'how is it possible',
+            'why forever', 'fluorine', 'fluoride', 'carbon', 'atom', 'atoms',
+            'organic chemistry', 'dont disappear', 'dont go away', 'cant be destroyed',
+            'nature cant', 'impossible to break', 'what makes them eternal',
+            'what makes them persistent', 'last forever', 'why called forever',
+            'why not destroyed', 'immune to nature'
+          ],
+          answer: 'The secret behind PFAS persistence is their <strong>C–F bond</strong>:\n\n• Dissociation energy: <strong>485 kJ/mol</strong> — the strongest in organic chemistry\n• Comparison with other bonds:\n  – C–H: 411 kJ/mol\n  – C–O: 358 kJ/mol\n  – C–C: 346 kJ/mol\n  – <strong>C–F: 485 kJ/mol</strong> ⬆️\n\nNo natural process (sunlight, bacteria, environmental oxidation) has enough energy to break it. That\'s why we need <strong>supercritical conditions</strong> (>374 °C, >22.1 MPa) to destroy them.',
+          followUp: ['SCWO technology', 'What are PFAS?', 'Verification'],
+          weight: 1.0
+        },
+        {
+          id: 'capture-stage',
+          keywords: [
+            'capture', 'capture stage', 'how do you capture', 'how do you trap',
+            'resin', 'anionic resin', 'activated carbon', 'adsorption',
+            'absorption', 'retention', 'retain', 'trap', 'first stage',
+            'prefilter', 'sediment', 'pretreatment',
+            'first step', 'first phase', 'how does the filter work', 'what happens first',
+            'filtration process', 'filter stages', 'process phases', '98 percent', '98%',
+            'efficiency', 'how does it retain', 'capture mechanism'
+          ],
+          answer: 'The <strong>capture stage</strong> is the first phase of our system:\n\n<strong>1. Sediment prefilter</strong>\nRemoves physical particles from water\n\n<strong>2. Activated carbon</strong>\nCaptures general contaminants\n\n<strong>3. Selective anionic resin</strong>\nSpecifically designed for PFAS — retention efficiency <strong>>98%</strong>\n\nThis stage traps PFAS without destroying them. For actual destruction, the saturated cartridge is sent to our centralized SCWO plant.',
+          followUp: ['Concentration', 'SCWO destruction', 'Verification'],
+          weight: 1.0
+        },
+        {
+          id: 'concentration-stage',
+          keywords: [
+            'concentration', 'concentrate', 'membrane', 'nanofiltration', 'reverse osmosis',
+            'nf', 'ro', 'why concentrate', 'reduce volume', 'efficiency',
+            'x100', 'concentration factor', 'separation stage',
+            'second stage', 'second step', 'membranes', 'osmosis', 'why not treat all',
+            'why concentrate', 'need to concentrate', 'purpose of concentration',
+            'molecular selection', 'membrane filtration', 'economical',
+            'optimize', 'less volume', 'hundred times'
+          ],
+          answer: 'The <strong>concentration stage</strong> uses <strong>NF/RO</strong> membranes (nanofiltration / reverse osmosis):\n\n• 🔬 Concentration factor: <strong>×100</strong>\n• Drastically reduces the volume to be treated in the SCWO reactor\n• Makes the process much more <strong>economical and efficient</strong>\n\nInstead of treating thousands of liters, we concentrate the PFAS so the SCWO reactor only processes a fraction. This is what makes destruction technology viable at the <strong>household level</strong>.',
+          followUp: ['SCWO destruction', 'See the product', 'Industrial solution'],
+          weight: 1.0
+        },
+        {
+          id: 'scwo-deep',
+          keywords: [
+            'supercritical water', 'supercritical state', 'supercritical conditions',
+            '374 degrees', '22 mpa', '220 bar', 'scwo reactor', 'how scwo works',
+            'inside the reactor', 'supercritical phase', 'oxidant', 'solvent',
+            'critical point', 'what comes out', 'residues', 'byproducts', 'end products',
+            'co2', 'h2o', 'fluoride', 'f-', 'safe after',
+            'high temperature', 'high pressure', 'how does it destroy', 'how does it break',
+            'mineralization', 'total destruction', 'supercritical fluid',
+            'what remains', 'any residues', 'is it clean', 'carbon dioxide',
+            'fluoride ions', 'zero residues', 'supercritical oxidation detail',
+            'reactor chamber', 'how hot', 'how much pressure'
+          ],
+          answer: 'Inside the <strong>SCWO</strong> reactor, something extraordinary happens:\n\n🌡️ <strong>Conditions</strong>\nTemperature >374 °C, pressure >22.1 MPa (>220 bar)\n\n💧 <strong>Supercritical state</strong>\nWater stops being liquid or gas — it becomes a <strong>supercritical fluid</strong> with unique properties: dissolves organic compounds like a solvent and oxidizes them simultaneously.\n\n⚡ <strong>Process</strong>\nC–F bonds (485 kJ/mol) are completely broken.\n\n✅ <strong>End products</strong>\n• CO₂ (carbon dioxide)\n• H₂O (water)\n• F⁻ (inorganic fluoride ions)\n\n<strong>Zero toxic residues.</strong> Everything measurable and verifiable.',
+          followUp: ['Triple verification', 'How do you prove it?', 'See the product'],
+          weight: 1.0
+        },
+        {
+          id: 'cartridge-return',
+          keywords: [
+            'return', 'send back', 'used cartridge', 'spent cartridge',
+            'saturated cartridge', 'collect', 'collection', 'send cartridge',
+            'what do i do with', 'when depleted', 'cycle', 'logistics',
+            'returnable', 'closed loop', 'return circuit',
+            'what happens to filter', 'used filter', 'spent filter', 'old filter',
+            'change filter', 'replace cartridge', 'where does it go', 'where does the waste go',
+            'thrown away', 'recycled', 'trash', 'waste', 'replacement', 'spare',
+            'free shipping', 'pickup', 'collection service', 'lifecycle'
+          ],
+          answer: 'Our system works on a <strong>closed-loop return circuit</strong>:\n\n<strong>1.</strong> The cartridge filters PFAS at your home\n<strong>2.</strong> The NFC chip alerts you when it\'s saturated\n<strong>3.</strong> You send it back (logistics included)\n<strong>4.</strong> At our central plant, captured PFAS are destroyed via SCWO\n<strong>5.</strong> You receive an <strong>analytical report</strong> confirming destruction\n\nWe don\'t just filter: we <strong>destroy and verify</strong>. Nothing ends up in a landfill.',
+          followUp: ['NFC chip', 'Verification', 'See the product'],
+          weight: 1.0
+        },
+        {
+          id: 'activated-carbon',
+          keywords: [
+            'activated carbon', 'carbon filter', 'brita', 'pitcher', 'jug',
+            'regular filter', 'conventional filter', 'cheap filter',
+            'why doesnt it work', 'limitations', 'difference from filter',
+            'filter vs', 'only retains', 'retention is not destruction',
+            'other filters', 'market filters', 'which filter',
+            'filter pitcher', 'fridge filter', 'tap filter', 'basic filter', 'home osmosis',
+            'i have a filter', 'already have a filter', 'my filter doesnt work', 'my brita',
+            'does brita work', 'does my filter work', 'normal filter enough', 'saturates',
+            'saturation', 're-release', 'back into water', 'doesnt destroy', 'doesnt decompose',
+            'water jug', 'home water filter', 'better than brita'
+          ],
+          answer: 'Activated carbon filters (like Brita pitchers) have <strong>significant limitations</strong> with PFAS:\n\n❌ <strong>No destruction</strong> — they only retain (adsorb) PFAS in the carbon\n❌ <strong>Partial effectiveness</strong> — poor capture of short-chain PFAS (PFBA, PFHxA)\n❌ <strong>Saturation</strong> — when saturated, PFAS can re-release into water\n❌ <strong>Contaminated waste</strong> — spent carbon still contains all the PFAS\n\nOur difference: selective nanofiltration + <strong>verified SCWO destruction</strong>. PFAS don\'t get transferred — they\'re <strong>eliminated forever</strong>.',
+          followUp: ['Why ZeroPFAS?', 'See the product', 'SCWO technology'],
+          weight: 1.0
+        },
+        {
+          id: 'pfas-food',
+          keywords: [
+            'food', 'eat', 'diet', 'intake', 'fish', 'meat', 'egg', 'milk',
+            'dairy', 'vegetable', 'fruit', 'food chain', 'bioconcentration',
+            'contaminated food', 'what i eat', 'food packaging',
+            'popcorn', 'fast food', 'grease', 'oil', 'microwave',
+            'grocery', 'shopping', 'nutrition', 'cooking with water', 'boiling water',
+            'rice', 'pasta', 'soup', 'coffee', 'tea', 'beverage',
+            'cheese', 'yogurt', 'butter', 'seafood', 'shrimp', 'tuna', 'salmon',
+            'lettuce', 'tomato', 'crop', 'irrigation', 'agriculture', 'farmland',
+            'contaminated soil', 'biosolids', 'fertilizer', 'sludge'
+          ],
+          answer: 'PFAS reach your food through <strong>multiple pathways</strong>:\n\n🐟 <strong>Bioaccumulation</strong> — fish and seafood from contaminated waters\n🥛 <strong>Dairy and eggs</strong> — from animals exposed to PFAS-contaminated water or soil\n🌱 <strong>Crops</strong> — irrigated with contaminated water or grown in treated soils\n📦 <strong>Packaging</strong> — grease-resistant cardboard (pizza boxes, popcorn bags, fast food wrappers)\n🍳 <strong>Cookware</strong> — deteriorated non-stick pans with Teflon\n\nThe main source remains <strong>drinking water</strong>. A specific filter at home significantly reduces your total exposure.',
+          followUp: ['Is my water safe?', 'Are they dangerous?', 'See the product'],
+          weight: 1.0
+        },
+        {
+          id: 'pfas-history',
+          keywords: [
+            'history', 'when', 'when discovered', 'since when', 'origin',
+            'who invented', 'who created', '1950', '1940', '3m', 'dupont',
+            'teflon', 'scotchgard', 'dark waters', 'movie', 'film',
+            'when banned', 'scandal', 'lawsuit', 'case', 'trial',
+            'historical contamination', 'how long',
+            'chronology', 'timeline', 'evolution', 'first pfas',
+            '1938', '2000', '2019', '2022', 'when did they start', 'since when exist',
+            'how long contaminating', 'how did they start', 'how were they discovered',
+            'robert bilott', 'west virginia', 'parkersburg', 'mark ruffalo',
+            'pfas movie', 'documentary', 'news', 'media', 'press'
+          ],
+          answer: 'The history of PFAS is long and concerning:\n\n📅 <strong>1938</strong> — PTFE (Teflon) accidentally discovered in DuPont labs\n📅 <strong>1950s</strong> — Massive adoption begins in industrial and consumer products\n📅 <strong>2000s</strong> — First evidence of global contamination and health damage (DuPont/West Virginia case)\n📅 <strong>2019</strong> — <em>Dark Waters</em> film exposes the scandal to the public\n📅 <strong>2022</strong> — IARC classifies PFOA as <strong>Group 1 carcinogen</strong>\n📅 <strong>2026</strong> — Strict EPA limits (4 ng/L) and EU Directive 2020/2184 take effect\n\nOver <strong>75 years</strong> of use before serious action was taken.',
+          followUp: ['What are PFAS?', '2026 regulations', 'Are they dangerous?'],
+          weight: 1.0
+        },
+        {
+          id: 'installation',
+          keywords: [
+            'install', 'installation', 'how to install', 'easy to install',
+            'need a plumber', 'diy', 'do it myself', 'under sink', 'kitchen',
+            'space', 'dimensions', 'size', 'fit', 'measurements', 'weight',
+            'connect', 'connection', 'pipe', 'plumbing', 'electricity',
+            'need electricity', 'power', 'plug in', 'noise', 'silent', 'quiet',
+            'where does it go', 'where to place', 'how to mount', 'mounting',
+            'preparation', 'tools', 'need a plumber', 'complicated',
+            'need construction', 'renovation', 'no construction needed',
+            'uses power', 'power consumption', 'energy', 'autonomous',
+            'easy', 'simple', 'quick to install', 'step by step'
+          ],
+          answer: 'Installation of our device is <strong>straightforward</strong>:\n\n📍 <strong>Location</strong> — under your kitchen sink\n🔧 <strong>Setup</strong> — direct connection to cold water pipe\n⚡ <strong>Electricity</strong> — <strong>no power needed</strong> for filtration\n🔇 <strong>Noise</strong> — completely silent operation\n📐 <strong>Size</strong> — compact design, fits most under-sink cabinets\n\nYou can install it yourself or request assistance. The cartridge is replaced easily with a simple click.',
+          followUp: ['NFC chip', 'How much does it cost?', 'See the product'],
+          weight: 1.0
+        },
+        {
+          id: 'flow-rate',
+          keywords: [
+            'flow rate', 'liters', 'liters per minute', 'pressure', 'bar', 'flow',
+            'speed', 'fast', 'slow', 'how long', 'fill', 'fill a glass',
+            'fill a bottle', 'performance', '2.1', 'capacity', 'volume', 'enough',
+            'how much water', 'how many liters', 'water pressure', 'power',
+            'low flow', 'reduces pressure', 'normal flow', 'low pressure',
+            'takes long', 'is it fast', 'wait', 'time', 'how much does it filter',
+            'daily capacity', 'keeps up', 'for whole family', 'enough water'
+          ],
+          answer: 'Our device has a nominal flow rate of <strong>2.1 L/min at 3 bar</strong> pressure.\n\n• 💧 Fill a glass in <strong>~3 seconds</strong>\n• 🍶 Fill a 1L bottle in <strong>~30 seconds</strong>\n• 🚿 Continuous flow, no waiting\n\nThat\'s comparable to a regular faucet. You won\'t notice any difference in daily use, but your water will be PFAS-free and meeting the strictest standards (<strong><0.5 ng/L</strong>).',
+          followUp: ['See the product', 'Installation', 'How much does it cost?'],
+          weight: 1.0
+        },
+        {
+          id: 'pfas-children',
+          keywords: [
+            'children', 'kids', 'babies', 'infant', 'pediatric',
+            'breast milk', 'bottle', 'formula', 'baby water',
+            'school', 'daycare', 'playground', 'child development', 'growth',
+            'immunity', 'vaccines', 'affects children', 'affects babies',
+            'protect my kids', 'my baby', 'my child', 'pregnancy',
+            'breastfeeding', 'nursing', 'prenatal', 'fetus', 'placenta',
+            'newborn', 'toddler', 'little ones', 'vulnerable', 'sensitive',
+            'most affected', 'body weight', 'per kg', 'relative dose',
+            'immune system', 'hormones', 'thyroid', 'brain development', 'neurotoxicity',
+            'my son', 'my daughter', 'expecting', 'pregnant'
+          ],
+          answer: 'Children and babies are <strong>especially vulnerable</strong> to PFAS:\n\n👶 <strong>Prenatal exposure</strong> — PFAS cross the placenta and reach the fetus\n🍼 <strong>Breast milk</strong> — PFAS have been detected in breast milk worldwide\n💉 <strong>Immune system</strong> — reduces response to childhood vaccines (EPA study)\n📏 <strong>Development</strong> — can affect growth and hormonal development\n⚖️ <strong>Lower body weight</strong> — children drink more water per kg than adults, amplifying exposure\n\nA home filtration system is one of the <strong>most effective measures</strong> to protect the little ones.',
+          followUp: ['See the product', 'Are they dangerous?', 'What can I do?'],
+          weight: 1.0
+        },
+        {
+          id: 'other-methods',
+          keywords: [
+            'other methods', 'alternatives', 'other technologies', 'how to remove',
+            'incineration', 'burn', 'plasma', 'photocatalysis', 'sonochemistry',
+            'electrochemistry', 'bioremediation', 'bacteria', 'current treatments',
+            'state of the art', 'existing methods', 'what options',
+            'comparisons', 'not only scwo', 'alternative to scwo',
+            'what do others do', 'other countries', 'current solutions',
+            'whats available', 'ozone', 'ultraviolet', 'uv', 'radiation',
+            'pyrolysis', 'biodegradation', 'fungi', 'enzyme', 'nanotechnology',
+            'nanomaterial', 'advanced treatment', 'remediation',
+            'how do others do it', 'best technology', 'cutting edge'
+          ],
+          answer: 'Main PFAS treatment methods and their limitations:\n\n🔥 <strong>Conventional incineration</strong> — needs >1,100 °C and may generate toxic byproducts\n⚡ <strong>Electrochemistry</strong> — works for low concentrations, but slow and expensive\n☀️ <strong>Photocatalysis</strong> — still in research phase, not scalable yet\n🦠 <strong>Bioremediation</strong> — bacteria cannot break the C–F bond\n🧲 <strong>Activated carbon / resins</strong> — only retain, don\'t destroy\n\n<strong>SCWO</strong> is the only technology operating at scale with <strong>>99.9% destruction</strong>, converting PFAS into CO₂ + H₂O + F⁻ with no toxic residues.',
+          followUp: ['SCWO technology', 'Why ZeroPFAS?', 'Verification'],
+          weight: 1.0
+        },
+        {
+          id: 'pfas-water-sources',
+          keywords: [
+            'rivers', 'lakes', 'aquifers', 'groundwater', 'reservoir',
+            'spring', 'well', 'tap', 'pipes', 'treatment plant',
+            'water utility', 'public water', 'supply', 'distribution',
+            'where does it come from', 'how do they enter', 'how do they get in',
+            'tap water', 'public supply', 'conventional treatment',
+            'discharge', 'industrial discharge', 'runoff', 'leachate',
+            'landfill', 'military base', 'airport', 'firefighters', 'afff',
+            'firefighting foam', 'dont remove', 'dont filter', '98 percent',
+            'water contamination', 'contaminated water', 'my river', 'my city',
+            'water in my area', 'where does my water come from', 'treatment facility'
+          ],
+          answer: 'PFAS enter water through multiple pathways:\n\n🏭 <strong>Industrial discharge</strong> — factories that use or manufacture PFAS\n🧯 <strong>Firefighting foams</strong> — training at military bases, airports\n🌧️ <strong>Runoff</strong> — rain washing PFAS from contaminated soils\n🗑️ <strong>Landfills</strong> — leachate from PFAS-containing waste\n🚰 <strong>Conventional treatment</strong> — water treatment plants <strong>DO NOT remove</strong> PFAS\n\n<strong>98%</strong> of analyzed water sources contain detectable PFAS. Conventional water treatment plants were not designed to eliminate them.',
+          followUp: ['Is my water safe?', 'See the product', 'SCWO technology'],
+          weight: 1.0
+        },
+        {
+          id: 'invest',
+          keywords: [
+            'invest', 'investment', 'investor', 'capital', 'funding', 'finance',
+            'round', 'startup', 'business', 'opportunity', 'collaborate',
+            'collaboration', 'partnership', 'partner', 'shareholder',
+            'crowdfunding', 'venture', 'business model', 'profitable',
+            'scalable', 'market', 'potential', 'projection', 'roi'
+          ],
+          answer: 'ZeroPFAS represents a <strong>market opportunity</strong> with global potential:\n\n📈 <strong>Market</strong> — PFAS treatment becomes mandatory in EU and USA from 2026\n🔬 <strong>Proprietary technology</strong> — SCWO + triple verification, integrated approach\n📊 <strong>Scalability</strong> — dual model (residential + industrial)\n🌍 <strong>Transferability</strong> — applicable to any country with PFAS regulations\n\nInterest categories:\n• 💼 Collaboration / Partnership\n• 💰 Investment\n• 🏢 Technology license\n\nReach out via the <a href="#contact">contact form</a> selecting your category of interest.',
+          followUp: ['Contact us', 'About ZeroPFAS', 'Industrial solution'],
+          weight: 1.0
+        },
+        {
+          id: 'regulation-eu-detail',
+          keywords: [
+            'european directive', 'directive 2020', '2020/2184', 'europe', 'european union',
+            'eu limit', '0.1', '0.5', 'microgram', 'transposition', 'member states',
+            'echa restriction', 'universal restriction', 'europe ban',
+            'european regulation', 'european law', 'european legislation',
+            'european commission', 'brussels', 'european parliament', 'drinking water europe',
+            'drinking water directive', 'spain', 'germany', 'france', 'italy',
+            'total pfas limit', 'mandatory europe', 'when does it take effect europe',
+            'ban pfas europe', 'restrict pfas', 'manufacture pfas', 'use pfas'
+          ],
+          answer: 'European PFAS regulation has two pillars:\n\n🇪🇺 <strong>Directive 2020/2184</strong> (Drinking Water)\n• Total PFAS limit: <strong>0.1 µg/L</strong>\n• Member states must transpose into national law\n• Compliance deadline: <strong>2026</strong>\n\n🔬 <strong>ECHA — Universal Restriction</strong>\n• Proposal to ban the <strong>manufacture and use</strong> of all PFAS\n• The broadest restriction in history\n• Timeline: 2025–2027\n\nOur product meets the most stringent limits: <strong><0.5 ng/L</strong> in filtered water — far below the European requirement.',
+          followUp: ['EPA regulations', 'See the product', 'What are PFAS?'],
+          weight: 1.0
+        },
+        {
+          id: 'regulation-epa-detail',
+          keywords: [
+            'epa', 'united states', 'usa', 'america', 'american',
+            'mcl', 'maximum contaminant', '4 ng', '4ng',
+            'pfoa pfos', 'epa limits', 'us regulation', 'usa regulation',
+            'federal', 'state', 'drinking water', 'clean water act',
+            'american regulation', 'american law', 'environmental protection agency',
+            'parts per trillion', 'ppt', 'ppb', 'maximum contaminant level',
+            'pfoa limit', 'pfos limit', 'drinking water america', 'when in america',
+            'us law', 'us regulation'
+          ],
+          answer: '<strong>EPA</strong> (USA) regulation on PFAS:\n\n🇺🇸 <strong>MCL — Maximum Contaminant Level</strong>\n• PFOA: <strong>4.0 ng/L</strong>\n• PFOS: <strong>4.0 ng/L</strong>\n• Effective since: <strong>2026</strong>\n\nThis is an <strong>extremely low level</strong> (parts per trillion). Conventional treatment systems cannot achieve it.\n\nOur device produces water at <strong><0.5 ng/L</strong> — meets and exceeds EPA standards. This is critical for municipalities and homes in areas with known contamination.',
+          followUp: ['European regulations', 'See the product', 'Industrial solution'],
+          weight: 1.0
+        },
+        {
+          id: 'scalability',
+          keywords: [
+            'scalability', 'scale', 'scale up', 'grow', 'growth',
+            'modular', 'expandable', 'adaptable', 'flexible',
+            'home to industrial', 'all scales', 'dual', 'dual line',
+            'residential and industrial', 'home and business',
+            'transferable', 'global', 'worldwide', 'other countries', 'license',
+            'expand', 'expansion', 'enlarge', 'bigger', 'more capacity',
+            'grows', 'can it grow', 'works large scale', 'works at scale',
+            'also for businesses', 'also industrial', 'can be expanded',
+            'replicate', 'export', 'franchise', 'internationalize'
+          ],
+          answer: 'ZeroPFAS was designed with <strong>dual scalability</strong> from the start:\n\n🏠 <strong>Residential line</strong>\n• Point-of-use device under sink\n• Flow rate: 2.1 L/min\n• Returnable cartridges with NFC\n\n🏭 <strong>Industrial line</strong>\n• Centralized SCWO reactor\n• Capacity: >1,000 m³/day\n• Real-time monitoring\n• Modular architecture — expands on demand\n\n🌍 <strong>Transferability</strong>\nThe technology adapts to any country and water source. Licensing model available for global expansion.',
+          followUp: ['Industrial solution', 'See the product', 'Contact us'],
+          weight: 1.0
+        },
+        {
+          id: 'report-analytics',
+          keywords: [
+            'report', 'data', 'analysis', 'analytics', 'dashboard', 'panel',
+            'monitor', 'monitoring', 'real time', 'what data', 'what does it measure',
+            'statistics', 'graph', 'results', 'how do i know it works',
+            'platform', 'online', 'access', 'see results',
+            'lc-ms', 'lc ms', 'tof', 'fluoride balance', 'chromatography',
+            'spectrometry', 'laboratory', 'destruction certificate',
+            'can i verify', 'can i see', 'transparency', 'what do you tell me',
+            'do you inform me', 'do i get data', 'how much destroyed', 'how much eliminated',
+            'what amount', 'percentage', 'measurement', 'measurements'
+          ],
+          answer: 'Our system offers <strong>comprehensive monitoring and reports</strong>:\n\n📱 <strong>App / Platform</strong>\n• Real-time cartridge status (via NFC)\n• Replacement alert before depletion\n• Cumulative usage history\n\n📊 <strong>Destruction Report</strong>\nEach processed cartridge batch generates a report with:\n• LC-MS/MS results (individual PFAS)\n• Total organofluorine (TOF)\n• Fluoride balance (destruction proof)\n\n✅ You\'ll know exactly <strong>how many PFAS were destroyed</strong> and can verify it yourself.',
+          followUp: ['Verification', 'NFC chip', 'See the product'],
+          weight: 1.0
+        },
+        {
+          id: 'filtered-water-quality',
+          keywords: [
+            'how is the water', 'how does the water come out', 'water after filtering',
+            'filtered water', 'treated water', 'output water', 'water quality',
+            'what water comes out', 'water result', 'final water',
+            'meets regulations', 'clean water', 'under sink water'
+          ],
+          answer: 'The filtered water is designed for daily household use and to reduce the presence of PFAS at the point of use.\n\n• ✅ The <strong>nanofiltration</strong> membrane captures PFAS before they reach your tap\n• 📋 The goal is for treated water to <strong>meet EPA and EU standards</strong>\n• 🔄 The system uses a <strong>replaceable cartridge</strong> with NFC tracking to monitor its status\n• 🔇 All in a <strong>compact and silent</strong> format, no electricity needed for filtration\n\nIn practice, the water coming out of the system has been through a specific PFAS treatment process.',
+          followUp: ['How does NFC work?', 'How much does it cost?', 'Installation'],
+          weight: 1.05
         }
       ]
     }
@@ -1230,18 +2238,36 @@
         return { intent: 'affective' };
       }
 
-      /* P6 — Domain: NLU sentence patterns + semantic scoring */
+      /* P6 — Pre-processing: spelling correction */
+      var correctedText = TextProcessor.correctDomainSpelling(text, lang);
+      var emotion = NLU.detectEmotion(text, lang);
+
+      /* Primero NLU sin contaminar con contexto */
+      var nluResult = NLU.analyze(text, lang);
+
+      if (correctedText !== text) {
+        var nluCorrected = NLU.analyze(correctedText, lang);
+        for (var cid in nluCorrected.scores) {
+          nluResult.scores[cid] = Math.max(nluResult.scores[cid] || 0, nluCorrected.scores[cid]);
+        }
+        nluResult.matchCount = Math.max(nluResult.matchCount, nluCorrected.matchCount);
+      }
+
+      /* Solo añadimos contexto si NO hay una intención clara */
+      var enrichedText = correctedText;
+      if (nluResult.matchCount === 0) {
+        enrichedText = ConversationCtx.resolveAnaphora(correctedText, lang);
+      }
+
+      /* Context boosts */
       var boosts = ConversationCtx.getBoosts();
       if (ConversationCtx.hasReferback(text, lang) && ConversationCtx.getTopic()) {
         var currentId = ConversationCtx.getTopic();
-        boosts[currentId] = (boosts[currentId] || 1) * 1.4;
+        boosts[currentId] = (boosts[currentId] || 1) * 1.2;
       }
 
-      /* Run NLU sentence-level analysis */
-      var nluResult = NLU.analyze(text, lang);
-
-      /* Run semantic token-level scoring */
-      var results = SemanticEngine.scoreQuery(text, KB[lang].faq, lang, boosts);
+      /* Run semantic scoring on enriched text (spelling + optional anaphora context) */
+      var results = SemanticEngine.scoreQuery(enrichedText, KB[lang].faq, lang, boosts);
 
       /* Merge NLU scores into semantic results (ADDITIVE, not multiplicative) */
       if (nluResult.matchCount > 0) {
@@ -1284,19 +2310,44 @@
         }
       }
 
+      /* Anti-repetition: if top result is the current topic but a strong
+         second candidate exists, prefer the second to avoid context drag */
+      var currentTopic = ConversationCtx.getTopic();
+
+      if (
+        currentTopic &&
+        results.length > 1 &&
+        results[0].entry.id === currentTopic &&
+        !ConversationCtx.hasReferback(text, lang)
+      ) {
+        var topResult = results[0];
+        var secondResult = results[1];
+
+        var secondLooksStrong =
+          (secondResult.signals.nlu || 0) > 0 ||
+          secondResult.signals.exact > 0 ||
+          secondResult.signals.phrase > 0;
+
+        if (secondLooksStrong && secondResult.score >= topResult.score * 0.72) {
+          var tmp = results[0];
+          results[0] = results[1];
+          results[1] = tmp;
+        }
+      }
+
       if (results.length > 0) {
         var top = results[0];
         /* HIGH confidence: strong NLU or semantic signal */
-        if (top.score >= 8 && top.confidence >= 0.25) {
-          return { intent: 'domain_high', results: results };
+        if (top.score >= 8 && top.confidence >= 0.20) {
+          return { intent: 'domain_high', results: results, emotion: emotion };
         }
         /* MEDIUM confidence */
         if (top.score >= 3) {
-          return { intent: 'domain_medium', results: results };
+          return { intent: 'domain_medium', results: results, emotion: emotion };
         }
-        /* LOW confidence */
-        if (top.score >= 1.5) {
-          return { intent: 'domain_low', results: results };
+        /* LOW confidence — lowered threshold to catch more partial matches */
+        if (top.score >= 1.0) {
+          return { intent: 'domain_low', results: results, emotion: emotion };
         }
       }
 
@@ -1326,6 +2377,28 @@
 
     function formatAnswer(entry) {
       return entry.answer.replace(/\n/g, '<br>');
+    }
+
+    /** Empathetic prefix for emotional queries */
+    function emotionPrefix(emotion, lang) {
+      var prefixes = {
+        es: {
+          worry: 'Entiendo tu preocupación. Es normal querer estar informado sobre estos temas.',
+          fear: 'Es comprensible que esto genere inquietud. La buena noticia es que existen soluciones.',
+          skepticism: 'Entiendo tus dudas — es importante ser crítico. Te comparto los datos para que puedas juzgar:',
+          family: 'Proteger a tu familia es lo más importante. Aquí tienes lo que necesitas saber:',
+          urgency: 'Entiendo la urgencia. Vamos directo al punto:'
+        },
+        en: {
+          worry: 'I understand your concern. It\'s normal to want to stay informed about these issues.',
+          fear: 'It\'s understandable that this is concerning. The good news is that solutions exist.',
+          skepticism: 'I understand your doubts — being critical is important. Here are the facts:',
+          family: 'Protecting your family is what matters most. Here\'s what you need to know:',
+          urgency: 'I understand the urgency. Let me get straight to the point:'
+        }
+      };
+      var bank = prefixes[lang] || prefixes.es;
+      return bank[emotion] || null;
     }
 
     /** Generate a context-aware follow-up expansion */
@@ -1407,6 +2480,12 @@
         case 'domain_high':
           var best = intentResult.results[0];
           html = formatAnswer(best.entry);
+          /* Empathetic prefix for emotional queries */
+          if (intentResult.emotion) {
+            var empathy = emotionPrefix(intentResult.emotion, lang);
+            if (empathy) html = '<em>' + empathy + '</em><br><br>' + html;
+          }
+
           sugg = best.entry.followUp || bank.defaultSuggestions;
           topicId = best.entry.id;
           break;
@@ -1416,6 +2495,10 @@
           var prefix = lang === 'es'
             ? 'Creo que esto es lo que buscas:<br><br>'
             : 'I think this is what you\'re looking for:<br><br>';
+          if (intentResult.emotion) {
+            var empathyM = emotionPrefix(intentResult.emotion, lang);
+            if (empathyM) prefix = '<em>' + empathyM + '</em><br><br>';
+          }
           html = prefix + formatAnswer(top.entry);
           /* Suggest follow-ups + alternative topic labels from runner-ups */
           var altSugg = (top.entry.followUp || []).slice();
@@ -1432,14 +2515,20 @@
           break;
 
         case 'domain_low':
-          html = bank.smartFallback;
-          var lowSugg = [];
-          for (var li = 0; li < Math.min(intentResult.results.length, 4); li++) {
+          var lowTop = intentResult.results[0];
+          var lowPrefix = lang === 'es'
+            ? 'Quizá esto te resulte útil:<br><br>'
+            : 'This might be helpful:<br><br>';
+          html = lowPrefix + formatAnswer(lowTop.entry);
+          /* Suggest alternatives from other top results */
+          var lowSugg = (lowTop.entry.followUp || []).slice(0, 2);
+          for (var li = 1; li < Math.min(intentResult.results.length, 4); li++) {
             var le = intentResult.results[li].entry;
             var ll = TOPIC_LABELS[lang] && TOPIC_LABELS[lang][le.id];
             if (ll) lowSugg.push(ll.label);
           }
           sugg = lowSugg.length > 0 ? lowSugg : bank.defaultSuggestions;
+          topicId = lowTop.entry.id;
           break;
 
         case 'ambiguous':
@@ -1480,7 +2569,28 @@
       'difference':     { icon: '🏆', label: '¿Por qué ZeroPFAS?' },
       'zeropfas-about': { icon: '🌐', label: 'Sobre ZeroPFAS' },
       'environment':    { icon: '🌍', label: 'Impacto ambiental' },
-      'how-to-help':    { icon: '🤝', label: '¿Qué puedo hacer?' }
+      'how-to-help':    { icon: '🤝', label: '¿Qué puedo hacer?' },
+      'pfas-types':     { icon: '🔢', label: 'Tipos de PFAS' },
+      'pfas-sources':   { icon: '📍', label: '¿Dónde hay PFAS?' },
+      'cf-bond':        { icon: '⚛️', label: 'Enlace C–F' },
+      'capture-stage':  { icon: '🧲', label: 'Fase de captura' },
+      'concentration-stage': { icon: '🔄', label: 'Concentración' },
+      'scwo-deep':      { icon: '🌡️', label: 'SCWO en detalle' },
+      'cartridge-return': { icon: '♻️', label: 'Retorno de cartucho' },
+      'activated-carbon': { icon: '🆚', label: 'Carbón activo vs SCWO' },
+      'pfas-food':      { icon: '🍽️', label: 'PFAS en alimentos' },
+      'pfas-history':   { icon: '📜', label: 'Historia de los PFAS' },
+      'installation':   { icon: '🔧', label: 'Instalación' },
+      'flow-rate':      { icon: '💧', label: 'Caudal y rendimiento' },
+      'pfas-children':  { icon: '👶', label: 'PFAS y niños' },
+      'other-methods':  { icon: '🔬', label: 'Otros métodos' },
+      'pfas-water-sources': { icon: '🚰', label: 'PFAS en agua' },
+      'invest':         { icon: '📈', label: 'Invertir / Colaborar' },
+      'regulation-eu-detail': { icon: '🇪🇺', label: 'Normativa EU' },
+      'regulation-epa-detail': { icon: '🇺🇸', label: 'Normativa EPA' },
+      'scalability':    { icon: '📊', label: 'Escalabilidad' },
+      'report-analytics': { icon: '📄', label: 'Informes y datos' },
+      'filtered-water-quality': { icon: '🚰', label: 'Calidad del agua filtrada' }
     },
     en: {
       'pfas-intro':     { icon: '🧬', label: 'What are PFAS?' },
@@ -1498,7 +2608,28 @@
       'difference':     { icon: '🏆', label: 'Why ZeroPFAS?' },
       'zeropfas-about': { icon: '🌐', label: 'About ZeroPFAS' },
       'environment':    { icon: '🌍', label: 'Environmental impact' },
-      'how-to-help':    { icon: '🤝', label: 'What can I do?' }
+      'how-to-help':    { icon: '🤝', label: 'What can I do?' },
+      'pfas-types':     { icon: '🔢', label: 'Types of PFAS' },
+      'pfas-sources':   { icon: '📍', label: 'Where are PFAS?' },
+      'cf-bond':        { icon: '⚛️', label: 'C–F bond' },
+      'capture-stage':  { icon: '🧲', label: 'Capture stage' },
+      'concentration-stage': { icon: '🔄', label: 'Concentration' },
+      'scwo-deep':      { icon: '🌡️', label: 'SCWO in detail' },
+      'cartridge-return': { icon: '♻️', label: 'Cartridge return' },
+      'activated-carbon': { icon: '🆚', label: 'Carbon vs SCWO' },
+      'pfas-food':      { icon: '🍽️', label: 'PFAS in food' },
+      'pfas-history':   { icon: '📜', label: 'History of PFAS' },
+      'installation':   { icon: '🔧', label: 'Installation' },
+      'flow-rate':      { icon: '💧', label: 'Flow rate' },
+      'pfas-children':  { icon: '👶', label: 'PFAS & children' },
+      'other-methods':  { icon: '🔬', label: 'Other methods' },
+      'pfas-water-sources': { icon: '🚰', label: 'PFAS in water' },
+      'invest':         { icon: '📈', label: 'Invest / Collaborate' },
+      'regulation-eu-detail': { icon: '🇪🇺', label: 'EU regulations' },
+      'regulation-epa-detail': { icon: '🇺🇸', label: 'EPA regulations' },
+      'scalability':    { icon: '📊', label: 'Scalability' },
+      'report-analytics': { icon: '📄', label: 'Reports & data' },
+      'filtered-water-quality': { icon: '🚰', label: 'Filtered water quality' }
     }
   };
 

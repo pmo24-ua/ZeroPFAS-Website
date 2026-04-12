@@ -369,9 +369,9 @@
     g.add(tealRing);
 
     // Inter-canister pipe
-    var p = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 1.5, 8), mPipe);
+    var p = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 1.8, 8), mPipe);
     p.rotation.z = Math.PI / 2;
-    p.position.set(-2.7, 1.5, 0);
+    p.position.set(-2.7, 1.45, 0);
     g.add(p);
 
     device.add(g);
@@ -446,8 +446,8 @@
     g.add(pt);
 
     // Up-pipe from carbon
-    var up = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 1.1, 8), mPipe);
-    up.position.set(-0.9, 1.55, 0);
+    var up = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 1.2, 8), mPipe);
+    up.position.set(-1.2, 1.6, 0);
     g.add(up);
 
     device.add(g);
@@ -462,32 +462,32 @@
     var mPipe = mkMat(0xc0c8d0, 0x666666);
     var mats = [mOrange, mPipe];
 
-    // Vertical segment
-    var pipeV = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.6, 8), mPipe);
-    pipeV.position.set(2.0, 2.72, 0);
+    // Vertical segment aligned with concentrate port (x=1.8)
+    var pipeV = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.55, 8), mPipe);
+    pipeV.position.set(1.8, 2.835, 0);
     g.add(pipeV);
 
     // Elbow bend (orange sphere)
     var elbow = new THREE.Mesh(new THREE.SphereGeometry(0.07, 10, 8), mOrange);
-    elbow.position.set(2.0, 3.05, 0);
+    elbow.position.set(1.8, 3.11, 0);
     g.add(elbow);
 
     // Horizontal drain segment
-    var pipeH = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.6, 8), mPipe);
+    var pipeH = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.7, 8), mPipe);
     pipeH.rotation.z = Math.PI / 2;
-    pipeH.position.set(2.35, 3.05, 0);
+    pipeH.position.set(2.25, 3.11, 0);
     g.add(pipeH);
 
     // Drain arrow tip (orange cone)
     var arrow = new THREE.Mesh(new THREE.ConeGeometry(0.07, 0.12, 8), mOrange);
     arrow.rotation.z = -Math.PI / 2;
-    arrow.position.set(2.7, 3.05, 0);
+    arrow.position.set(2.65, 3.11, 0);
     g.add(arrow);
 
-    // Orange accent rings
+    // Orange accent ring at concentrate port
     var r1 = new THREE.Mesh(new THREE.TorusGeometry(0.055, 0.012, 6, 12), mOrange);
     r1.rotation.x = Math.PI / 2;
-    r1.position.set(2.0, 2.5, 0);
+    r1.position.set(1.8, 2.55, 0);
     g.add(r1);
 
     device.add(g);
@@ -566,8 +566,8 @@
     g.add(nfc);
 
     // Down-pipe from membrane
-    var dp = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 1.3, 8), mPipe);
-    dp.position.set(1.6, 1.45, 0);
+    var dp = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 1.45, 8), mPipe);
+    dp.position.set(1.65, 1.6, 0);
     g.add(dp);
 
     device.add(g);
@@ -605,9 +605,9 @@
     g.add(flowDot);
 
     // Connecting pipe from PFAS
-    var cp = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 1.2, 8), mPipe);
+    var cp = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 1.3, 8), mPipe);
     cp.rotation.z = Math.PI / 2;
-    cp.position.set(2.0, -0.2, 0);
+    cp.position.set(2.05, -0.2, 0);
     g.add(cp);
 
     device.add(g);
