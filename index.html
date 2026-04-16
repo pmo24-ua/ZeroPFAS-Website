@@ -399,9 +399,12 @@
     </div>
 
     <div class="product-hero">
+      <div class="product-hero__title reveal">
+        <h2 class="display-lg">Agua libre de PFAS,<br><span class="gradient-text">con trazabilidad total.</span></h2>
+      </div>
+
       <!-- Left: Text content -->
       <div class="product-hero__text reveal">
-        <h2 class="display-xl">Captura PFAS en origen.<br><span class="gradient-text">Retorno trazable. Destrucción verificable.</span></h2>
         <p class="product-hero__desc">Sistema multietapa de punto de uso con prefiltro de sedimentos, carbón activo, membrana NF/RO y cartucho de captura selectiva con resina aniónica. Cada cartucho saturado lleva chip NFC y se retorna para destrucción centralizada vía SCWO, con informe analítico por lote.</p>
         <div class="product-hero__specs">
           <div class="product-spec">
@@ -438,41 +441,6 @@
           <div class="product-hero__ambient"></div>
         </div>
 
-        <!-- Callout annotations — 4 key stages only -->
-        <div class="product-hero__callouts" id="productCallouts">
-          <div class="ph-callout ph-callout--inlet" data-stage="inlet">
-            <div class="ph-callout__dot"></div>
-            <div class="ph-callout__line"></div>
-            <div class="ph-callout__tag">
-              <span class="ph-callout__num">01</span>
-              <span class="ph-callout__title">Entrada</span>
-            </div>
-          </div>
-          <div class="ph-callout ph-callout--membrane" data-stage="membrane">
-            <div class="ph-callout__dot"></div>
-            <div class="ph-callout__line"></div>
-            <div class="ph-callout__tag">
-              <span class="ph-callout__num">02</span>
-              <span class="ph-callout__title">Membrana NF</span>
-            </div>
-          </div>
-          <div class="ph-callout ph-callout--capture" data-stage="capture">
-            <div class="ph-callout__dot"></div>
-            <div class="ph-callout__line"></div>
-            <div class="ph-callout__tag">
-              <span class="ph-callout__num">03</span>
-              <span class="ph-callout__title">Captura PFAS</span>
-            </div>
-          </div>
-          <div class="ph-callout ph-callout--cartridge" data-stage="cartridge">
-            <div class="ph-callout__dot"></div>
-            <div class="ph-callout__line"></div>
-            <div class="ph-callout__tag">
-              <span class="ph-callout__num">04</span>
-              <span class="ph-callout__title">Cartucho retornable · NFC</span>
-            </div>
-          </div>
-        </div>
       </div>
     </div>
   </div>
@@ -712,159 +680,170 @@
       <p class="s6__sub">Las tres normativas más exigentes del mundo entran en vigor este año. Las multas son millonarias. Las soluciones convencionales no destruyen PFAS — solo los mueven de sitio.</p>
     </div>
 
-    <!-- Regulation cards — big visual -->
+    <!-- Regulation cards — 3-column grid -->
     <div class="s6__regs reveal-stagger">
+
+      <!-- Estados Unidos -->
       <div class="s6__reg s6__reg--1">
         <div class="s6__reg-glow"></div>
-        <div class="s6__reg-badge">EE.UU.</div>
-        <div class="s6__reg-body">
-          <span class="s6__reg-org">EPA — MCL PFOA/PFOS</span>
-          <div class="s6__reg-limit">4,0 <span>ng/L</span></div>
-          <div class="s6__reg-bar">
-            <div class="s6__reg-bar-fill s6__reg-bar-fill--1"></div>
-          </div>
-          <span class="s6__reg-deadline">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-            Cumplimiento obligatorio · 2026
-          </span>
+        <div class="s6__reg-badge">🇺🇸 Estados Unidos</div>
+        <span class="s6__reg-org">EPA: límite legal para PFOA/PFOS</span>
+        <div class="s6__reg-limit">
+          <span class="s6__reg-limit-main">4,0</span>
+          <span class="s6__reg-limit-sub">ng/L máximo</span>
         </div>
+        <div class="s6__reg-bar" aria-hidden="true">
+          <div class="s6__reg-bar-fill s6__reg-bar-fill--1"></div>
+        </div>
+        <span class="s6__reg-deadline">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          Obligatorio en 2026
+        </span>
       </div>
 
+      <!-- Unión Europea -->
       <div class="s6__reg s6__reg--2">
         <div class="s6__reg-glow"></div>
-        <div class="s6__reg-badge">UE</div>
-        <div class="s6__reg-body">
-          <span class="s6__reg-org">Directiva 2020/2184</span>
-          <div class="s6__reg-limit">0,1 <span>μg/L</span></div>
-          <div class="s6__reg-bar">
-            <div class="s6__reg-bar-fill s6__reg-bar-fill--2"></div>
-          </div>
-          <span class="s6__reg-deadline">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-            Transposición nacional · 2026
-          </span>
+        <div class="s6__reg-badge">🇪🇺 Unión Europea</div>
+        <span class="s6__reg-org">Directiva de agua de consumo (2020/2184)</span>
+        <div class="s6__reg-limit">
+          <span class="s6__reg-limit-main">0,1</span>
+          <span class="s6__reg-limit-sub">μg/L PFAS totales</span>
         </div>
+        <div class="s6__reg-bar" aria-hidden="true">
+          <div class="s6__reg-bar-fill s6__reg-bar-fill--2"></div>
+        </div>
+        <span class="s6__reg-deadline">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          Aplicación nacional en 2026
+        </span>
       </div>
 
+      <!-- ECHA -->
       <div class="s6__reg s6__reg--3">
         <div class="s6__reg-glow"></div>
-        <div class="s6__reg-badge">ECHA</div>
-        <div class="s6__reg-body">
-          <span class="s6__reg-org">Restricción universal PFAS</span>
-          <div class="s6__reg-limit">Total <span>ban</span></div>
-          <div class="s6__reg-bar">
-            <div class="s6__reg-bar-fill s6__reg-bar-fill--3"></div>
-          </div>
-          <span class="s6__reg-deadline">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-            En evaluación · 2025–2027
-          </span>
+        <div class="s6__reg-badge">🇪🇺 ECHA (UE)</div>
+        <span class="s6__reg-org">Propuesta de restricción amplia de PFAS</span>
+        <div class="s6__reg-limit">
+          <span class="s6__reg-limit-main">Prohibición</span>
+          <span class="s6__reg-limit-sub">progresiva</span>
         </div>
+        <div class="s6__reg-bar" aria-hidden="true">
+          <div class="s6__reg-bar-fill s6__reg-bar-fill--3"></div>
+        </div>
+        <span class="s6__reg-deadline">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          Decisión prevista: 2025–2027
+        </span>
       </div>
+
     </div>
 
-    <!-- VS Comparison — premium redesign -->
-    <div class="s6__vs reveal">
-      <h3 class="s6__vs-title">¿Por qué no basta con <span class="s6__vs-title-hl">capturar?</span></h3>
-      <div class="s6__vs-grid">
-        <!-- OLD side -->
-        <div class="s6__vs-card s6__vs-card--old">
-          <div class="s6__vs-card-header">
-            <div class="s6__vs-icon s6__vs-icon--old">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+    <!-- VS Comparison — Animated table -->
+    <div class="s6__vs reveal" id="vsSection">
+      <h3 class="s6__vs-title">¿Cuál es la diferencia <span class="s6__vs-title-hl">de verdad?</span></h3>
+      <p class="s6__vs-sub">Una solución mueve el problema. La otra lo borra.</p>
+
+      <div class="vs-table" id="vsTable">
+
+        <!-- Headers -->
+        <div class="vs-table__head">
+          <div class="vs-table__head-q"></div>
+          <div class="vs-table__head-col vs-table__head-col--old">
+            <div class="vs-brand vs-brand--old">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
             </div>
-            <div>
-              <span class="s6__vs-card-tag s6__vs-card-tag--old">Convencional</span>
-              <h4 class="s6__vs-card-name">Carbón activo / Resinas</h4>
-            </div>
+            <strong>Filtros de siempre</strong>
+            <span>Carbón activo</span>
           </div>
-          <ul class="s6__vs-features">
-            <li class="s6__vs-feat s6__vs-feat--bad">
-              <span class="s6__vs-feat-icon">✕</span>
-              <div>
-                <strong>Captura, no destruye</strong>
-                <span>Los PFAS siguen intactos en el filtro</span>
-              </div>
-            </li>
-            <li class="s6__vs-feat s6__vs-feat--bad">
-              <span class="s6__vs-feat-icon">✕</span>
-              <div>
-                <strong>Genera residuos tóxicos</strong>
-                <span>Lodos PFAS concentrados sin solución</span>
-              </div>
-            </li>
-            <li class="s6__vs-feat s6__vs-feat--bad">
-              <span class="s6__vs-feat-icon">✕</span>
-              <div>
-                <strong>Transferencia del problema</strong>
-                <span>Mueve contaminación, no la elimina</span>
-              </div>
-            </li>
-            <li class="s6__vs-feat s6__vs-feat--bad">
-              <span class="s6__vs-feat-icon">✕</span>
-              <div>
-                <strong>Incumple normativa 2026</strong>
-                <span>Sin destrucción verificable</span>
-              </div>
-            </li>
-          </ul>
-          <div class="s6__vs-verdict s6__vs-verdict--old">
-            <span class="s6__vs-verdict-val">0%</span>
-            <span class="s6__vs-verdict-label">destrucción real</span>
+          <div class="vs-table__head-col vs-table__head-col--new">
+            <div class="vs-brand vs-brand--new">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+            </div>
+            <strong>ZeroPFAS</strong>
+            <span>Nuestra solución</span>
           </div>
         </div>
 
-        <!-- VS badge -->
-        <div class="s6__vs-divider">
-          <span class="s6__vs-badge">VS</span>
+        <!-- Fila 1 -->
+        <div class="vs-row" data-delay="0">
+          <div class="vs-row__q">
+            <span class="vs-row__emoji">🧪</span>
+            <span>¿Desaparecen los contaminantes?</span>
+          </div>
+          <div class="vs-row__cell vs-row__cell--bad">
+            <span class="vs-dot vs-dot--bad"></span>
+            <span>No. Los mueven, no los <em>borran</em>.</span>
+          </div>
+          <div class="vs-row__cell vs-row__cell--good">
+            <span class="vs-dot vs-dot--good"></span>
+            <span>Sí. Los destruye para <em>siempre</em>.</span>
+          </div>
         </div>
 
-        <!-- NEW side -->
-        <div class="s6__vs-card s6__vs-card--new">
-          <div class="s6__vs-card-header">
-            <div class="s6__vs-icon s6__vs-icon--new">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-            </div>
-            <div>
-              <span class="s6__vs-card-tag s6__vs-card-tag--new">Nuestra tecnología</span>
-              <h4 class="s6__vs-card-name">ZeroPFAS Solutions</h4>
-            </div>
+        <!-- Fila 2 -->
+        <div class="vs-row" data-delay="1">
+          <div class="vs-row__q">
+            <span class="vs-row__emoji">🗑️</span>
+            <span>¿Qué queda al final?</span>
           </div>
-          <ul class="s6__vs-features">
-            <li class="s6__vs-feat s6__vs-feat--good">
-              <span class="s6__vs-feat-icon">✓</span>
-              <div>
-                <strong>Destrucción real del enlace C–F</strong>
-                <span>Mineralización verificada analíticamente</span>
-              </div>
-            </li>
-            <li class="s6__vs-feat s6__vs-feat--good">
-              <span class="s6__vs-feat-icon">✓</span>
-              <div>
-                <strong>Cero residuos PFAS</strong>
-                <span>Mineralización completa a fluoruro inorgánico</span>
-              </div>
-            </li>
-            <li class="s6__vs-feat s6__vs-feat--good">
-              <span class="s6__vs-feat-icon">✓</span>
-              <div>
-                <strong>Triple verificación analítica</strong>
-                <span>Target + non-target + balance de flúor</span>
-              </div>
-            </li>
-            <li class="s6__vs-feat s6__vs-feat--good">
-              <span class="s6__vs-feat-icon">✓</span>
-              <div>
-                <strong>Cumplimiento garantizado</strong>
-                <span>Auditable y conforme a EPA, EU y ECHA</span>
-              </div>
-            </li>
-          </ul>
-          <div class="s6__vs-verdict s6__vs-verdict--new">
-            <span class="s6__vs-verdict-val">>99%</span>
-            <span class="s6__vs-verdict-label">destrucción verificada</span>
+          <div class="vs-row__cell vs-row__cell--bad">
+            <span class="vs-dot vs-dot--bad"></span>
+            <span>Basura tóxica sin destino <em>claro</em>.</span>
+          </div>
+          <div class="vs-row__cell vs-row__cell--good">
+            <span class="vs-dot vs-dot--good"></span>
+            <span>Agua, CO₂ y sal. Nada <em>tóxico</em>.</span>
           </div>
         </div>
+
+        <!-- Fila 3 -->
+        <div class="vs-row" data-delay="2">
+          <div class="vs-row__q">
+            <span class="vs-row__emoji">🏛️</span>
+            <span>¿Cumple la ley en 2026?</span>
+          </div>
+          <div class="vs-row__cell vs-row__cell--bad">
+            <span class="vs-dot vs-dot--bad"></span>
+            <span>Cada vez <em>menos</em>. Las normas aprietan.</span>
+          </div>
+          <div class="vs-row__cell vs-row__cell--good">
+            <span class="vs-dot vs-dot--good"></span>
+            <span>Sí. Con análisis que lo <em>demuestran</em>.</span>
+          </div>
+        </div>
+
+        <!-- Score rings -->
+        <div class="vs-result" id="vsScoreWrap">
+          <div class="vs-result__side vs-result__side--old">
+            <div class="vs-result__circle">
+              <svg class="vs-result__ring" viewBox="0 0 120 120">
+                <circle cx="60" cy="60" r="52" fill="none" stroke="rgba(255,255,255,.06)" stroke-width="8"/>
+                <circle class="vs-result__ring-fill vs-result__ring-fill--old" cx="60" cy="60" r="52" fill="none" stroke="#ff3b30" stroke-width="8" stroke-linecap="round" stroke-dasharray="326.7" stroke-dashoffset="326.7" transform="rotate(-90 60 60)"/>
+              </svg>
+              <div class="vs-result__pct vs-result__pct--old">
+                <span id="vsPctOld">0</span><span class="vs-result__sym">%</span>
+              </div>
+            </div>
+            <span class="vs-result__label">Convencional</span>
+          </div>
+          <div class="vs-result__divider">
+            <span class="vs-result__vs">VS</span>
+          </div>
+          <div class="vs-result__side vs-result__side--new">
+            <div class="vs-result__circle vs-result__circle--new">
+              <svg class="vs-result__ring" viewBox="0 0 120 120">
+                <circle cx="60" cy="60" r="52" fill="none" stroke="rgba(255,255,255,.06)" stroke-width="8"/>
+                <circle class="vs-result__ring-fill vs-result__ring-fill--new" cx="60" cy="60" r="52" fill="none" stroke="#30d5c8" stroke-width="8" stroke-linecap="round" stroke-dasharray="326.7" stroke-dashoffset="326.7" transform="rotate(-90 60 60)"/>
+              </svg>
+              <div class="vs-result__pct vs-result__pct--new">
+                <span id="vsPctNew">0</span><span class="vs-result__sym vs-result__sym--new">%</span>
+              </div>
+            </div>
+            <span class="vs-result__label">ZeroPFAS</span>
+          </div>
+        </div>
+
       </div>
     </div>
 
@@ -925,27 +904,29 @@
   </div>
 </section>
 
+<div class="container">
+  <!-- Footer CTA band — bigger, more impactful -->
+  <div class="footer__cta">
+    <div class="footer__cta-bg"></div>
+    <div class="footer__cta-content">
+      <div class="footer__cta-badge">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+        Evaluación gratuita
+      </div>
+      <h3 class="footer__cta-title">¿Listo para eliminar PFAS <span class="gradient-text">de verdad?</span></h3>
+      <p class="footer__cta-desc">Solicita una evaluación técnica sin compromiso y descubre cómo integrar destrucción real de PFAS en tu planta.</p>
+    </div>
+    <a href="#contact" class="btn btn--primary footer__cta-btn">
+      Contactar ahora
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14m-7-7 7 7-7 7"/></svg>
+    </a>
+  </div>
+</div>
+
 <!-- ===== Footer ===== -->
 <footer class="footer">
   <div class="footer__glow"></div>
   <div class="container">
-
-    <!-- Footer CTA band — bigger, more impactful -->
-    <div class="footer__cta">
-      <div class="footer__cta-bg"></div>
-      <div class="footer__cta-content">
-        <div class="footer__cta-badge">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"/></svg>
-          Evaluación gratuita
-        </div>
-        <h3 class="footer__cta-title">¿Listo para eliminar PFAS <span class="gradient-text">de verdad?</span></h3>
-        <p class="footer__cta-desc">Solicita una evaluación técnica sin compromiso y descubre cómo integrar destrucción real de PFAS en tu planta.</p>
-      </div>
-      <a href="#contact" class="btn btn--primary footer__cta-btn">
-        Contactar ahora
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14m-7-7 7 7-7 7"/></svg>
-      </a>
-    </div>
 
     <!-- Main footer grid -->
     <div class="footer__main">
@@ -957,20 +938,7 @@
           <span class="footer__sub">Solutions</span>
         </div>
         <p class="footer__desc">Tecnología integrada de captura, concentración y destrucción verificable de PFAS para un agua libre de contaminantes eternos.</p>
-        <div class="footer__badges">
-          <div class="footer__badge">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-            <span>Verificación analítica triple</span>
-          </div>
-          <div class="footer__badge">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>
-            <span>Cumple normativa EPA & EU</span>
-          </div>
-          <div class="footer__badge">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"/></svg>
-            <span>Destrucción >99% verificada</span>
-          </div>
-        </div>
+
       </div>
 
       <!-- Secciones -->
@@ -1008,6 +976,10 @@
           </a>
         </div>
         <a href="mailto:contacto@zeropfas.com" class="footer__email">contacto@zeropfas.com</a>
+        <div class="footer__location">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+          <span class="footer__location-flags">🇪🇸</span> España &nbsp;·&nbsp; <span class="footer__location-flags">🇪🇺</span> Unión Europea
+        </div>
       </div>
     </div>
 
@@ -1018,6 +990,13 @@
       </div>
       <div class="footer__bottom-center">
         <p>&copy; 2026 ZeroPFAS Solutions</p>
+        <nav class="footer__legal-links" aria-label="Legal">
+          <a href="aviso-legal.html">Aviso legal</a>
+          <span>·</span>
+          <a href="privacidad.html">Privacidad</a>
+          <span>·</span>
+          <a href="cookies.html">Cookies</a>
+        </nav>
       </div>
       <div class="footer__bottom-right">
         <span class="footer__status">

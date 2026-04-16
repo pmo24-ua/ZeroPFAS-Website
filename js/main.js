@@ -99,24 +99,25 @@
   const heroContent = document.querySelector('.hero__content');
   const heroScroll  = document.querySelector('.hero__scroll');
 
-  if (!prefersReduced) {
-    function heroParallax() {
-      const scrollY = window.scrollY;
-      const vh = window.innerHeight;
-      if (scrollY > vh) return;
+  function heroParallax() {
+    const scrollY = window.scrollY;
+    const vh = window.innerHeight;
+    if (scrollY > vh) return;
 
-      const ratio = scrollY / vh;
+    const ratio = scrollY / vh;
 
+    if (!prefersReduced) {
       if (heroContent) {
-        heroContent.style.transform = `translateY(${scrollY * .3}px)`;
-        heroContent.style.opacity = 1 - ratio * 1.2;
-      }
-      if (heroScroll) {
-        heroScroll.style.opacity = 1 - ratio * 2;
+        heroContent.style.transform = `translateY(${scrollY * .15}px)`;
+        heroContent.style.opacity = Math.max(0, 1 - ratio * 1.1);
       }
     }
-    window.addEventListener('scroll', heroParallax, { passive: true });
+    if (heroScroll) {
+      heroScroll.style.animation = 'none';
+      heroScroll.style.opacity = Math.max(0, 1 - ratio * 1.1);
+    }
   }
+  window.addEventListener('scroll', heroParallax, { passive: true });
 
   /* ===== Smooth anchor scroll ===== */
   document.querySelectorAll('a[href^="#"]').forEach(link => {
@@ -137,7 +138,7 @@
     const target = parseInt(el.dataset.count, 10);
     if (isNaN(target)) return;
     const suffix = el.dataset.suffix || '';
-    const duration = 1800;
+    const duration = 1200;
     const start = performance.now();
 
     function tick(now) {
@@ -174,12 +175,12 @@
         card.style.setProperty('--mouse-x', x + '%');
         card.style.setProperty('--mouse-y', y + '%');
 
-        // 3D tilt effect
+        // Subtle lift — no aggressive 3D tilt
         if (!prefersReduced) {
-          const tiltX = ((y - 50) / 50) * -4;
-          const tiltY = ((x - 50) / 50) * 4;
+          const tiltX = ((y - 50) / 50) * -1.5;
+          const tiltY = ((x - 50) / 50) * 1.5;
           card.classList.add('is-tilting');
-          card.style.transform = `perspective(800px) rotateX(${tiltX}deg) rotateY(${tiltY}deg) translateY(-4px)`;
+          card.style.transform = `perspective(1000px) rotateX(${tiltX}deg) rotateY(${tiltY}deg) translateY(-2px)`;
         }
       });
       card.addEventListener('mouseleave', () => {
@@ -317,4 +318,121 @@
     });
   }
 
+  /* ===== VS animated table — cinematic reveal ===== */
+  const vsTable = document.getElementById('vsTable');
+  if (vsTable) {
+    const vsScoreWrap = document.getElementById('vsScoreWrap');
+    const pctOld = document.getElementById('vsPctOld');
+    const pctNew = document.getElementById('vsPctNew');
+    const ringOld = vsScoreWrap && vsScoreWrap.querySelector('.vs-result__ring-fill--old');
+    const ringNew = vsScoreWrap && vsScoreWrap.querySelector('.vs-result__ring-fill--new');
+    const circleNew = vsScoreWrap && vsScoreWrap.querySelector('.vs-result__circle--new');
+    const circumference = 2 * Math.PI * 52; // r=52 → ~326.7
+
+    function animateCounter(el, target, duration) {
+      const start = performance.now();
+      (function tick(now) {
+        const t = Math.min((now - start) / duration, 1);
+        const ease = 1 - Math.pow(1 - t, 3);
+        el.textContent = Math.round(ease * target);
+        if (t < 1) requestAnimationFrame(tick);
+      })(start);
+    }
+
+    // Observer for table rows
+    const vsObs = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          vsTable.classList.add('row-animate');
+          vsObs.disconnect();
+        }
+      });
+    }, { threshold: 0.15 });
+    vsObs.observe(vsTable);
+
+    // Observer for ring counters
+    if (vsScoreWrap) {
+      const ringObs = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            // Old ring: ~2% fill
+            if (ringOld) {
+              const offsetOld = circumference * (1 - 0.02);
+              ringOld.style.strokeDashoffset = offsetOld;
+            }
+            if (pctOld) animateCounter(pctOld, 0, 1200);
+
+            // New ring: 99% fill
+            if (ringNew) {
+              const offsetNew = circumference * (1 - 0.99);
+              ringNew.style.strokeDashoffset = offsetNew;
+            }
+            if (pctNew) animateCounter(pctNew, 99, 2000);
+
+            // Glow burst on completion
+            setTimeout(() => {
+              if (circleNew) circleNew.classList.add('animated');
+            }, 2000);
+
+            ringObs.disconnect();
+          }
+        });
+      }, { threshold: 0.3 });
+      ringObs.observe(vsScoreWrap);
+    }
+  }
+
+})();
+
+/* ===== Quick Contact Modal ===== */
+(function () {
+  const overlay  = document.getElementById('quickContactModal');
+  const openBtn  = document.getElementById('openQuickContact');
+  const closeBtn = document.getElementById('closeQuickContact');
+  const form     = document.getElementById('quickContactForm');
+  if (!overlay || !openBtn) return;
+
+  function open() {
+    overlay.classList.add('is-open');
+    document.body.style.overflow = 'hidden';
+    setTimeout(() => closeBtn && closeBtn.focus(), 100);
+  }
+  function close() {
+    overlay.classList.remove('is-open');
+    document.body.style.overflow = '';
+  }
+
+  openBtn.addEventListener('click', open);
+  closeBtn && closeBtn.addEventListener('click', close);
+  overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && overlay.classList.contains('is-open')) close();
+  });
+
+  if (form) {
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const name  = (form.elements.name.value    || '').trim();
+      const email = (form.elements.email.value   || '').trim();
+      const org   = (form.elements.org.value     || '').trim();
+      const msg   = (form.elements.message.value || '').trim();
+
+      if (!name || !email || !msg) {
+        alert('Por favor, completa los campos obligatorios.');
+        return;
+      }
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        alert('Introduce un email válido.');
+        return;
+      }
+
+      const subject = encodeURIComponent('Solicitud de evaluación gratuita — ZeroPFAS');
+      const body    = encodeURIComponent(
+        `Nombre: ${name}\nEmail: ${email}${org ? '\nEmpresa: ' + org : ''}\n\n${msg}`
+      );
+      window.location.href = `mailto:contacto@zeropfas.com?subject=${subject}&body=${body}`;
+      close();
+      form.reset();
+    });
+  }
 })();

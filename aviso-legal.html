@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Aviso Legal — ZeroPFAS Solutions</title>
+  <meta name="description" content="Aviso legal, condiciones de uso y propiedad intelectual de ZeroPFAS Solutions.">
+  <meta name="theme-color" content="#050508">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💧</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; font-size: 17px; -webkit-font-smoothing: antialiased; }
+    body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; background: #050508; color: #f5f5f7; line-height: 1.65; overflow-x: hidden; }
+    a { color: inherit; text-decoration: none; }
+
+    /* — Navbar mini — */
+    .legal-nav { position: fixed; top: 0; left: 0; width: 100%; z-index: 100; background: rgba(5,5,8,.82); backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px); border-bottom: 1px solid rgba(255,255,255,.06); }
+    .legal-nav__inner { max-width: 1240px; margin: 0 auto; padding: 0 clamp(20px,4vw,40px); height: 64px; display: flex; align-items: center; justify-content: space-between; }
+    .legal-nav__logo { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: .95rem; letter-spacing: -.01em; }
+    .legal-nav__logo svg { opacity: .7; }
+    .legal-nav__logo .zero { color: #f5f5f7; }
+    .legal-nav__logo .pfas { background: linear-gradient(135deg, #2997ff, #30d5c8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    .legal-nav__back { font-size: .82rem; color: rgba(245,245,247,.55); transition: color .2s; display: flex; align-items: center; gap: 6px; }
+    .legal-nav__back:hover { color: #f5f5f7; }
+    .legal-nav__back svg { transition: transform .2s; }
+    .legal-nav__back:hover svg { transform: translateX(-3px); }
+
+    /* — Layout — */
+    .legal-wrap { max-width: 780px; margin: 0 auto; padding: calc(64px + 4rem) clamp(20px,4vw,40px) 4rem; }
+
+    /* — Header — */
+    .legal-header { margin-bottom: 3rem; }
+    .legal-header__badge { display: inline-flex; align-items: center; gap: 6px; font-size: .72rem; font-weight: 600; text-transform: uppercase; letter-spacing: .1em; color: rgba(245,245,247,.45); margin-bottom: 1rem; }
+    .legal-header__badge::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: #2997ff; }
+    .legal-header h1 { font-size: clamp(2rem, 5vw, 3rem); font-weight: 700; letter-spacing: -.03em; line-height: 1.1; margin-bottom: .75rem; }
+    .legal-header h1 span { background: linear-gradient(135deg, #2997ff, #30d5c8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    .legal-header__date { font-size: .82rem; color: rgba(245,245,247,.4); }
+
+    /* — Content card — */
+    .legal-card { background: rgba(14,14,22,.65); border: 1px solid rgba(255,255,255,.06); border-radius: 20px; padding: clamp(2rem,4vw,3rem); position: relative; overflow: hidden; }
+    .legal-card::before { content: ''; position: absolute; top: -80px; right: -80px; width: 220px; height: 220px; background: radial-gradient(circle, rgba(41,151,255,.08) 0%, transparent 70%); pointer-events: none; }
+    .legal-card h2 { font-size: 1.1rem; font-weight: 600; color: #f5f5f7; margin: 2.2rem 0 .6rem; letter-spacing: -.01em; position: relative; padding-left: 1rem; }
+    .legal-card h2::before { content: ''; position: absolute; left: 0; top: 3px; width: 3px; height: calc(100% - 6px); border-radius: 2px; background: linear-gradient(180deg, #2997ff, #30d5c8); }
+    .legal-card h2:first-child { margin-top: 0; }
+    .legal-card p { color: rgba(245,245,247,.6); line-height: 1.8; margin-bottom: .8rem; }
+    .legal-card ul { margin: .5rem 0 1rem 1.2rem; }
+    .legal-card li { color: rgba(245,245,247,.6); line-height: 1.8; margin-bottom: .4rem; list-style: none; position: relative; padding-left: 1rem; }
+    .legal-card li::before { content: ''; position: absolute; left: 0; top: .7em; width: 5px; height: 5px; border-radius: 50%; background: rgba(41,151,255,.5); }
+    .legal-card a { color: #2997ff; transition: color .2s; }
+    .legal-card a:hover { color: #30d5c8; }
+    .legal-card strong { color: rgba(245,245,247,.85); font-weight: 600; }
+
+    /* — Cross-links — */
+    .legal-links { display: flex; flex-wrap: wrap; gap: .8rem; margin-top: 2.5rem; padding-top: 2rem; border-top: 1px solid rgba(255,255,255,.06); }
+    .legal-links a { font-size: .8rem; color: rgba(245,245,247,.45); padding: .5rem 1rem; border: 1px solid rgba(255,255,255,.08); border-radius: 10px; transition: all .25s; }
+    .legal-links a:hover { color: #f5f5f7; border-color: rgba(41,151,255,.3); background: rgba(41,151,255,.06); }
+    .legal-links a.active { color: #2997ff; border-color: rgba(41,151,255,.25); background: rgba(41,151,255,.08); pointer-events: none; }
+
+    /* — Footer mini — */
+    .legal-footer { text-align: center; padding: 2rem 1rem; font-size: .75rem; color: rgba(245,245,247,.3); }
+  </style>
+</head>
+<body>
+
+<!-- Navbar -->
+<nav class="legal-nav">
+  <div class="legal-nav__inner">
+    <a href="index.html" class="legal-nav__logo">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v4m0 12v4M2 12h4m12 0h4m-3.5-6.5L17 7m-10 10-1.5 1.5M20.5 17.5 19 17M5 7 3.5 5.5"/></svg>
+      <span class="zero">Zero</span><span class="pfas">PFAS</span>
+    </a>
+    <a href="index.html" class="legal-nav__back">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5m7-7-7 7 7 7"/></svg>
+      Volver al sitio
+    </a>
+  </div>
+</nav>
+
+<main class="legal-wrap">
+  <!-- Header -->
+  <header class="legal-header">
+    <div class="legal-header__badge">Documento legal</div>
+    <h1>Aviso <span>legal</span></h1>
+    <p class="legal-header__date">Última actualización: 15 de abril de 2026</p>
+  </header>
+
+  <!-- Content -->
+  <div class="legal-card">
+    <h2>Titular del sitio web</h2>
+    <p>Este sitio web es propiedad de <strong>ZeroPFAS Solutions</strong>, proyecto de investigación fundado por Daniel Martínez Onofre, dirigido al desarrollo de tecnologías de captura, concentración y destrucción verificable de sustancias perfluoroalquiladas y polifluoroalquiladas (PFAS).</p>
+    <p>Correo electrónico de contacto: <a href="mailto:contacto@zeropfas.com">contacto@zeropfas.com</a></p>
+
+    <h2>Objeto y condiciones de uso</h2>
+    <p>El presente aviso legal regula el acceso y la utilización de este sitio web. Al navegar por él, el usuario acepta las condiciones aquí descritas. Los contenidos publicados tienen carácter exclusivamente informativo y divulgativo sobre el proyecto y las tecnologías en desarrollo; no constituyen oferta comercial vinculante ni asesoramiento técnico o legal.</p>
+
+    <h2>Propiedad intelectual e industrial</h2>
+    <p>Todos los textos, gráficos, diseños, código fuente, marcas, logotipos y demás elementos del sitio web son titularidad de ZeroPFAS Solutions o se utilizan con la debida autorización. Queda estrictamente prohibida su reproducción, distribución, comunicación pública o transformación, total o parcial, sin consentimiento previo y por escrito del titular.</p>
+
+    <h2>Exclusión de garantías y responsabilidad</h2>
+    <p>ZeroPFAS Solutions emplea esfuerzos razonables para mantener la información del sitio actualizada y libre de errores, pero no garantiza su exactitud, integridad ni disponibilidad ininterrumpida. El titular no será responsable de daños derivados del uso o imposibilidad de uso de este sitio web, ni de decisiones adoptadas a partir de la información aquí publicada.</p>
+
+    <h2>Enlaces externos</h2>
+    <p>Este sitio puede contener enlaces a páginas de terceros. ZeroPFAS Solutions no controla ni se responsabiliza de los contenidos, políticas de privacidad o prácticas de dichos sitios externos.</p>
+
+    <h2>Legislación aplicable y jurisdicción</h2>
+    <p>Las presentes condiciones se rigen por la legislación española. Para la resolución de cualquier controversia, las partes se someten a los juzgados y tribunales de la ciudad donde esté domiciliado el titular, con renuncia a cualquier otro fuero que pudiera corresponderles.</p>
+
+    <!-- Cross-navigation -->
+    <div class="legal-links">
+      <a class="active">Aviso legal</a>
+      <a href="privacidad.html">Política de privacidad</a>
+      <a href="cookies.html">Política de cookies</a>
+    </div>
+  </div>
+</main>
+
+<footer class="legal-footer">
+  <p>&copy; 2026 ZeroPFAS Solutions · Todos los derechos reservados</p>
+</footer>
+
+</body>
+</html>

@@ -800,6 +800,61 @@
   bridgeMP.position.set(1.88, 2.18, 0);
   device.add(bridgeMP);
 
+  /* -------- Carbon → Membrane routing bridge -------- */
+  // Vertical segment: from inter-canister level (y=1.5) down to y=1.0
+  var bridgeCMv = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.06, 0.06, 0.5, 10), matPipe
+  );
+  bridgeCMv.position.set(-0.9, 1.25, 0);
+  device.add(bridgeCMv);
+
+  // Horizontal bridge from carbon (x=-1.8) to pipe23v base (x=-0.9) at y=1.0
+  var bridgeCMh = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.06, 0.06, 0.9, 10), matPipe
+  );
+  bridgeCMh.rotation.z = Math.PI / 2;
+  bridgeCMh.position.set(-1.35, 1.0, 0);
+  device.add(bridgeCMh);
+
+  // Elbows at L-turn points
+  var elbowCMbot = new THREE.Mesh(elbowGeo, matAluminum);
+  elbowCMbot.position.set(-0.9, 1.0, 0);
+  elbowCMbot.castShadow = true;
+  device.add(elbowCMbot);
+
+  var elbowCMcbn = new THREE.Mesh(elbowGeo, matAluminum);
+  elbowCMcbn.position.set(-1.8, 1.0, 0);
+  elbowCMcbn.castShadow = true;
+  device.add(elbowCMcbn);
+
+  // Fitting at carbon head exit
+  addFitting(new THREE.Vector3(-1.8, 1.5, 0));
+
+  // Vertical segment from inter-canister pipe level down at carbon side
+  var bridgeCMv2 = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.06, 0.06, 0.5, 10), matPipe
+  );
+  bridgeCMv2.position.set(-1.8, 1.25, 0);
+  device.add(bridgeCMv2);
+
+  /* -------- Pipe45v → PFAS cartridge entry -------- */
+  // Horizontal branch from pipe45v (x=1.6) into PFAS neck (x=1.0) at cap height
+  var bridgePFh = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.06, 0.06, 0.6, 10), matPipe
+  );
+  bridgePFh.rotation.z = Math.PI / 2;
+  bridgePFh.position.set(1.3, 1.58, 0);
+  device.add(bridgePFh);
+
+  // Elbow where pipe45v turns into PFAS
+  var elbowPFentry = new THREE.Mesh(elbowGeo, matAluminum);
+  elbowPFentry.position.set(1.6, 1.58, 0);
+  elbowPFentry.castShadow = true;
+  device.add(elbowPFentry);
+
+  // Fitting at PFAS cap entry
+  addFitting(new THREE.Vector3(1.0, 1.7, 0));
+
   /* ========================================================
      STAGE 8: Returnable cartridge module — HERO element
      Visually offset, larger, with extraction handle, NFC
@@ -919,6 +974,96 @@
   }
 
   /* ========================================================
+     ADDITIONAL INFRASTRUCTURE — membrane brackets & returnable link
+     ======================================================== */
+
+  /* Membrane support brackets (L-shape from back rail to membrane) */
+  var mBracketXs = [-0.3, 1.2];
+  for (var mbi = 0; mbi < mBracketXs.length; mbi++) {
+    var mbx = mBracketXs[mbi];
+    // Vertical arm from rail to membrane height
+    var mbV = new THREE.Mesh(
+      new THREE.BoxGeometry(0.07, 2.5, 0.07), matAluminum
+    );
+    mbV.position.set(mbx, 0.95, -1.25);
+    mbV.castShadow = true;
+    device.add(mbV);
+    // Horizontal arm reaching membrane
+    var mbH = new THREE.Mesh(
+      new THREE.BoxGeometry(0.07, 0.07, 1.25), matAluminum
+    );
+    mbH.position.set(mbx, 2.2, -0.63);
+    device.add(mbH);
+    // U-clamp around membrane body
+    var mbC = new THREE.Mesh(
+      new THREE.TorusGeometry(0.52, 0.025, 6, 20, Math.PI), matDarkMetal
+    );
+    mbC.rotation.y = Math.PI / 2;
+    mbC.position.set(mbx, 2.2, 0);
+    device.add(mbC);
+    // Diagonal gusset 
+    var mbG = new THREE.Mesh(
+      new THREE.BoxGeometry(0.05, 0.45, 0.45), matAluminum
+    );
+    mbG.position.set(mbx, 1.97, -0.95);
+    mbG.rotation.x = -Math.PI / 4;
+    device.add(mbG);
+  }
+
+  /* Outlet → Returnable connection pipe */
+  // Elbow at outlet terminus
+  var elbowOutRet = new THREE.Mesh(elbowGeo, matAluminum);
+  elbowOutRet.position.set(3.6, -0.2, 0);
+  elbowOutRet.castShadow = true;
+  device.add(elbowOutRet);
+
+  // Pipe angling forward toward returnable z-offset
+  var pipeRetZ = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.05, 0.05, 0.42, 10), matPipe
+  );
+  pipeRetZ.position.set(3.7, -0.2, 0.175);
+  pipeRetZ.rotation.x = Math.PI / 2;
+  device.add(pipeRetZ);
+
+  // Elbow at z=0.35 plane
+  var elbowRetZ = new THREE.Mesh(elbowGeo, matAluminum);
+  elbowRetZ.position.set(3.8, -0.2, 0.35);
+  elbowRetZ.castShadow = true;
+  device.add(elbowRetZ);
+
+  // Vertical pipe down to returnable bottom
+  var pipeRetV = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.05, 0.05, 0.95, 10), matPipe
+  );
+  pipeRetV.position.set(3.8, -0.68, 0.35);
+  device.add(pipeRetV);
+
+  // Fitting at returnable docking port
+  addFitting(new THREE.Vector3(3.8, -1.15, 0.35));
+
+  // Returnable support bracket (connects to back rail)
+  var retSupportH = new THREE.Mesh(
+    new THREE.BoxGeometry(0.06, 0.06, 1.75), matAluminum
+  );
+  retSupportH.position.set(3.8, -0.3, -0.5);
+  device.add(retSupportH);
+
+  var retSupportV = new THREE.Mesh(
+    new THREE.BoxGeometry(0.06, 1.38, 0.06), matAluminum
+  );
+  retSupportV.position.set(3.8, -1.05, -1.4);
+  device.add(retSupportV);
+
+  // Returnable base clamp
+  var retBaseClamp = new THREE.Mesh(
+    new THREE.TorusGeometry(0.54, 0.03, 6, 20, Math.PI), matDarkMetal
+  );
+  retBaseClamp.rotation.y = Math.PI / 2;
+  retBaseClamp.rotation.z = Math.PI;
+  retBaseClamp.position.set(3.8, -1.0, 0.35);
+  device.add(retBaseClamp);
+
+  /* ========================================================
      LED status strip — along mounting bracket
      ======================================================== */
   var ledStripGeo = new THREE.BoxGeometry(8.5, 0.03, 0.08);
@@ -988,13 +1133,16 @@
     new THREE.Vector3(-3.90,  1.80, 0),   // after valve / fitting
     new THREE.Vector3(-3.60,  1.70, 0),   // elbow — turn down
     new THREE.Vector3(-3.60,  1.50, 0),   // sediment head level
-    new THREE.Vector3(-1.95,  1.50, 0),   // inter-canister pipe end
-    new THREE.Vector3(-0.90,  1.00, 0),   // pipe23v bottom
+    new THREE.Vector3(-1.80,  1.50, 0),   // inter-canister pipe end at carbon
+    new THREE.Vector3(-1.80,  1.00, 0),   // carbon down to L-turn
+    new THREE.Vector3(-0.90,  1.00, 0),   // bridge horizontal to pipe23v base
     new THREE.Vector3(-0.90,  2.15, 0),   // pipe23v top / elbow
     new THREE.Vector3(-1.35,  2.20, 0),   // membrane feed port
     new THREE.Vector3( 2.15,  2.20, 0),   // membrane permeate out
-    new THREE.Vector3( 1.60,  2.15, 0),   // elbow — turn down
-    new THREE.Vector3( 1.60,  0.80, 0),   // pipe45v bottom
+    new THREE.Vector3( 1.60,  2.15, 0),   // bridgeMP elbow — turn down
+    new THREE.Vector3( 1.60,  1.58, 0),   // pipe45v to PFAS entry height
+    new THREE.Vector3( 1.00,  1.58, 0),   // horizontal branch into PFAS neck
+    new THREE.Vector3( 1.00, -0.20, 0),   // through PFAS cartridge body
     new THREE.Vector3( 1.40, -0.20, 0),   // PFAS exit
     new THREE.Vector3( 2.60, -0.20, 0),   // outlet pipe mid
     new THREE.Vector3( 3.60, -0.20, 0)    // outlet end

@@ -668,6 +668,189 @@
     stageMaterials.push(mats);
   })();
 
+  /* ====== SHARED INFRASTRUCTURE — brackets, pipes, supports, elbows ====== */
+  /* These elements stay partially visible regardless of active step,
+     providing structural continuity and a sense of real engineering. */
+
+  var matInfraPipe = new THREE.MeshStandardMaterial({
+    color: 0xc0c8d0, roughness: 0.22, metalness: 0.78,
+    transparent: true, opacity: 1.0
+  });
+  var matInfraJoint = new THREE.MeshStandardMaterial({
+    color: 0xb8c0c8, roughness: 0.16, metalness: 0.84,
+    transparent: true, opacity: 1.0
+  });
+  var matInfraClamp = new THREE.MeshStandardMaterial({
+    color: 0x2a2a35, roughness: 0.30, metalness: 0.68,
+    transparent: true, opacity: 1.0
+  });
+
+  /* --- Helpers --- */
+  function infraElbow(x, y, z, r) {
+    var e = new THREE.Mesh(
+      new THREE.SphereGeometry(r || 0.08, 12, 10), matInfraJoint
+    );
+    e.position.set(x, y, z || 0);
+    device.add(e);
+  }
+  function infraPipe(x, y, z, len, axis) {
+    var p = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.055, 0.055, len, 10), matInfraPipe
+    );
+    p.position.set(x, y, z || 0);
+    if (axis === 'z') p.rotation.z = Math.PI / 2;
+    if (axis === 'x') p.rotation.x = Math.PI / 2;
+    device.add(p);
+  }
+  function infraFitting(x, y, z, axis) {
+    var f = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.09, 0.09, 0.1, 14), matInfraJoint
+    );
+    f.position.set(x, y, z || 0);
+    if (axis === 'z') f.rotation.z = Math.PI / 2;
+    device.add(f);
+    var r = new THREE.Mesh(
+      new THREE.TorusGeometry(0.09, 0.014, 8, 18), matInfraClamp
+    );
+    r.position.set(x, y, z || 0);
+    if (axis === 'z') r.rotation.y = Math.PI / 2;
+    else r.rotation.x = Math.PI / 2;
+    device.add(r);
+  }
+
+  /* --- Back rail (horizontal bar behind modules) --- */
+  var backRail = new THREE.Mesh(
+    new THREE.BoxGeometry(10.5, 0.1, 0.16), matBracket
+  );
+  backRail.position.set(-0.5, -0.3, -1.4);
+  device.add(backRail);
+
+  /* --- Vertical uprights (bracket → rail) --- */
+  [-4.2, -1.8, 1.0, 3.5].forEach(function (ux) {
+    var up = new THREE.Mesh(
+      new THREE.BoxGeometry(0.06, 1.38, 0.06), matBracket
+    );
+    up.position.set(ux, -1.05, -1.4);
+    device.add(up);
+  });
+
+  /* --- Cross members on mounting bracket --- */
+  [-3.6, -1.8, 1.0].forEach(function (cx) {
+    var cm = new THREE.Mesh(
+      new THREE.BoxGeometry(0.06, 0.06, 2.6), matBracket
+    );
+    cm.position.set(cx, -1.74, 0);
+    device.add(cm);
+  });
+
+  /* --- Canister support clamps --- */
+  [-3.6, -1.8, 1.0].forEach(function (cx) {
+    var cl = new THREE.Mesh(
+      new THREE.TorusGeometry(0.48, 0.035, 6, 20, Math.PI), matInfraClamp
+    );
+    cl.rotation.y = Math.PI / 2;
+    cl.rotation.z = Math.PI;
+    cl.position.set(cx, -1.3, 0);
+    device.add(cl);
+  });
+
+  /* --- Mounting holes (decorative) --- */
+  [[-4.5, -1.2], [-4.5, 1.2], [4.3, -1.2], [4.3, 1.2]].forEach(function (pos) {
+    var h = new THREE.Mesh(
+      new THREE.TorusGeometry(0.06, 0.018, 8, 16), matInfraClamp
+    );
+    h.rotation.x = Math.PI / 2;
+    h.position.set(pos[0], -1.73, pos[1]);
+    device.add(h);
+  });
+
+  /* --- Membrane support brackets (L-shape from back rail) --- */
+  [-0.4, 1.6].forEach(function (mx) {
+    // Vertical arm
+    var mv = new THREE.Mesh(
+      new THREE.BoxGeometry(0.07, 2.5, 0.07), matBracket
+    );
+    mv.position.set(mx, 0.95, -1.2);
+    device.add(mv);
+    // Horizontal arm
+    var mh = new THREE.Mesh(
+      new THREE.BoxGeometry(0.07, 0.07, 1.2), matBracket
+    );
+    mh.position.set(mx, 2.2, -0.6);
+    device.add(mh);
+    // U-clamp around membrane
+    var mc = new THREE.Mesh(
+      new THREE.TorusGeometry(0.52, 0.028, 6, 20, Math.PI), matInfraClamp
+    );
+    mc.rotation.y = Math.PI / 2;
+    mc.position.set(mx, 2.2, 0);
+    device.add(mc);
+    // Gusset plate (diagonal reinforcement)
+    var gus = new THREE.Mesh(
+      new THREE.BoxGeometry(0.05, 0.5, 0.5), matBracket
+    );
+    gus.position.set(mx, 1.95, -0.95);
+    gus.rotation.x = -Math.PI / 4;
+    device.add(gus);
+  });
+
+  /* --- Returnable mounting bracket --- */
+  var retBracketH = new THREE.Mesh(
+    new THREE.BoxGeometry(0.06, 0.06, 1.75), matBracket
+  );
+  retBracketH.position.set(3.8, -0.3, -0.5);
+  device.add(retBracketH);
+  var retBracketV = new THREE.Mesh(
+    new THREE.BoxGeometry(0.06, 1.38, 0.06), matBracket
+  );
+  retBracketV.position.set(3.8, -1.05, -1.4);
+  device.add(retBracketV);
+  var retClamp = new THREE.Mesh(
+    new THREE.TorusGeometry(0.54, 0.035, 6, 20, Math.PI), matInfraClamp
+  );
+  retClamp.rotation.y = Math.PI / 2;
+  retClamp.rotation.z = Math.PI;
+  retClamp.position.set(3.8, -1.0, 0.35);
+  device.add(retClamp);
+
+  /* ---- Connecting pipes and elbows between stages ---- */
+
+  /* Route A: Inlet → Sediment */
+  infraFitting(-3.9, 1.8, 0, 'z');       // push-fit at inlet pipe end
+  infraElbow(-3.6, 1.7);                 // turn from horizontal to down
+
+  /* Route B: Sediment head → Carbon (inter-canister) */
+  infraElbow(-3.6, 1.45);                // sediment top onto horizontal run
+  infraFitting(-2.7, 1.45, 0, 'z');      // midpoint fitting
+  infraElbow(-1.8, 1.45);                // arrive at carbon top
+
+  /* Route C: Carbon → Membrane (L-route bridging the gap) */
+  infraPipe(-1.8, 1.22, 0, 0.45);        // vertical down from carbon pipe level
+  infraElbow(-1.8, 1.0);                 // turn right
+  infraPipe(-1.5, 1.0, 0, 0.6, 'z');     // horizontal to membrane up-pipe base
+  infraElbow(-1.2, 1.0);                 // turn upward
+  infraElbow(-1.2, 2.15);                // arrive at membrane feed level
+
+  /* Route D: Membrane permeate → PFAS down-pipe */
+  infraPipe(1.93, 2.2, 0, 0.55, 'z');    // horizontal bridge from permeate port
+  infraElbow(1.65, 2.2);                 // turn downward into down-pipe
+
+  /* Route E: PFAS down-pipe → Cartridge entry */
+  infraElbow(1.65, 1.4);                 // branch toward PFAS cap
+  infraPipe(1.32, 1.4, 0, 0.65, 'z');    // horizontal pipe into PFAS head
+  infraFitting(1.0, 1.6, 0);             // push-fit on PFAS cap
+
+  /* Route F: PFAS → Outlet */
+  infraElbow(1.4, -0.2);                 // exit PFAS body to horizontal run
+  infraFitting(2.5, -0.2, 0, 'z');       // midpoint fitting on outlet pipe
+
+  /* Route G: Outlet → Returnable */
+  infraElbow(3.6, -0.2);                 // end of outlet → turn toward returnable
+  infraPipe(3.7, -0.2, 0.175, 0.40, 'x'); // short pipe angling forward (z direction)
+  infraElbow(3.8, -0.2, 0.35);           // arrive at returnable z-plane
+  infraPipe(3.8, -0.65, 0.35, 0.90);     // vertical pipe down to returnable bottom
+  infraFitting(3.8, -1.1, 0.35);         // fitting at returnable docking port
+
   /* ====== Shadow catcher ====== */
   var floor = new THREE.Mesh(
     new THREE.PlaneGeometry(16, 12),
@@ -820,6 +1003,11 @@
     matBracket.opacity += (OP_BRACKET - matBracket.opacity) * 0.05;
     matLed.opacity += (OP_LED - matLed.opacity) * 0.05;
     matLed.emissiveIntensity = 0.15 + Math.sin(t * 1.5) * 0.08;
+
+    /* Infrastructure — keep pipes and joints subtly visible */
+    matInfraPipe.opacity += (OP_BRACKET - matInfraPipe.opacity) * 0.05;
+    matInfraJoint.opacity += (OP_BRACKET - matInfraJoint.opacity) * 0.05;
+    matInfraClamp.opacity += (OP_BRACKET * 0.8 - matInfraClamp.opacity) * 0.05;
 
     /* Focused accent light — tracks active step position */
     var fp = FOCUS_POS[currentStep];
