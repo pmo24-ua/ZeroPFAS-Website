@@ -1442,13 +1442,18 @@ button { background: none; border: none; color: inherit; cursor: pointer; font: 
   line-height: 1.15;
   margin-top: auto;
 }
-.s6__reg-limit span {
+.s6__reg-limit-sub {
   font-size: .5em;
   font-weight: 600;
-  opacity: .6;
+  opacity: .9;
   display: block;
   margin-top: .3rem;
+  background: none;
+  -webkit-text-fill-color: currentColor;
 }
+.s6__reg--1 .s6__reg-limit-sub { color: #84c6ff; }
+.s6__reg--2 .s6__reg-limit-sub { color: #8af0e5; }
+.s6__reg--3 .s6__reg-limit-sub { color: #ffc46b; }
 .s6__reg--1 .s6__reg-limit {
   background: linear-gradient(135deg, var(--blue), #5ac8fa);
   -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
@@ -3093,7 +3098,15 @@ button { background: none; border: none; color: inherit; cursor: pointer; font: 
   font-size: .9rem;
   color: var(--text-2);
   transition: color .3s, transform .2s;
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  gap: .4rem;
+}
+.footer__link-list a::before {
+  content: '›';
+  color: var(--teal);
+  opacity: .8;
+  font-size: .9em;
 }
 .footer__link-list a:hover {
   color: var(--text);
@@ -3117,6 +3130,11 @@ button { background: none; border: none; color: inherit; cursor: pointer; font: 
   justify-content: center;
   color: var(--text-2);
   transition: border-color .3s, color .3s, background .3s, transform .2s;
+}
+.footer__social-link svg {
+  width: 18px;
+  height: 18px;
+  display: block;
 }
 .footer__social-link:hover {
   border-color: var(--blue);
@@ -3215,7 +3233,18 @@ button { background: none; border: none; color: inherit; cursor: pointer; font: 
 }
 @media (max-width: 768px) {
   .footer__top { grid-template-columns: 1fr; gap: 1.5rem; padding: 2rem 0 1.5rem; }
-  .footer__main { grid-template-columns: 1fr; gap: 2rem; padding: 2rem 0 1.5rem; }
+  .footer__main {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1.35rem 1rem;
+    padding: 2rem 0 1.5rem;
+  }
+  .footer__brand-col { grid-column: 1 / -1; }
+  .footer__links-col--sections,
+  .footer__links-col--resources {
+    grid-column: span 1;
+  }
+  .footer__links-col--connect { grid-column: 1 / -1; }
+  .footer__social-link { width: 40px; height: 40px; }
   .footer__cta { flex-direction: column; text-align: center; padding: 2.5rem 1.5rem; margin: 2.5rem 0 2rem; gap: 1.5rem; }
   .footer__cta-content { text-align: center; }
   .footer__cta-desc { margin: 0 auto; }
