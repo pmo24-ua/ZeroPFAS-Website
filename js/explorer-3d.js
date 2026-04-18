@@ -243,7 +243,7 @@
     ring.position.set(-5.7, 1.8, 0);
     g.add(ring);
 
-    var dp = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 1.6, 10), mPipe);
+    var dp = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 1.8, 10), mPipe);
     dp.position.set(-3.6, 0.9, 0);
     g.add(dp);
 
@@ -447,7 +447,7 @@
 
     // Up-pipe from carbon
     var up = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 1.2, 8), mPipe);
-    up.position.set(-1.2, 1.6, 0);
+    up.position.set(-1.32, 1.6, 0);
     g.add(up);
 
     device.add(g);
@@ -565,9 +565,9 @@
     nfc.position.set(px, py - 0.5, 0.54);
     g.add(nfc);
 
-    // Down-pipe from membrane
-    var dp = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 1.45, 8), mPipe);
-    dp.position.set(1.65, 1.6, 0);
+    // Down-pipe from membrane (spans Route D elbow y=2.2 down to Route E elbow y=1.37)
+    var dp = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.83, 8), mPipe);
+    dp.position.set(1.65, 1.785, 0);
     g.add(dp);
 
     device.add(g);
@@ -817,38 +817,41 @@
 
   /* Route A: Inlet → Sediment */
   infraFitting(-3.9, 1.8, 0, 'z');       // push-fit at inlet pipe end
-  infraElbow(-3.6, 1.7);                 // turn from horizontal to down
+  infraPipe(-3.75, 1.8, 0, 0.30, 'z');   // bridge pipe to down-pipe axis
+  infraElbow(-3.6, 1.8);                 // turn downward at down-pipe top
 
   /* Route B: Sediment head → Carbon (inter-canister) */
   infraElbow(-3.6, 1.45);                // sediment top onto horizontal run
   infraFitting(-2.7, 1.45, 0, 'z');      // midpoint fitting
   infraElbow(-1.8, 1.45);                // arrive at carbon top
 
-  /* Route C: Carbon → Membrane (L-route bridging the gap) */
+  /* Route C: Carbon → Membrane feed port */
   infraPipe(-1.8, 1.22, 0, 0.45);        // vertical down from carbon pipe level
   infraElbow(-1.8, 1.0);                 // turn right
-  infraPipe(-1.5, 1.0, 0, 0.6, 'z');     // horizontal to membrane up-pipe base
-  infraElbow(-1.2, 1.0);                 // turn upward
-  infraElbow(-1.2, 2.15);                // arrive at membrane feed level
+  infraPipe(-1.56, 1.0, 0, 0.48, 'z');   // horizontal to membrane up-pipe column
+  infraElbow(-1.32, 1.0);                // turn upward into up-pipe
+  infraElbow(-1.32, 2.2);                // junction: up-pipe top meets membrane feed port
 
   /* Route D: Membrane permeate → PFAS down-pipe */
-  infraPipe(1.93, 2.2, 0, 0.55, 'z');    // horizontal bridge from permeate port
+  infraPipe(1.90, 2.2, 0, 0.50, 'z');    // horizontal bridge from permeate port
   infraElbow(1.65, 2.2);                 // turn downward into down-pipe
 
   /* Route E: PFAS down-pipe → Cartridge entry */
-  infraElbow(1.65, 1.4);                 // branch toward PFAS cap
-  infraPipe(1.32, 1.4, 0, 0.65, 'z');    // horizontal pipe into PFAS head
-  infraFitting(1.0, 1.6, 0);             // push-fit on PFAS cap
+  infraElbow(1.65, 1.37);                // branch at PFAS cap level
+  infraPipe(1.32, 1.37, 0, 0.65, 'z');   // horizontal pipe into PFAS head
+  infraFitting(1.0, 1.37, 0);            // push-fit on PFAS hex cap
 
   /* Route F: PFAS → Outlet */
-  infraElbow(1.4, -0.2);                 // exit PFAS body to horizontal run
+  infraElbow(1.52, -0.2);                // exit PFAS body edge to outlet
   infraFitting(2.5, -0.2, 0, 'z');       // midpoint fitting on outlet pipe
 
-  /* Route G: Outlet → Returnable */
-  infraElbow(3.6, -0.2);                 // end of outlet → turn toward returnable
-  infraPipe(3.7, -0.2, 0.175, 0.40, 'x'); // short pipe angling forward (z direction)
-  infraElbow(3.8, -0.2, 0.35);           // arrive at returnable z-plane
-  infraPipe(3.8, -0.65, 0.35, 0.90);     // vertical pipe down to returnable bottom
+  /* Route G: Outlet → Returnable (X→Z→Y routing with elbows at each corner) */
+  infraElbow(3.6, -0.2);                 // end of outlet pipe
+  infraPipe(3.7, -0.2, 0, 0.20, 'z');    // bridge along X: x=3.6 → x=3.8
+  infraElbow(3.8, -0.2, 0);              // corner: turn from X-axis to Z-axis
+  infraPipe(3.8, -0.2, 0.175, 0.35, 'x'); // pipe along Z: z=0 → z=0.35
+  infraElbow(3.8, -0.2, 0.35);           // corner: turn from Z-axis downward
+  infraPipe(3.8, -0.65, 0.35, 0.90);     // vertical pipe down: y=-0.2 → y=-1.1
   infraFitting(3.8, -1.1, 0.35);         // fitting at returnable docking port
 
   /* ====== Shadow catcher ====== */
