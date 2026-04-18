@@ -430,7 +430,7 @@
       const body    = encodeURIComponent(
         `Nombre: ${name}\nEmail: ${email}${org ? '\nEmpresa: ' + org : ''}\n\n${msg}`
       );
-      window.location.href = `mailto:contacto@zeropfas.com?subject=${subject}&body=${body}`;
+      window.location.href = `mailto:zeropfasinfo@gmail.com?subject=${subject}&body=${body}`;
       close();
       form.reset();
     });

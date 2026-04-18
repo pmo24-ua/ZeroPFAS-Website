@@ -138,15 +138,7 @@
   device.add(rail);
 
   // Canister support clamps on bracket
-  var clampXs = [-3.6, -1.8, 1.0, 3.8];
-  for (var ci = 0; ci < clampXs.length; ci++) {
-    var clampGeo = new THREE.TorusGeometry(0.58, 0.04, 6, 24, Math.PI);
-    var clamp = new THREE.Mesh(clampGeo, matDarkMetal);
-    clamp.rotation.y = Math.PI / 2;
-    clamp.rotation.z = Math.PI;
-    clamp.position.set(clampXs[ci], -1.3, 0);
-    device.add(clamp);
-  }
+  // Eliminado para evitar anillas atravesando la base
 
   // Pressure gauge on inlet manifold
   var gaugeBody = new THREE.Mesh(
@@ -1055,13 +1047,7 @@
   device.add(retSupportV);
 
   // Returnable base clamp
-  var retBaseClamp = new THREE.Mesh(
-    new THREE.TorusGeometry(0.54, 0.03, 6, 20, Math.PI), matDarkMetal
-  );
-  retBaseClamp.rotation.y = Math.PI / 2;
-  retBaseClamp.rotation.z = Math.PI;
-  retBaseClamp.position.set(3.8, -1.0, 0.35);
-  device.add(retBaseClamp);
+  // Eliminado para evitar anilla atravesando la base
 
   /* ========================================================
      LED status strip — along mounting bracket
@@ -1124,7 +1110,7 @@
   var REJECT_PARTICLE_N = 6;       // particles on reject branch
   var FLOW_PARTICLE_R   = 0.032;   // sphere radius
   var FLOW_GLOW         = 0.55;    // base emissive intensity
-  var PULSE_COUNT       = 6;       // glow rings travelling main path
+  var PULSE_COUNT       = 0;       // disabled: remove floor/path ring visuals
   var PULSE_SPEED       = 0.04;    // ring cycle rate
 
   /* -- Path waypoints (follow exterior pipe routing) -- */

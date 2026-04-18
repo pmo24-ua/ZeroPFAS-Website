@@ -25,7 +25,7 @@
 
 /* ===== RESET ===== */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-html { scroll-behavior: smooth; scroll-padding-top: 80px; -webkit-font-smoothing: antialiased; font-size: 17px; }
+html { scroll-behavior: smooth; scroll-padding-top: 80px; -webkit-font-smoothing: antialiased; font-size: 18px; }
 body {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   background: var(--bg);
@@ -47,7 +47,7 @@ button { background: none; border: none; color: inherit; cursor: pointer; font: 
   background-clip: text;
 }
 .display-xl {
-  font-size: clamp(2.2rem, 5.5vw, 3.8rem);
+  font-size: clamp(2.4rem, 5.8vw, 4.2rem);
   font-weight: 700;
   line-height: 1.1;
   letter-spacing: -.03em;
@@ -233,11 +233,14 @@ button { background: none; border: none; color: inherit; cursor: pointer; font: 
 /* ===== PIPELINE — Process flow visualization ===== */
 .section-desc {
   color: var(--text-2);
-  font-size: clamp(.95rem, 1.4vw, 1.1rem);
-  max-width: 640px;
-  margin: .8rem auto 0;
-  text-align: center;
+  font-size: clamp(1.05rem, 1.55vw, 1.24rem);
+  max-width: 860px;
+  margin: .95rem 0 0;
+  text-align: left;
   line-height: 1.6;
+}
+.section-desc--solution {
+  max-width: 100%;
 }
 .pipeline {
   width: calc(100% - clamp(40px, 8vw, 80px));
@@ -306,7 +309,7 @@ button { background: none; border: none; color: inherit; cursor: pointer; font: 
   font-variant-numeric: tabular-nums;
 }
 .pipeline__title {
-  font-size: 1rem;
+  font-size: 1.2rem;
   font-weight: 600;
   color: var(--text);
   margin-bottom: .4rem;
@@ -315,10 +318,10 @@ button { background: none; border: none; color: inherit; cursor: pointer; font: 
   color: var(--orange);
 }
 .pipeline__desc {
-  font-size: .78rem;
+  font-size: 1rem;
   color: var(--text-2);
-  line-height: 1.55;
-  max-width: 200px;
+  line-height: 1.65;
+  max-width: 280px;
   margin-bottom: .8rem;
 }
 .pipeline__tag {
@@ -568,7 +571,7 @@ button { background: none; border: none; color: inherit; cursor: pointer; font: 
   margin-bottom: 2.5rem;
 }
 .section-label__num {
-  font-size: .82rem; font-weight: 700;
+  font-size: .92rem; font-weight: 700;
   color: var(--blue);
   font-variant-numeric: tabular-nums;
 }
@@ -577,22 +580,31 @@ button { background: none; border: none; color: inherit; cursor: pointer; font: 
   background: linear-gradient(90deg, var(--blue), transparent);
 }
 .section-label__text {
-  font-size: .82rem; font-weight: 600;
+  font-size: .92rem; font-weight: 600;
   color: rgba(245,245,247,.55);
   text-transform: uppercase;
   letter-spacing: .12em;
 }
 
 /* ===== ABOUT ===== */
-.about-hero { max-width: 700px; margin-bottom: 1rem; }
+.about-hero { max-width: 100%; margin-bottom: 1rem; }
 .about-intro {
-  max-width: 640px;
+  max-width: 100%;
   margin-bottom: 3rem;
 }
 .about-intro p {
-  font-size: clamp(1rem, 1.4vw, 1.15rem);
+  font-size: clamp(1.08rem, 1.65vw, 1.28rem);
   color: var(--text-2);
   line-height: 1.75;
+}
+
+/* Standardized subtitle scale for section cards and blocks */
+.problem-card__title,
+.pipeline__title,
+.tech-panel__title,
+.verify-card__title,
+.verify-step__title {
+  font-size: 1.15rem;
 }
 
 /* Data cards */
@@ -645,7 +657,7 @@ button { background: none; border: none; color: inherit; cursor: pointer; font: 
   background-clip: text;
 }
 .data-card__label {
-  font-size: .78rem;
+  font-size: .98rem;
   color: var(--text-3);
   font-weight: 500;
 }
@@ -844,11 +856,11 @@ button { background: none; border: none; color: inherit; cursor: pointer; font: 
 }
 
 .bond-visual__caption {
-  font-size: .88rem;
-  color: #fff;
+  font-size: clamp(1.08rem, 1.25vw, 1.26rem);
+  color: var(--text-2);
   text-align: center;
-  max-width: 420px;
-  line-height: 1.6;
+  max-width: 860px;
+  line-height: 1.7;
   padding: 0 2rem 1.5rem;
 }
 
@@ -962,14 +974,14 @@ button { background: none; border: none; color: inherit; cursor: pointer; font: 
   color: var(--blue);
 }
 .problem-card__title {
-  font-size: 1.05rem;
+  font-size: 1.2rem;
   font-weight: 700;
   margin-bottom: .6rem;
 }
 .problem-card__text {
-  font-size: .82rem;
+  font-size: 1rem;
   color: var(--text-2);
-  line-height: 1.6;
+  line-height: 1.7;
   margin-bottom: 1rem;
 }
 .problem-card__stat {
@@ -1049,7 +1061,7 @@ button { background: none; border: none; color: inherit; cursor: pointer; font: 
   border: 1px solid rgba(48,213,200,.15);
 }
 .tech-panel__title {
-  font-size: 1.15rem;
+  font-size: 1.2rem;
   font-weight: 700;
   margin-bottom: 1.2rem;
 }
@@ -1060,10 +1072,10 @@ button { background: none; border: none; color: inherit; cursor: pointer; font: 
 }
 .tech-panel__list li {
   position: relative;
-  font-size: .85rem;
+  font-size: 1rem;
   color: var(--text-2);
   padding-left: 1.2rem;
-  line-height: 1.5;
+  line-height: 1.65;
 }
 .tech-panel__list li::before {
   content: '';
@@ -1124,13 +1136,14 @@ button { background: none; border: none; color: inherit; cursor: pointer; font: 
   animation: ringPulse 4s infinite;
 }
 .verify-card__title {
-  font-size: 1rem;
+  font-size: 1.2rem;
   font-weight: 700;
   margin-bottom: .4rem;
 }
 .verify-card__desc {
-  font-size: .82rem;
+  font-size: 1rem;
   color: var(--text-2);
+  line-height: 1.65;
   margin-bottom: .8rem;
 }
 .verify-card__tag {
@@ -1148,10 +1161,11 @@ button { background: none; border: none; color: inherit; cursor: pointer; font: 
 
 /* ===== VERIFY FLOW (Section 05) ===== */
 .verify-subtitle {
-  max-width: 640px;
-  font-size: .92rem;
+  max-width: 860px;
+  font-size: clamp(1.05rem, 1.55vw, 1.24rem);
   color: var(--text-2);
-  line-height: 1.7;
+  line-height: 1.65;
+  text-align: left;
 }
 .verify-flow {
   display: flex;
@@ -1256,13 +1270,13 @@ button { background: none; border: none; color: inherit; cursor: pointer; font: 
   border-color: rgba(48,209,88,.15);
 }
 .verify-step__title {
-  font-size: 1.05rem;
+  font-size: 1.2rem;
   font-weight: 700;
   margin-bottom: .4rem;
   line-height: 1.3;
 }
 .verify-step__desc {
-  font-size: .84rem;
+  font-size: 1rem;
   color: var(--text-2);
   line-height: 1.65;
   margin-bottom: .75rem;
@@ -1364,9 +1378,9 @@ button { background: none; border: none; color: inherit; cursor: pointer; font: 
 }
 .s6__sub {
   max-width: 600px;
-  font-size: 1.05rem;
+  font-size: clamp(1.05rem, 1.55vw, 1.24rem);
   color: var(--text-2);
-  line-height: 1.7;
+  line-height: 1.65;
 }
 
 /* Regulation cards */
@@ -1475,10 +1489,13 @@ button { background: none; border: none; color: inherit; cursor: pointer; font: 
   color: var(--text-3);
   white-space: nowrap;
   margin-top: .5rem;
-  padding-top: .75rem;
-  border-top: 1px solid var(--border);
+  padding-top: .85rem;
+  border-top: 4px solid transparent;
   width: 100%;
 }
+.s6__reg--1 .s6__reg-deadline { border-top-color: rgba(41,151,255,.75); }
+.s6__reg--2 .s6__reg-deadline { border-top-color: rgba(48,213,200,.78); }
+.s6__reg--3 .s6__reg-deadline { border-top-color: rgba(255,149,0,.78); }
 .s6__reg--1 .s6__reg-deadline svg { color: var(--blue); }
 .s6__reg--2 .s6__reg-deadline svg { color: var(--teal); }
 .s6__reg--3 .s6__reg-deadline svg { color: var(--orange); }
@@ -3298,7 +3315,7 @@ button { background: none; border: none; color: inherit; cursor: pointer; font: 
   .contact-form__row { grid-template-columns: 1fr; }
   .contact-inner { gap: 1.5rem; }
   .bond-visual { gap: 1.2rem; margin-top: 2rem; }
-  .bond-visual__caption { padding: 0 1rem 1rem; font-size: .82rem; color: #fff; max-width: 100%; }
+  .bond-visual__caption { padding: 0 1rem 1rem; font-size: .82rem; color: var(--text-2); text-align: center; max-width: 100%; }
   .bond-visual__scale { padding: 0 1rem; max-width: 100%; }
   .product-featurebar { padding: 1rem; gap: .5rem; }
   .product-fbar__item { flex: 1 1 100%; padding: .5rem .8rem; }
@@ -4205,11 +4222,45 @@ textarea:focus-visible {
 }
 
 /* ===== SPACING REFINEMENTS ===== */
-.about-hero { max-width: 700px; margin-bottom: 1.25rem; }
+.about-hero { max-width: 100%; margin-bottom: 1.25rem; }
 .section-desc { margin-bottom: 1.5rem; }
 .verify-trio { margin-top: 3rem; margin-bottom: .5rem; }
 
 @media (max-width: 768px) {
   .faq-grid { grid-template-columns: 1fr; }
   .faq-section { margin-top: 3rem; padding-top: 2rem; }
+}
+
+/* ===== FINAL TYPOGRAPHY OVERRIDES (desktop-first readability) ===== */
+.explorer-intro,
+.section-desc.verify-subtitle,
+.s6__sub {
+  width: 100%;
+  max-width: 100%;
+}
+
+@media (min-width: 1024px) {
+  .bond-visual__scale {
+    max-width: 520px;
+    gap: 10px;
+  }
+
+  .bond-visual__scale-row {
+    gap: 12px;
+  }
+
+  .bond-visual__scale-label {
+    font-size: 1.05rem;
+    width: 52px;
+  }
+
+  .bond-visual__scale-val {
+    font-size: 1.05rem;
+    font-weight: 700;
+    width: 46px;
+  }
+
+  .bond-visual__scale-bar {
+    height: 6px;
+  }
 }
