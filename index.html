@@ -68,11 +68,10 @@
       <li><a href="#problem">Problema</a></li>
       <li><a href="#solution">Solución</a></li>
       <li><a href="#technology">Tecnología</a></li>
-      <li><a href="#product">Producto</a></li>
       <li><a href="#verification">Verificación</a></li>
       <li class="navbar__mobile-only"><a href="#contact">Contacto</a></li>
     </ul>
-    <a href="#contact" class="navbar__cta">Contactar</a>
+    <a href="#contact" class="navbar__cta">Solicitar información</a>
     <button class="navbar__toggle" id="mobileToggle" aria-label="Menú" aria-expanded="false" aria-controls="navLinks">
       <span class="hamburger">
         <span class="hamburger__line"></span>
@@ -96,16 +95,16 @@
       Investigación activa · 2026
     </div>
     <h1 class="hero__title anim-hero-title">
-      <span class="hero__title-line">Destruimos los</span>
-      <span class="hero__title-line"><span class="gradient-text">químicos eternos.</span></span>
+      <span class="hero__title-line">Eliminamos PFAS del</span>
+      <span class="hero__title-line"><span class="gradient-text">de forma sostenible.</span></span>
     </h1>
-    <p class="hero__sub anim-hero-sub">Captura, concentración y destrucción verificable de PFAS mediante oxidación en agua supercrítica.</p>
+    <p class="hero__sub anim-hero-sub">Desarrollamos soluciones para eliminar PFAS sin trasladar la contaminación a otro medio.</p>
     <div class="hero__actions anim-hero-actions">
       <a href="#solution" class="btn btn--primary">
-        <span>Ver la solución</span>
+        <span>Ver la propuesta</span>
         <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8h10m-4-4 4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
       </a>
-      <a href="#about" class="btn btn--glass">Sobre el proyecto</a>
+      <a href="#contact" class="btn btn--glass">Solicitar información</a>
     </div>
   </div>
   <div class="hero__scroll anim-hero-scroll">
@@ -116,19 +115,120 @@
 <!-- ===== Animated separator ===== -->
 <div class="glow-separator"></div>
 
-<!-- ===== ABOUT ===== -->
-<section id="about" class="section">
+<!-- ===== PROBLEM ===== -->
+<section id="problem" class="section section--dark">
   <div class="container">
     <div class="section-label reveal">
       <span class="section-label__num">01</span>
       <span class="section-label__line"></span>
-      <span class="section-label__text">Sobre el proyecto</span>
+      <span class="section-label__text">El problema</span>
+    </div>
+    <h2 class="display-xl reveal">¿Por qué las PFAS son un<br><span class="gradient-text">reto sin resolver?</span></h2>
+    <div class="about-intro reveal">
+      <p>Los PFAS son compuestos químicos sintéticos muy persistentes: se degradan lentamente y pueden acumularse en el agua y en el entorno. Son diseñados específicamente para no degradarse, lo que genera desafíos únicos en su tratamiento y eliminación.</p>
+    </div>
+
+    <div class="problem-grid reveal-stagger">
+      <div class="problem-card">
+        <div class="problem-card__visual">
+          <div class="problem-card__ring problem-card__ring--pulse"></div>
+          <span class="problem-card__num">01</span>
+        </div>
+        <h3 class="problem-card__title">Persistencia extrema</h3>
+        <p class="problem-card__text">Los PFAS contienen enlaces C–F que dificultan su degradación en condiciones ambientales.</p>
+        <div class="problem-card__stat">
+          <span class="problem-card__stat-value">Alta</span>
+          <span class="problem-card__stat-unit">persistencia</span>
+        </div>
+      </div>
+
+      <div class="problem-card">
+        <div class="problem-card__visual">
+          <div class="problem-card__ring problem-card__ring--pulse"></div>
+          <span class="problem-card__num">02</span>
+        </div>
+        <h3 class="problem-card__title">Bioacumulación</h3>
+        <p class="problem-card__text">Al estar presentes de forma continua, los PFAS tienden a acumularse en agua, suelos y organismos, lo que dificulta reducir su exposición a largo plazo.</p>
+        <div class="problem-card__stat">
+          <span class="problem-card__stat-value">Exposición</span>
+          <span class="problem-card__stat-unit">continua</span>
+        </div>
+      </div>
+
+      <div class="problem-card">
+        <div class="problem-card__visual">
+          <div class="problem-card__ring problem-card__ring--pulse"></div>
+          <span class="problem-card__num">03</span>
+        </div>
+        <h3 class="problem-card__title">Retención ≠ Destrucción</h3>
+        <p class="problem-card__text">Separar PFAS no resuelve el problema si no se destruyen de forma efectiva.</p>
+        <div class="problem-card__stat">
+          <span class="problem-card__stat-value">Separar</span>
+          <span class="problem-card__stat-unit">no basta</span>
+        </div>
+      </div>
+
+      <div class="problem-card problem-card--accent">
+        <div class="problem-card__visual">
+          <div class="problem-card__ring problem-card__ring--pulse"></div>
+          <span class="problem-card__num">04</span>
+        </div>
+        <h3 class="problem-card__title">Presión regulatoria</h3>
+        <p class="problem-card__text">La normativa avanza hacia controles más estrictos y exige demostrar, con datos verificables, que los PFAS se reducen o eliminan de forma efectiva.</p>
+        <div class="problem-card__stat">
+          <span class="problem-card__stat-value">Mayor</span>
+          <span class="problem-card__stat-unit">exigencia</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Realistic C-F bond — 3D render -->
+    <div class="bond-visual reveal">
+      <div class="bond-visual__canvas-wrap">
+        <canvas id="bondCanvas" role="img" aria-label="Render 3D realista del enlace covalente C–F"></canvas>
+      </div>
+      <!-- Comparative BDE scale -->
+      <div class="bond-visual__scale">
+        <div class="bond-visual__scale-row">
+          <span class="bond-visual__scale-label">C–H</span>
+          <div class="bond-visual__scale-bar"><div class="bond-visual__scale-fill bond-visual__scale-fill--ch"></div></div>
+          <span class="bond-visual__scale-val">411</span>
+        </div>
+        <div class="bond-visual__scale-row">
+          <span class="bond-visual__scale-label">C–C</span>
+          <div class="bond-visual__scale-bar"><div class="bond-visual__scale-fill bond-visual__scale-fill--cc"></div></div>
+          <span class="bond-visual__scale-val">346</span>
+        </div>
+        <div class="bond-visual__scale-row">
+          <span class="bond-visual__scale-label">C–O</span>
+          <div class="bond-visual__scale-bar"><div class="bond-visual__scale-fill bond-visual__scale-fill--co"></div></div>
+          <span class="bond-visual__scale-val">358</span>
+        </div>
+        <div class="bond-visual__scale-row bond-visual__scale-row--highlight">
+          <span class="bond-visual__scale-label">C–F</span>
+          <div class="bond-visual__scale-bar"><div class="bond-visual__scale-fill bond-visual__scale-fill--cf"></div></div>
+          <span class="bond-visual__scale-val">485</span>
+        </div>
+      </div>
+      <p class="bond-visual__caption">El enlace C–F es excepcionalmente resistente. Requiere mucha más energía para romperse que otros enlaces como: C–H, C–C o C–O. Esta fortaleza explica la persistencia de los PFAS: <strong>ninguna tecnología convencional genera suficiente energía para romperlo</strong>.</p>
+  </div>
+</section>
+
+<div class="glow-separator glow-separator--teal"></div>
+
+<!-- ===== ABOUT ===== -->
+<section id="about" class="section">
+  <div class="container">
+    <div class="section-label reveal">
+      <span class="section-label__num">02</span>
+      <span class="section-label__line"></span>
+      <span class="section-label__text">Proyecto</span>
     </div>
     <div class="about-hero reveal">
-      <h2 class="display-xl">Un químico frente al reto de los <span class="gradient-text">contaminantes eternos.</span></h2>
+      <h2 class="display-xl">El proyecto ZeroPFAS en <span class="gradient-text">entornos reales.</span></h2>
     </div>
     <div class="about-intro reveal">
-      <p>Proyecto de <strong>Daniel Martínez Onofre</strong>, químico. Las PFAS son compuestos con enlaces C–F extremadamente estables, usados desde 1950. Su persistencia los hace acumularse en agua, suelos y organismos vivos.</p>
+      <p>El proyecto ZeroPFAS combina captura selectiva, concentración, destrucción y verificación para tratar agua potable, aguas industriales y vertidos contaminados con un enfoque verificable.</p>
     </div>
 
     <!-- Animated data cards -->
@@ -163,106 +263,6 @@
 
 <div class="glow-separator glow-separator--teal"></div>
 
-<!-- ===== PROBLEM ===== -->
-<section id="problem" class="section section--dark">
-  <div class="container">
-    <div class="section-label reveal">
-      <span class="section-label__num">02</span>
-      <span class="section-label__line"></span>
-      <span class="section-label__text">El problema</span>
-    </div>
-    <h2 class="display-xl reveal">¿Por qué las PFAS son un <span class="gradient-text">reto sin resolver?</span></h2>
-
-    <div class="problem-grid reveal-stagger">
-      <div class="problem-card">
-        <div class="problem-card__visual">
-          <div class="problem-card__ring problem-card__ring--pulse"></div>
-          <span class="problem-card__num">01</span>
-        </div>
-        <h3 class="problem-card__title">Persistencia extrema</h3>
-        <p class="problem-card__text">Los enlaces C–F no se degradan naturalmente. Se acumulan durante décadas.</p>
-        <div class="problem-card__stat">
-          <span class="problem-card__stat-value">1.000+</span>
-          <span class="problem-card__stat-unit">años</span>
-        </div>
-      </div>
-
-      <div class="problem-card">
-        <div class="problem-card__visual">
-          <div class="problem-card__ring problem-card__ring--pulse"></div>
-          <span class="problem-card__num">02</span>
-        </div>
-        <h3 class="problem-card__title">Bioacumulación</h3>
-        <p class="problem-card__text">Exposición crónica asociada a alteraciones reproductivas, renales y carcinogenicidad.</p>
-        <div class="problem-card__stat">
-          <span class="problem-card__stat-value">Grupo 1</span>
-          <span class="problem-card__stat-unit">IARC</span>
-        </div>
-      </div>
-
-      <div class="problem-card">
-        <div class="problem-card__visual">
-          <div class="problem-card__ring problem-card__ring--pulse"></div>
-          <span class="problem-card__num">03</span>
-        </div>
-        <h3 class="problem-card__title">Retención ≠ Destrucción</h3>
-        <p class="problem-card__text">El carbón activado retira PFAS pero no rompe los enlaces C–F.</p>
-        <div class="problem-card__stat">
-          <span class="problem-card__stat-value">0 %</span>
-          <span class="problem-card__stat-unit">destruido</span>
-        </div>
-      </div>
-
-      <div class="problem-card problem-card--accent">
-        <div class="problem-card__visual">
-          <div class="problem-card__ring problem-card__ring--pulse"></div>
-          <span class="problem-card__num">04</span>
-        </div>
-        <h3 class="problem-card__title">Ventana regulatoria</h3>
-        <p class="problem-card__text">EPA y ECHA exigen tecnologías de eliminación verificable para 2026.</p>
-        <div class="problem-card__stat">
-          <span class="problem-card__stat-value">2026</span>
-          <span class="problem-card__stat-unit">deadline</span>
-        </div>
-      </div>
-    </div>
-
-    <!-- Realistic C-F bond — 3D render -->
-    <div class="bond-visual reveal">
-      <div class="bond-visual__canvas-wrap">
-        <canvas id="bondCanvas" role="img" aria-label="Render 3D realista del enlace covalente C–F"></canvas>
-      </div>
-      <!-- Comparative BDE scale -->
-      <div class="bond-visual__scale">
-        <div class="bond-visual__scale-row">
-          <span class="bond-visual__scale-label">C–H</span>
-          <div class="bond-visual__scale-bar"><div class="bond-visual__scale-fill bond-visual__scale-fill--ch"></div></div>
-          <span class="bond-visual__scale-val">411</span>
-        </div>
-        <div class="bond-visual__scale-row">
-          <span class="bond-visual__scale-label">C–C</span>
-          <div class="bond-visual__scale-bar"><div class="bond-visual__scale-fill bond-visual__scale-fill--cc"></div></div>
-          <span class="bond-visual__scale-val">346</span>
-        </div>
-        <div class="bond-visual__scale-row">
-          <span class="bond-visual__scale-label">C–O</span>
-          <div class="bond-visual__scale-bar"><div class="bond-visual__scale-fill bond-visual__scale-fill--co"></div></div>
-          <span class="bond-visual__scale-val">358</span>
-        </div>
-        <div class="bond-visual__scale-row bond-visual__scale-row--highlight">
-          <span class="bond-visual__scale-label">C–F</span>
-          <div class="bond-visual__scale-bar"><div class="bond-visual__scale-fill bond-visual__scale-fill--cf"></div></div>
-          <span class="bond-visual__scale-val">485</span>
-        </div>
-      </div>
-      <p class="bond-visual__caption">El enlace C–F (BDE = 485 kJ/mol) es uno de los más fuertes de la química orgánica. Su energía de disociación supera al C–H, C–C y C–O. Las tecnologías convencionales <strong>no lo rompen</strong>.</p>
-    </div>
-  </div>
-</section>
-
-<div class="glow-separator"></div>
-
-<!-- ===== SOLUTION — Visual pipeline ===== -->
 <section id="solution" class="section">
   <div class="container">
     <div class="section-label reveal">
@@ -270,8 +270,8 @@
       <span class="section-label__line"></span>
       <span class="section-label__text">Nuestra solución</span>
     </div>
-    <h2 class="display-xl reveal">Tu agua entra contaminada. <span class="gradient-text">Sale limpia. Verificado.</span></h2>
-    <p class="section-desc section-desc--solution reveal">Cuatro pasos automáticos. Sin químicos añadidos, sin residuos tóxicos, sin confianza ciega: cada litro se analiza y se demuestra limpio.</p>
+    <h2 class="display-xl reveal">Eliminación real de PFAS, <span class="gradient-text">no&nbsp;simple separación.</span></h2>
+    <p class="section-desc section-desc--solution reveal">Un enfoque integral para tratar PFAS sin limitarse a retenerlos, con control del proceso y validación de resultados.</p>
   </div>
 
   <!-- Pipeline Visual — CSS-only professional flow -->
@@ -285,8 +285,8 @@
         </div>
         <span class="pipeline__num">01</span>
         <h3 class="pipeline__title">Captura</h3>
-        <p class="pipeline__desc">El agua pasa por filtros especializados que atrapan los PFAS como un imán. Nada escapa.</p>
-        <span class="pipeline__tag pipeline__tag--blue">Retención >98 %</span>
+        <p class="pipeline__desc">Retención selectiva de PFAS en la corriente tratada.</p>
+        <span class="pipeline__tag pipeline__tag--blue">Retención selectiva</span>
       </div>
 
       <div class="pipeline__connector"><span></span></div>
@@ -298,8 +298,8 @@
         </div>
         <span class="pipeline__num">02</span>
         <h3 class="pipeline__title">Concentración</h3>
-        <p class="pipeline__desc">Los contaminantes capturados se agrupan y concentran para que la destrucción sea total y eficiente.</p>
-        <span class="pipeline__tag pipeline__tag--teal">×100 concentración</span>
+        <p class="pipeline__desc">Reducción de volumen para optimizar la etapa de destrucción.</p>
+        <span class="pipeline__tag pipeline__tag--teal">Reducción de volumen</span>
       </div>
 
       <div class="pipeline__connector"><span></span></div>
@@ -310,9 +310,9 @@
           <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
         </div>
         <span class="pipeline__num">03</span>
-        <h3 class="pipeline__title">Destrucción total</h3>
-        <p class="pipeline__desc">A temperatura y presión extremas, el agua se convierte en un disolvente que destruye cada molécula de PFAS. No se esconden: se eliminan.</p>
-        <span class="pipeline__tag pipeline__tag--orange">>99,9 % destrucción</span>
+        <h3 class="pipeline__title">Destrucción</h3>
+        <p class="pipeline__desc">Ruptura de compuestos PFAS en condiciones controladas.</p>
+        <span class="pipeline__tag pipeline__tag--orange">Destrucción controlada</span>
       </div>
 
       <div class="pipeline__connector"><span></span></div>
@@ -324,8 +324,8 @@
         </div>
         <span class="pipeline__num">04</span>
         <h3 class="pipeline__title">Verificación</h3>
-        <p class="pipeline__desc">No decimos que el agua está limpia: lo demostramos. Análisis de laboratorio certifican que los PFAS han sido completamente destruidos.</p>
-        <span class="pipeline__tag pipeline__tag--green">PFAS = 0 verificado</span>
+        <p class="pipeline__desc">Análisis del efluente para confirmar la reducción alcanzada.</p>
+        <span class="pipeline__tag pipeline__tag--green">Verificación analítica</span>
       </div>
 
     </div>
@@ -335,7 +335,7 @@
       <div class="pipeline__result-icon">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><path d="m9 12 2 2 4-4"/></svg>
       </div>
-      <span>Resultado: solo quedan <strong>agua, CO₂ y sales minerales inocuas</strong> — cero residuos tóxicos</span>
+      <span>Proceso orientado a evitar transferencias y minimizar residuos secundarios.</span>
     </div>
   </div>
 </section>
@@ -350,7 +350,8 @@
       <span class="section-label__line"></span>
       <span class="section-label__text">Tecnología</span>
     </div>
-    <h2 class="display-xl reveal">Dos líneas integradas. <span class="gradient-text">Un objetivo.</span></h2>
+    <h2 class="display-xl reveal">Captura distribuida. <span class="gradient-text">Destrucción centralizada.</span></h2>
+    <p class="section-desc reveal">Dos líneas integradas para capturar PFAS en origen y destruirlos en condiciones controladas.</p>
 
     <div class="tech-duo">
       <div class="tech-panel reveal">
@@ -359,11 +360,11 @@
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 20h20M5 20V8l5 4V8l5 4V4h4v16"/></svg>
           Industrial
         </div>
-        <h3 class="tech-panel__title">Concentración + Destrucción Centralizada</h3>
+        <h3 class="tech-panel__title">Concentración + destrucción centralizada</h3>
         <ul class="tech-panel__list">
           <li>Plantas municipales e industriales</li>
           <li>Capacidad &gt; 1.000 m³/día</li>
-          <li>Reactor SCWO in situ</li>
+          <li>Reactor SCWO central</li>
           <li>Monitorización continua en línea</li>
         </ul>
       </div>
@@ -372,12 +373,12 @@
         <div class="tech-panel__glow tech-panel__glow--teal"></div>
         <div class="tech-panel__badge tech-panel__badge--pou">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-          Punto de Uso
+          Punto de consumo
         </div>
         <h3 class="tech-panel__title">Captura con circuito de retorno</h3>
         <ul class="tech-panel__list">
-          <li>Filtro bajo fregadero o fuente</li>
-          <li>Cartuchos con chip NFC trazable</li>
+          <li>Captura en origen</li>
+          <li>Cartuchos trazables</li>
           <li>Recogida periódica → planta central</li>
           <li>Informe de destrucción por lote</li>
         </ul>
@@ -400,12 +401,12 @@
 
     <div class="product-hero">
       <div class="product-hero__title reveal">
-        <h2 class="display-lg">Agua libre de PFAS,<br><span class="gradient-text">con trazabilidad total.</span></h2>
+        <h2 class="display-lg">Tratamiento de agua con<br><span class="gradient-text">trazabilidad de destrucción.</span></h2>
       </div>
 
       <!-- Left: Text content -->
       <div class="product-hero__text reveal">
-        <p class="product-hero__desc">Sistema multietapa de punto de uso con prefiltro de sedimentos, carbón activo, membrana NF/RO y cartucho de captura selectiva con resina aniónica. Cada cartucho saturado lleva chip NFC y se retorna para destrucción centralizada vía SCWO, con informe analítico por lote.</p>
+        <p class="product-hero__desc">Sistema multietapa para capturar PFAS en punto de uso y gestionar su destrucción centralizada con seguimiento por cartucho y verificación por lote.</p>
         <div class="product-hero__specs">
           <div class="product-spec">
             <span class="product-spec__val">&lt; 0.5</span>
@@ -420,7 +421,7 @@
           <div class="product-spec">
             <span class="product-spec__val">NFC</span>
             <span class="product-spec__unit">por cartucho</span>
-            <span class="product-spec__label">Trazabilidad lote → destrucción</span>
+            <span class="product-spec__label">Seguimiento por cartucho y lote</span>
           </div>
         </div>
         <a href="#explorer" class="btn btn--glass product-hero__cta">
@@ -581,7 +582,7 @@
 <section id="verification" class="section">
   <div class="container">
     <div class="section-label reveal">
-      <span class="section-label__num">05</span>
+      <span class="section-label__num">06</span>
       <span class="section-label__line"></span>
       <span class="section-label__text">Verificación analítica</span>
     </div>
@@ -624,8 +625,8 @@
             <h3 class="verify-step__title">Medimos el flúor orgánico total</h3>
             <p class="verify-step__desc">Detectamos si quedan compuestos fluorados que un análisis individual podría no cubrir. Esto revela si la destrucción fue completa o solo parcial.</p>
             <div class="verify-step__metric">
-              <span class="verify-step__metric-val verify-step__metric-val--teal">100%</span>
-              <span class="verify-step__metric-label">cobertura de detección</span>
+              <span class="verify-step__metric-val verify-step__metric-val--teal">Amplia</span>
+              <span class="verify-step__metric-label">cobertura analítica ampliada</span>
             </div>
           </div>
         </div>
@@ -657,7 +658,7 @@
 
     <div class="verify-summary reveal">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-      <span>Los tres análisis combinados ofrecen una <strong>certeza analítica completa</strong> — el estándar más exigente del sector.</span>
+      <span>Los tres análisis combinados ofrecen una <strong>evidencia analítica integrada</strong> — el estándar más exigente del sector.</span>
     </div>
   </div>
 </section>
@@ -669,15 +670,15 @@
   <div class="s6__bg"></div>
   <div class="container">
     <div class="section-label reveal">
-      <span class="section-label__num">06</span>
+      <span class="section-label__num">07</span>
       <span class="section-label__line"></span>
       <span class="section-label__text">Regulación y ventaja competitiva</span>
     </div>
 
     <!-- Bold hero -->
     <div class="s6__headline reveal">
-      <h2 class="s6__title">En 2026, el agua contaminada<br>con PFAS será <span class="s6__title-hl">ilegal.</span></h2>
-      <p class="s6__sub">Las tres normativas más exigentes del mundo entran en vigor este año. Las multas son millonarias. Las soluciones convencionales no destruyen PFAS — solo los mueven de sitio.</p>
+      <h2 class="s6__title">La regulación ya no empuja solo a controlar PFAS,<br>sino a <span class="s6__title-hl">eliminarlos.</span></h2>
+      <p class="s6__sub">Los límites en agua potable, el control de emisiones y las restricciones de uso están elevando la exigencia técnica y regulatoria para operadores, industrias y sistemas de tratamiento.</p>
     </div>
 
     <!-- Regulation cards — 3-column grid -->
@@ -754,14 +755,14 @@
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
             </div>
             <strong>Filtros de siempre</strong>
-            <span>Carbón activo</span>
+            <span>Mueven el problema</span>
           </div>
           <div class="vs-table__head-col vs-table__head-col--new">
             <div class="vs-brand vs-brand--new">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
             </div>
             <strong>ZeroPFAS</strong>
-            <span>Nuestra solución</span>
+            <span>Destrucción verificable</span>
           </div>
         </div>
 
@@ -773,11 +774,11 @@
           </div>
           <div class="vs-row__cell vs-row__cell--bad">
             <span class="vs-dot vs-dot--bad"></span>
-            <span>No. Los mueven, no los <em>borran</em>.</span>
+            <span>No. Los capturan o concentran, pero siguen requiriendo gestión posterior.</span>
           </div>
           <div class="vs-row__cell vs-row__cell--good">
             <span class="vs-dot vs-dot--good"></span>
-            <span>Sí. Los destruye para <em>siempre</em>.</span>
+            <span>Sí. Los destruye con <em>evidencia analítica</em>.</span>
           </div>
         </div>
 
@@ -789,11 +790,11 @@
           </div>
           <div class="vs-row__cell vs-row__cell--bad">
             <span class="vs-dot vs-dot--bad"></span>
-            <span>Basura tóxica sin destino <em>claro</em>.</span>
+            <span>Residuos de gestión posterior.</span>
           </div>
           <div class="vs-row__cell vs-row__cell--good">
             <span class="vs-dot vs-dot--good"></span>
-            <span>Agua, CO₂ y sal. Nada <em>tóxico</em>.</span>
+            <span>Agua tratada y menor carga residual.</span>
           </div>
         </div>
 
@@ -859,12 +860,12 @@
     <div class="contact-inner reveal">
       <div class="contact-inner__left">
         <div class="section-label">
-          <span class="section-label__num">07</span>
+          <span class="section-label__num">08</span>
           <span class="section-label__line"></span>
           <span class="section-label__text">Contacto</span>
         </div>
         <h2 class="display-xl">¿Interesado en nuestra <span class="gradient-text">solución?</span></h2>
-        <p class="contact-intro">Estamos abiertos a colaboraciones con empresas de tratamiento de aguas, entidades reguladoras e inversores. Cuéntanos tu caso.</p>
+        <p class="contact-intro">Estamos abiertos a colaboraciones con operadores de agua, industria, entidades reguladoras e inversores. Escríbenos para información técnica, validación o proyectos piloto.</p>
       </div>
       <div class="contact-inner__right">
         <form class="contact-form" id="contactForm" novalidate>
@@ -881,11 +882,11 @@
           <div class="contact-form__group">
             <label for="contactSubject" class="contact-form__label">Asunto</label>
             <select id="contactSubject" name="subject" class="contact-form__input contact-form__select">
-              <option value="general">Consulta general</option>
-              <option value="colaboracion">Colaboración / Partnership</option>
+              <option value="tecnica">Información técnica</option>
+              <option value="colaboracion">Colaboración</option>
+              <option value="piloto">Proyecto piloto</option>
               <option value="inversion">Inversión</option>
-              <option value="regulacion">Regulación / Compliance</option>
-              <option value="tecnico">Consulta técnica</option>
+              <option value="otro">Otro</option>
             </select>
           </div>
           <div class="contact-form__group">
@@ -894,7 +895,7 @@
           </div>
           <button type="submit" class="btn btn--primary contact-form__submit" id="contactSubmit">
             <div class="btn-spinner"></div>
-            <span>Enviar mensaje</span>
+            <span>Solicitar información</span>
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8h10m-4-4 4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
           </button>
           <div class="contact-form__status" id="contactStatus"></div>
@@ -937,7 +938,7 @@
           <span class="zero">Zero</span><span class="pfas">PFAS</span>
           <span class="footer__sub">Solutions</span>
         </div>
-        <p class="footer__desc">Tecnología integrada de captura, concentración y destrucción verificable de PFAS para un agua libre de contaminantes eternos.</p>
+        <p class="footer__desc">Tecnología integrada de captura, concentración y destrucción verificable de PFAS.</p>
 
       </div>
 
@@ -946,10 +947,10 @@
         <h4 class="footer__col-title">Secciones</h4>
         <ul class="footer__link-list">
           <li><a href="#about">Proyecto</a></li>
-          <li><a href="#problem">El problema</a></li>
+          <li><a href="#problem">Problema</a></li>
           <li><a href="#solution">Solución</a></li>
           <li><a href="#technology">Tecnología</a></li>
-          <li><a href="#product">Producto</a></li>
+          <li><a href="#verification">Verificación</a></li>
         </ul>
       </div>
 
@@ -957,8 +958,6 @@
       <div class="footer__links-col footer__links-col--resources">
         <h4 class="footer__col-title">Recursos</h4>
         <ul class="footer__link-list">
-          <li><a href="#verification">Verificación</a></li>
-          <li><a href="#innovation">Regulación</a></li>
           <li><a href="#contact">Contacto</a></li>
           <li><a href="#explorer">Explorador 3D</a></li>
         </ul>
@@ -1013,16 +1012,12 @@
     <!-- Bottom bar -->
     <div class="footer__bottom">
       <div class="footer__bottom-left">
-        <p>Proyecto de investigación · <a href="#about">Daniel Martínez Onofre</a></p>
+        <p>Proyecto en desarrollo · <a href="#hero">ZeroPFAS</a></p>
       </div>
       <div class="footer__bottom-center">
-        <p>&copy; 2026 ZeroPFAS Solutions</p>
+        <p>&copy; 2026 ZeroPFAS</p>
       </div>
       <div class="footer__bottom-right">
-        <span class="footer__status">
-          <span class="footer__status-dot"></span>
-          Operativo
-        </span>
       </div>
     </div>
   </div>

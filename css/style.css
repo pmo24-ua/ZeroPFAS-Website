@@ -454,12 +454,18 @@ button { background: none; border: none; color: inherit; cursor: pointer; font: 
   animation: pulse 2s infinite;
 }
 .hero__title {
-  font-size: clamp(2.5rem, 7vw, 5rem);
+  font-size: clamp(2.1rem, 5.6vw, 4rem);
   font-weight: 800;
-  line-height: 1.05;
-  letter-spacing: -.04em;
+  line-height: .98;
+  letter-spacing: -.05em;
 }
-.hero__title-line { display: block; }
+.hero__title-line {
+  display: block;
+  white-space: nowrap;
+}
+.hero__title-line + .hero__title-line {
+  margin-top: .12em;
+}
 .hero__sub {
   font-size: clamp(.95rem, 1.5vw, 1.15rem);
   color: var(--text-2);
@@ -936,7 +942,7 @@ button { background: none; border: none; color: inherit; cursor: pointer; font: 
   background: var(--bg);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  padding: 2.25rem 1.75rem;
+  padding: 1.75rem 1.5rem;
   position: relative;
   overflow: hidden;
   transition: border-color .3s, transform .3s ease, box-shadow .3s;
@@ -958,7 +964,7 @@ button { background: none; border: none; color: inherit; cursor: pointer; font: 
   position: relative;
   width: 48px; height: 48px;
   display: flex; align-items: center; justify-content: center;
-  margin-bottom: 1.2rem;
+  margin-bottom: 0.8rem;
 }
 .problem-card__ring {
   position: absolute; inset: -6px;
@@ -982,7 +988,7 @@ button { background: none; border: none; color: inherit; cursor: pointer; font: 
   font-size: 1rem;
   color: var(--text-2);
   line-height: 1.7;
-  margin-bottom: 1rem;
+  margin-bottom: 0.75rem;
 }
 .problem-card__stat {
   display: inline-flex;
@@ -990,7 +996,7 @@ button { background: none; border: none; color: inherit; cursor: pointer; font: 
   gap: .4rem;
   min-height: 34px;
   margin-top: auto;
-  padding-top: .8rem;
+  padding-top: 0.6rem;
   border-top: 1px solid var(--border);
 }
 .problem-card__stat-value {
@@ -2507,8 +2513,9 @@ button { background: none; border: none; color: inherit; cursor: pointer; font: 
     margin-bottom: 1rem;
   }
   .hero__title {
-    font-size: clamp(2rem, 10vw, 2.8rem);
-    line-height: 1.08;
+    font-size: clamp(1.8rem, 8vw, 2.45rem);
+    line-height: .98;
+    letter-spacing: -.045em;
   }
   .hero__sub {
     margin: 1.05rem auto 1.35rem;
