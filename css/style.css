@@ -915,6 +915,26 @@ button { background: none; border: none; color: inherit; cursor: pointer; font: 
   flex-shrink: 0;
   font-variant-numeric: tabular-nums;
 }
+.bond-visual__scale-val {
+  display: flex;
+  flex-direction: row;
+  align-items: baseline;
+  justify-content: center;
+  gap: 4px;
+  width: 72px;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+.bond-visual__scale-num {
+  font-size: .85rem;
+  font-weight: 700;
+}
+.bond-visual__scale-unit {
+  font-size: .58rem;
+  font-weight: 600;
+  letter-spacing: .04em;
+  opacity: .8;
+}
 .bond-visual__scale-bar {
   flex: 1;
   height: 4px;
@@ -936,11 +956,7 @@ button { background: none; border: none; color: inherit; cursor: pointer; font: 
   width: 100%;
 }
 .bond-visual__scale-val {
-  font-size: .65rem;
-  font-weight: 500;
   color: var(--text-3);
-  width: 28px;
-  font-variant-numeric: tabular-nums;
 }
 
 /* ===== PROBLEM ===== */
@@ -4276,9 +4292,15 @@ textarea:focus-visible {
   }
 
   .bond-visual__scale-val {
+    width: 88px;
+  }
+
+  .bond-visual__scale-num {
     font-size: 1.05rem;
-    font-weight: 700;
-    width: 46px;
+  }
+
+  .bond-visual__scale-unit {
+    font-size: .72rem;
   }
 
   .bond-visual__scale-bar {
