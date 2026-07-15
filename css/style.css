@@ -1125,6 +1125,18 @@ button { background: none; border: none; color: inherit; cursor: pointer; font: 
   background: var(--teal);
 }
 
+.tech-panel__cta-wrap {
+  display: grid;
+  gap: 1rem;
+  margin-top: 2rem;
+  justify-items: start;
+}
+
+.tech-panel__cta-copy {
+  max-width: 760px;
+  margin: 0;
+}
+
 /* ===== VERIFICATION ===== */
 .verify-trio {
   display: grid;
