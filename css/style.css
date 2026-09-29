@@ -481,6 +481,9 @@ button { background: none; border: none; color: inherit; cursor: pointer; font: 
   display: block;
   white-space: normal;
 }
+.hero__title.hero__title--statement {
+  max-width: 100%;
+}
 .hero__title-line + .hero__title-line {
   margin-top: .12em;
 }
