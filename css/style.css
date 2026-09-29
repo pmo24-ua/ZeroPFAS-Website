@@ -69,6 +69,7 @@ button { background: none; border: none; color: inherit; cursor: pointer; font: 
 }
 .zero { font-weight: 700; color: var(--text); }
 .pfas { font-weight: 700; color: var(--blue); }
+.brand-wordmark { display: inline-flex; white-space: nowrap; }
 
 /* Typography: improve wrapping and mobile sizes for headings */
 .display-xl, .display-lg, .display-sm, h1, h2, h3 {
@@ -105,13 +106,14 @@ button { background: none; border: none; color: inherit; cursor: pointer; font: 
 }
 .navbar__logo {
   display: flex; align-items: center; gap: .5rem;
+  flex-shrink: 0;
   font-size: .95rem;
   transition: transform .25s var(--ease);
 }
 .navbar__logo:hover {
   transform: scale(1.03);
 }
-.navbar__logo-icon { color: var(--blue); }
+.navbar__logo-icon { color: var(--blue); flex-shrink: 0; }
 .navbar__links {
   display: flex; gap: 1.5rem; margin-left: auto;
 }
@@ -2543,7 +2545,7 @@ button { background: none; border: none; color: inherit; cursor: pointer; font: 
 
 @media (max-width: 768px) {
   .navbar__links, .navbar__cta { display: none; }
-  .navbar__toggle { display: block; }
+  .navbar__toggle { display: block; margin-left: auto; }
   .navbar__links.active {
     display: flex; flex-direction: column;
     position: absolute; top: var(--nav-h); left: 0; right: 0;

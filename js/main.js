@@ -128,6 +128,7 @@
       if (!target) return;
       e.preventDefault();
       if (navLinks) navLinks.classList.remove('active');
+      if (toggle) toggle.setAttribute('aria-expanded', 'false');
       const top = target.getBoundingClientRect().top + window.scrollY - 80;
       window.scrollTo({ top, behavior: 'smooth' });
     });

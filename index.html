@@ -40,7 +40,7 @@
     </script>
     <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" as="style">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="css/style.css?v=20260418-3">
+    <link rel="stylesheet" href="css/style.css?v=20260929-1">
     <link rel="stylesheet" href="css/animations.css">
 </head>
 <body>
@@ -59,9 +59,9 @@
 <!-- ===== Navbar ===== -->
 <nav class="navbar" id="navbar">
   <div class="navbar__inner">
-    <a href="#" class="navbar__logo">
-      <svg class="navbar__logo-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v4m0 12v4M2 12h4m12 0h4m-3.5-6.5L17 7m-10 10-1.5 1.5M20.5 17.5 19 17M5 7 3.5 5.5"/></svg>
-      <span class="zero">Zero</span><span class="pfas">Pfas</span>
+    <a href="#hero" class="navbar__logo" aria-label="ZeroPFAS — Inicio">
+      <svg class="navbar__logo-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="3"/><path d="M12 2v4m0 12v4M2 12h4m12 0h4m-3.5-6.5L17 7m-10 10-1.5 1.5M20.5 17.5 19 17M5 7 3.5 5.5"/></svg>
+      <span class="brand-wordmark"><span class="zero">Zero</span><span class="pfas">Pfas</span></span>
     </a>
     <ul class="navbar__links" id="navLinks">
       <li><a href="#about">Proyecto</a></li>
@@ -213,6 +213,7 @@
         </div>
       </div>
       <p class="bond-visual__caption">El enlace C–F es excepcionalmente resistente. Esa fortaleza química explica por qué los PFAS son tan persistentes y difíciles de tratar con métodos convencionales.</p>
+    </div>
   </div>
 </section>
 
@@ -232,37 +233,6 @@
     <div class="about-intro reveal">
       <p>ZeroPFAS nace para resolver una limitación crítica de los sistemas convencionales: muchos separan los PFAS del agua, pero no los eliminan definitivamente.</p>
       <p>Nuestra solución plantea un sistema completo: capturar los PFAS, trazarlos durante todo el proceso y canalizarlos hacia una etapa de destrucción controlada. El objetivo es evitar que el contaminante quede abandonado en filtros, membranas o residuos sin tratamiento final.</p>
-    </div>
-
-    <div class="data-grid reveal-stagger">
-      <div class="data-card">
-        <div class="data-card__glow data-card__glow--blue"></div>
-        <div class="data-card__value">Captura</div>
-        <div class="data-card__label">Punto de uso</div>
-        <p class="data-card__desc">Retención selectiva de PFAS en el agua antes de que sigan circulando por el sistema.</p>
-        <svg class="data-card__icon" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><path d="M12 2v20M5 8l7-6 7 6M5 16l7 6 7-6"/></svg>
-      </div>
-      <div class="data-card">
-        <div class="data-card__glow data-card__glow--teal"></div>
-        <div class="data-card__value">Trazabilidad</div>
-        <div class="data-card__label">NFC y lote</div>
-        <p class="data-card__desc">Seguimiento por cartucho, uso, sustitución y control del residuo contaminado.</p>
-        <svg class="data-card__icon" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><path d="M4 7V4h3M20 17v3h-3M4 17v3h3M20 7V4h-3"/></svg>
-      </div>
-      <div class="data-card">
-        <div class="data-card__glow data-card__glow--orange"></div>
-        <div class="data-card__value">Concentración</div>
-        <div class="data-card__label">Menor volumen</div>
-        <p class="data-card__desc">Reducción del volumen contaminado para hacer viable el tratamiento posterior.</p>
-        <svg class="data-card__icon" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><path d="M4 6h16M7 12h10M10 18h4"/></svg>
-      </div>
-      <div class="data-card">
-        <div class="data-card__glow data-card__glow--red"></div>
-        <div class="data-card__value">Destrucción</div>
-        <div class="data-card__label">Salida controlada</div>
-        <p class="data-card__desc">Tratamiento centralizado orientado a romper los compuestos PFAS y evitar su reentrada al ciclo hídrico.</p>
-        <svg class="data-card__icon" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><path d="M6 6l12 12M18 6L6 18"/></svg>
-      </div>
     </div>
   </div>
 </section>
@@ -317,26 +287,7 @@
       </div>
     </div>
 
-    <p class="section-desc reveal">Del agua contaminada al tratamiento final. El sistema ZeroPFAS no se limita a filtrar. Captura los PFAS, registra el uso del cartucho y permite gestionar el residuo contaminado dentro de un circuito controlado de trazabilidad y destrucción.</p>
-
-    <div class="tech-duo reveal-stagger">
-      <div class="tech-panel reveal"><div class="tech-panel__glow tech-panel__glow--blue"></div><h3 class="tech-panel__title">01 · Entrada de agua contaminada</h3><p class="tech-panel__desc">El agua con presencia de PFAS entra en el sistema para iniciar el proceso de captura.</p></div>
-      <div class="tech-panel reveal"><div class="tech-panel__glow tech-panel__glow--teal"></div><h3 class="tech-panel__title">02 · Captura selectiva en cartucho</h3><p class="tech-panel__desc">Los PFAS quedan retenidos en un cartucho diseñado para concentrar el contaminante y separarlo del flujo de agua tratada.</p></div>
-      <div class="tech-panel reveal"><div class="tech-panel__glow tech-panel__glow--orange"></div><h3 class="tech-panel__title">03 · Identificación NFC</h3><p class="tech-panel__desc">Cada cartucho puede incorporar identificación NFC para registrar instalación, uso, sustitución y trazabilidad por lote.</p></div>
-      <div class="tech-panel reveal"><div class="tech-panel__glow tech-panel__glow--green"></div><h3 class="tech-panel__title">04 · Sustitución controlada</h3><p class="tech-panel__desc">Cuando el cartucho alcanza su vida útil, puede retirarse e intercambiarse por otro sin perder la trazabilidad del residuo contaminado.</p></div>
-      <div class="tech-panel reveal"><div class="tech-panel__glow tech-panel__glow--blue"></div><h3 class="tech-panel__title">05 · Envío a planta piloto</h3><p class="tech-panel__desc">El cartucho saturado o el material contaminado se canaliza hacia una planta piloto para su tratamiento posterior.</p></div>
-      <div class="tech-panel reveal"><div class="tech-panel__glow tech-panel__glow--orange"></div><h3 class="tech-panel__title">06 · Destrucción verificable</h3><p class="tech-panel__desc">El objetivo final es evitar que los PFAS vuelvan al ciclo hídrico mediante un proceso de destrucción controlada y verificación analítica.</p></div>
-    </div>
-
     <p class="section-desc reveal">Este modelo representa la arquitectura conceptual de ZeroPFAS. El diseño industrial final, los materiales específicos y los parámetros de operación pueden variar según el caso de uso, el caudal, la concentración de PFAS y los requisitos de validación.</p>
-
-    <div class="tech-panel__cta-wrap reveal">
-      <a href="#contact" class="btn btn--primary">
-        <span>Solicitar evaluación técnica del sistema</span>
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8h10m-4-4 4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      </a>
-      <p class="section-desc tech-panel__cta-copy">Analizamos el caso de uso, el tipo de agua, el caudal y la estrategia de captura, trazabilidad y tratamiento posterior.</p>
-    </div>
   </div>
 </section>
 
@@ -473,8 +424,8 @@
       <span class="section-label__line"></span>
       <span class="section-label__text">Verificación analítica</span>
     </div>
-    <h2 class="display-xl reveal">La regulación ya exige controlar PFAS. <span class="gradient-text">El mercado exigirá eliminarlos.</span></h2>
-    <p class="section-desc verify-subtitle reveal">Desde enero de 2026, la Unión Europea exige monitorización armonizada de PFAS en agua potable y cumplimiento de nuevos valores límite bajo la Directiva de Agua Potable.</p>
+    <h2 class="display-xl reveal">¿Cómo validamos <span class="gradient-text">el tratamiento de PFAS?</span></h2>
+    <p class="section-desc verify-subtitle reveal">Combinamos distintos niveles de análisis para evaluar la reducción del contaminante, detectar compuestos fluorados residuales y seguir la transformación del enlace C–F.</p>
 
     <div class="verify-flow reveal-stagger">
       <!-- Step 1 -->
@@ -485,7 +436,7 @@
             <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
           </div>
           <div class="verify-step__content">
-            <span class="verify-step__tag">ANALISIS DE COMPUESTOS DIANA</span>
+            <span class="verify-step__tag">ANÁLISIS DE COMPUESTOS DIANA</span>
             <h3 class="verify-step__title">Identificamos PFAS específicos</h3>
             <p class="verify-step__desc">Analizamos individualmente los compuestos PFAS presentes en la muestra mediante LC-MS/MS, una técnica de referencia para su cuantificación y seguimiento.</p>
             <div class="verify-step__metric">
@@ -508,7 +459,7 @@
             <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
           </div>
           <div class="verify-step__content">
-            <span class="verify-step__tag verify-step__tag--teal">ANALISIS AMPLIADO</span>
+            <span class="verify-step__tag verify-step__tag--teal">ANÁLISIS AMPLIADO</span>
             <h3 class="verify-step__title">Medimos el flúor orgánico total</h3>
             <p class="verify-step__desc">Evaluamos si permanecen compuestos fluorados que un análisis dirigido podría no cubrir. Esto ayuda a distinguir entre una eliminación más completa y una transformación solo parcial.</p>
             <div class="verify-step__metric">
@@ -531,7 +482,7 @@
             <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
           </div>
           <div class="verify-step__content">
-            <span class="verify-step__tag verify-step__tag--green">BALANCE DE FLUOR</span>
+            <span class="verify-step__tag verify-step__tag--green">BALANCE DE FLÚOR</span>
             <h3 class="verify-step__title">Seguimos la ruptura del enlace C–F</h3>
             <p class="verify-step__desc">Medimos el fluoruro libre (F⁻) generado tras la ruptura de enlaces carbono-flúor. Este dato aporta una evidencia adicional de transformación del contaminante, más allá de su simple desaparición en el análisis de compuestos diana.</p>
             <div class="verify-step__metric">
@@ -545,7 +496,7 @@
 
     <div class="verify-summary reveal">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-      <span>Esto cambia el escenario para operadores de agua, ayuntamientos, industrias y empresas de tratamiento: ya no basta con detectar PFAS.</span>
+      <span>Los tres análisis combinados permiten evaluar la reducción de PFAS, la presencia de compuestos fluorados residuales y la liberación de fluoruro durante el tratamiento.</span>
     </div>
   </div>
 </section>
@@ -781,7 +732,7 @@
             <textarea id="contactMsg" name="message" class="contact-form__input contact-form__textarea" rows="4" placeholder="Describe tu interés o consulta…" required></textarea>
           </div>
           <button type="submit" class="btn btn--primary contact-form__submit" id="contactSubmit">
-            <div class="btn-spinner"></div>
+            <span class="btn-spinner" aria-hidden="true"></span>
             <span>Solicitar evaluación técnica</span>
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8h10m-4-4 4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
           </button>
@@ -791,25 +742,6 @@
     </div>
   </div>
 </section>
-
-<div class="container">
-  <!-- Footer CTA band — bigger, more impactful -->
-  <div class="footer__cta">
-    <div class="footer__cta-bg"></div>
-    <div class="footer__cta-content">
-      <div class="footer__cta-badge">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"/></svg>
-        Evaluación técnica
-      </div>
-      <h3 class="footer__cta-title">¿Buscas una solución PFAS que vaya <span class="gradient-text">más allá de la filtración?</span></h3>
-      <p class="footer__cta-desc">Solicita una evaluación técnica y estudiaremos cómo integrar captura, trazabilidad y destrucción verificable en tu caso de uso.</p>
-    </div>
-    <a href="#contact" class="btn btn--primary footer__cta-btn">
-      Solicitar evaluación técnica
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14m-7-7 7 7-7 7"/></svg>
-    </a>
-  </div>
-</div>
 
 <!-- ===== Footer ===== -->
 <footer class="footer">
@@ -821,8 +753,8 @@
       <!-- Brand -->
       <div class="footer__brand-col">
         <div class="footer__brand">
-          <svg class="footer__logo-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v4m0 12v4M2 12h4m12 0h4m-3.5-6.5L17 7m-10 10-1.5 1.5M20.5 17.5 19 17M5 7 3.5 5.5"/></svg>
-          <span class="zero">Zero</span><span class="pfas">Pfas</span>
+          <svg class="footer__logo-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="3"/><path d="M12 2v4m0 12v4M2 12h4m12 0h4m-3.5-6.5L17 7m-10 10-1.5 1.5M20.5 17.5 19 17M5 7 3.5 5.5"/></svg>
+          <span class="brand-wordmark"><span class="zero">Zero</span><span class="pfas">Pfas</span></span>
           <span class="footer__sub">Solutions</span>
         </div>
         <p class="footer__desc">Tecnología integrada de captura, concentración y destrucción verificable de PFAS.</p>
@@ -920,7 +852,7 @@
 <script src="js/three-scene.js"></script>
 <script src="js/product-3d.js?v=20260418-1"></script>
 <script src="js/explorer-3d.js"></script>
-<script src="js/main.js"></script>
+<script src="js/main.js?v=20260929-1"></script>
 <script src="js/chatbot.js"></script>
 </body>
 </html>
